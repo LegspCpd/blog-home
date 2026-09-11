@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>访问被阻止</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: url('https://images5.alphacoders.com/423/thumb-1920-423529.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    /* 红色提示文字 */
+    .warning {
+      position: fixed;
+      top: 40px;
+      width: 100%;
+      text-align: center;
+      color: red;
+      font-size: 42px;
+      font-weight: bold;
+      letter-spacing: 4px;
+      text-shadow: 0 0 10px red, 0 0 20px red;
+      z-index: 10;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+
+<div class="warning">⚠ ACCESS DENIED ⚠</div>
+
+<canvas id="matrix"></canvas>
+
+<script>
+const canvas = document.getElementById('matrix');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const chars = '01';
+const fontSize = 20;
+const columns = canvas.width / fontSize;
+
+const drops = [];
+for (let i = 0; i < columns; i++) {
+  drops[i] = Math.random() * canvas.height;
+}
+
+function draw() {
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.fillStyle = 'rgba(0,0,0,0.9)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.globalCompositeOperation = 'source-over';
+
+  ctx.fillStyle = '#00FF00';
+  ctx.shadowColor = '#00FF00';
+  ctx.shadowBlur = 8;
+  ctx.font = fontSize + 'px monospace';
+
+  for (let i = 0; i < drops.length; i++) {
+    const text = chars[Math.floor(Math.random() * chars.length)];
+    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+      drops[i] = 0;
+    }
+
+    drops[i]++;
+  }
+}
+
+setInterval(draw, 33);
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+</body>
+</html>

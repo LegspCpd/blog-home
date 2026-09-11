@@ -1,0 +1,208 @@
+---
+import { Icon } from "astro-icon/components";
+import SupabaseLayout from "@layouts/SupabaseLayout.astro";
+import { getSortedPosts } from "@utils/content-utils";
+import { formatDateToYYYYMMDD } from "@utils/date-utils";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+
+const posts = await getSortedPosts();
+const recentPosts = posts.slice(0, 6);
+const feedUrl = `${Astro.site}rss.xml`;
+---
+
+<SupabaseLayout
+  title={i18n(I18nKey.rss)}
+  description={i18n(I18nKey.rssDescription)}
+>
+  <div class="su-prose-page">
+    <header class="su-page-head">
+      <p class="su-kicker">{i18n(I18nKey.rss)}</p>
+      <h1 class="su-title">{i18n(I18nKey.rss)}</h1>
+      <p class="su-page-desc">{i18n(I18nKey.rssSubtitle)}</p>
+    </header>
+
+    <!-- 订阅地址 -->
+    <section class="su-rss-feed">
+      <div class="su-rss-feed-text">
+        <p class="su-rss-feed-title">{i18n(I18nKey.rssLink)}</p>
+        <p class="su-rss-feed-desc">{i18n(I18nKey.rssCopyToReader)}</p>
+      </div>
+      <div class="su-rss-feed-actions">
+        <code class="su-rss-url">{feedUrl}</code>
+        <button
+          id="copy-rss-btn"
+          type="button"
+          class="su-btn"
+          data-url={feedUrl}
+          data-copied-text={i18n(I18nKey.rssCopied)}
+          data-failed-text={i18n(I18nKey.rssCopyFailed)}
+        >
+          <Icon name="material-symbols:content-copy-outline" width="14" height="14" />
+          {i18n(I18nKey.rssCopyLink)}
+        </button>
+      </div>
+    </section>
+
+    <!-- 最新文章 -->
+    <section class="su-rss-section">
+      <h2 class="su-related-title">{i18n(I18nKey.rssLatestPosts)}</h2>
+      <ul class="su-list">
+        {
+          recentPosts.map((post) => (
+            <li>
+              <a class="su-row" href={`/posts/${post.id.replace(/\.(md|mdx)$/i, "")}/`}>
+                <span class="su-row-date">{formatDateToYYYYMMDD(post.data.published)}</span>
+                <span class="su-row-title">{post.data.title}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <!-- RSS 说明 -->
+    <section class="su-rss-section">
+      <h2 class="su-related-title">{i18n(I18nKey.rssWhatIsRSS)}</h2>
+      <div class="su-rss-help">
+        <p>{i18n(I18nKey.rssWhatIsRSSDescription)}</p>
+        <ul>
+          <li>{i18n(I18nKey.rssBenefit1)}</li>
+          <li>{i18n(I18nKey.rssBenefit2)}</li>
+          <li>{i18n(I18nKey.rssBenefit3)}</li>
+          <li>{i18n(I18nKey.rssBenefit4)}</li>
+        </ul>
+        <p>{i18n(I18nKey.rssHowToUse)}</p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function initRssCopy() {
+      const copyBtn = document.getElementById("copy-rss-btn");
+      if (!copyBtn) return;
+
+      const newBtn = copyBtn.cloneNode(true) as HTMLElement;
+      copyBtn.parentNode?.replaceChild(newBtn, copyBtn);
+
+      newBtn.addEventListener("click", async function (this: HTMLElement) {
+        const url = this.getAttribute("data-url");
+        if (!url) return;
+        const originalText = this.textContent;
+        try {
+          await navigator.clipboard.writeText(url);
+          this.textContent = this.getAttribute("data-copied-text") || "";
+        } catch (err) {
+          console.error("复制失败:", err);
+          this.textContent = this.getAttribute("data-failed-text") || "";
+        }
+        setTimeout(() => {
+          this.textContent = originalText;
+        }, 2000);
+      });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initRssCopy);
+    } else {
+      setTimeout(initRssCopy, 0);
+    }
+
+    const w = window as unknown as { swup?: { hooks: { on: (e: string, cb: () => void) => void } } };
+    if (w.swup) {
+      w.swup.hooks.on("content:replace", () => {
+        setTimeout(initRssCopy, 100);
+      });
+    }
+  </script>
+</SupabaseLayout>
+
+<style>
+  .su-prose-page {
+    max-width: 820px;
+    margin-inline: auto;
+  }
+
+  .su-page-head {
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--su-border);
+  }
+
+  .su-title {
+    margin: 8px 0 12px;
+  }
+
+  .su-page-desc {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--su-muted-foreground);
+  }
+
+  .su-rss-feed {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border: 1px solid var(--su-border);
+    border-radius: 12px;
+  }
+
+  .su-rss-feed-title {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--su-foreground);
+  }
+
+  .su-rss-feed-desc {
+    margin: 0;
+    font-size: 13px;
+    color: var(--su-muted-foreground);
+  }
+
+  .su-rss-feed-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .su-rss-url {
+    padding: 8px 12px;
+    border: 1px solid var(--su-border);
+    border-radius: 6px;
+    background-color: var(--su-muted);
+    font-family: var(--font-mono-supabase);
+    font-size: 13px;
+    color: var(--su-muted-foreground);
+    word-break: break-all;
+  }
+
+  .su-rss-section {
+    margin-top: 56px;
+  }
+
+  .su-rss-help {
+    font-size: 16px;
+    line-height: 1.75;
+    color: var(--su-muted-foreground);
+  }
+
+  .su-rss-help p {
+    margin: 16px 0;
+  }
+
+  .su-rss-help ul {
+    margin: 16px 0;
+    padding-left: 22px;
+    list-style: disc;
+  }
+
+  .su-rss-help li {
+    margin: 6px 0;
+  }
+</style>

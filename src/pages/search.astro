@@ -1,0 +1,48 @@
+---
+import AdvancedSearch from "@components/pages/AdvancedSearch.svelte";
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import SupabaseLayout from "@layouts/SupabaseLayout.astro";
+import { url } from "@/utils/url-utils";
+
+const title = i18n(I18nKey.search);
+const description = "";
+---
+
+<SupabaseLayout title={title} description={description}>
+  <meta slot="head" name="robots" content="noindex, nofollow" />
+  <div class="su-search-page">
+    <AdvancedSearch client:load title={title} description={description} />
+  </div>
+</SupabaseLayout>
+
+{import.meta.env.PROD && (
+  <script is:inline define:vars={{ scriptUrl: url("/pagefind/pagefind.js") }}>
+    if (!window.pagefind) {
+      async function loadPagefind() {
+        const target = scriptUrl.replace(/\/$/, "");
+        try {
+          const response = await fetch(target, { method: "HEAD" });
+          if (response.status !== 200) {
+            return;
+          }
+          const pagefind = await import(scriptUrl);
+          await pagefind.options({ excerptLength: 20 });
+          window.pagefind = pagefind;
+          window.dispatchEvent(new Event("pagefindready"));
+        } catch (error) {
+          console.warn("Pagefind script not found or failed to load.");
+          window.dispatchEvent(new Event("pagefindloaderror"));
+        }
+      }
+      loadPagefind();
+    }
+  </script>
+)}
+
+<style>
+  .su-search-page {
+    max-width: 820px;
+    margin-inline: auto;
+  }
+</style>

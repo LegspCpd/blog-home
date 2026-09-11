@@ -1,0 +1,55 @@
+---
+import ArchivePanel from "@components/controls/ArchivePanel.svelte";
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import SupabaseLayout from "@layouts/SupabaseLayout.astro";
+import { getSortedPostsList } from "@/utils/content-utils";
+
+const sortedPostsList = await getSortedPostsList();
+const totalPosts = sortedPostsList.length;
+const years = new Set(
+	sortedPostsList.map((post) => new Date(post.data.published).getFullYear())
+).size;
+---
+
+<SupabaseLayout
+  title={i18n(I18nKey.archive)}
+  description={`全部文章归档，共 ${totalPosts} 篇`}
+>
+  <header class="su-page-head">
+    <p class="su-kicker">{i18n(I18nKey.archive)}</p>
+    <h1 class="su-title">全部文章</h1>
+    <p class="su-page-desc">
+      <span class="su-num">{totalPosts}</span> 篇文章 ·
+      <span class="su-num">{years}</span> 个年份
+    </p>
+  </header>
+
+  <ArchivePanel sortedPosts={sortedPostsList} client:load />
+</SupabaseLayout>
+
+<style>
+  .su-page-head {
+    margin-bottom: 64px;
+  }
+
+  .su-title {
+    margin: 8px 0 12px;
+  }
+
+  .su-page-desc {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 24px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--su-muted-foreground);
+  }
+
+  .su-page-tabs {
+    display: flex;
+    gap: 8px;
+  }
+</style>

@@ -1,0 +1,65 @@
+---
+/**
+ * SupabaseLayout — Supabase 设计系统的全站默认 Layout
+ *
+ * 结构：复用 Layout.astro（SEO / 主题 / 分析 / 背景等既有能力），
+ *       把内容区换成「可折叠左侧 Sidebar + 右侧主内容区」。
+ *
+ * ⚠️ 刻意不做任何 DOM 搬移：侧栏与主内容区是普通兄弟节点，
+ *    主内容区只用 CSS 让出侧栏宽度（见 supabase-layout.css）。
+ *    早期实现用脚本把 #su-main 搬进 Sidebar 的 Svelte island 内，
+ *    但那个节点会被 hydration 随机回收，导致内容整块消失（约半数刷新）。
+ */
+import AppSidebar from "@components/layout/AppSidebar.astro";
+import { defaultNavItems as navDefaults } from "@/config/sidebarNav";
+import "../styles/supabase-content.css";
+import "./supabase-layout.css";
+import Layout from "./Layout.astro";
+
+interface Props {
+	title?: string;
+	description?: string;
+	lang?: string;
+	/** SEO：文章页标记 og:type=article */
+	setOGTypeArticle?: boolean;
+	/** SEO：文章 slug */
+	postSlug?: string;
+	/** SEO：og:image */
+	ogImage?: string;
+	/** 可选：覆盖侧栏导航项 */
+	navItems?: Array<{ title: string; href: string; icon: string }>;
+}
+
+const {
+	title,
+	description,
+	lang,
+	setOGTypeArticle,
+	postSlug,
+	ogImage,
+	navItems = navDefaults,
+} = Astro.props;
+---
+
+<Layout
+  title={title}
+  description={description}
+  lang={lang}
+  setOGTypeArticle={setOGTypeArticle}
+  postSlug={postSlug}
+  ogImage={ogImage}
+>
+  <!-- 左侧可折叠 Sidebar（桌面 icon 折叠 / 移动端抽屉）
+       刻意放在 #swup-container 之外：
+       1) 路由切换时不被替换 → 折叠状态天然保持，且不会重新 hydration；
+       2) 页面切换只需替换主内容，速度接近瞬时。 -->
+  <AppSidebar items={navItems} />
+
+  <!-- 右侧主内容区：宽度偏移由 supabase-layout.css 控制 -->
+  <main id="su-main" class="su-main">
+    <!-- swup 唯一替换容器，必须是全站每个页面都存在且结构一致 -->
+    <div id="swup-container">
+      <slot />
+    </div>
+  </main>
+</Layout>

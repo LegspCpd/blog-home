@@ -1,0 +1,39 @@
+/* ── REVEAL CLASSES (initial state) ── */
+.ru, .rl, .rr {
+  opacity: 0;
+  transition: opacity .65s ease, transform .65s ease;
+}
+.ru { transform: translateY(28px); }
+.rl { transform: translateX(-32px); }
+.rr { transform: translateX(32px); }
+
+.ru.vis, .rl.vis, .rr.vis {
+  opacity: 1;
+  transform: none;
+}
+
+/* hero items animate after loader */
+.hero-ready .ru[data-d] {
+  animation: fadeUp .7s ease both;
+}
+.hero-ready .ru[data-d="0"]  { animation-delay:   0ms; }
+.hero-ready .ru[data-d="1"]  { animation-delay: 100ms; }
+.hero-ready .ru[data-d="2"]  { animation-delay: 220ms; }
+.hero-ready .ru[data-d="3"]  { animation-delay: 360ms; }
+.hero-ready .ru[data-d="4"]  { animation-delay: 480ms; }
+.hero-ready .ru[data-d="5"]  { animation-delay: 600ms; }
+.hero-ready .ru[data-d="6"]  { animation-delay: 740ms; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* stat number flash */
+@keyframes numFlash {
+  0%,100%{ color: var(--c-amber); }
+  50%    { color: #fff; text-shadow: 0 0 16px var(--c-amber); }
+}
+.flash-num { animation: numFlash .35s ease; }
+
+/* timeline items: no stagger (each triggers individually via IO) */

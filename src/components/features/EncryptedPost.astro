@@ -1,0 +1,284 @@
+---
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import { encryptContent } from "@utils/crypto-utils";
+import { Icon } from "astro-icon/components";
+
+interface Props {
+	password: string;
+	slug: string;
+	hint?: string;
+}
+
+const { password, slug, hint = "" } = Astro.props;
+
+const rawHtml = await Astro.slots.render("default");
+const encryptedData = encryptContent(rawHtml, password, slug);
+
+const labels = {
+	protected: i18n(I18nKey.passwordProtected),
+	desc: i18n(I18nKey.passwordProtectedDesc),
+	hint: i18n(I18nKey.passwordHint),
+	placeholder: i18n(I18nKey.passwordPlaceholder),
+	submit: i18n(I18nKey.passwordSubmit),
+	error: i18n(I18nKey.passwordError),
+};
+---
+
+<div
+  id="encrypted-container"
+  data-encrypted={encryptedData}
+  data-slug={slug}
+>
+  <!-- Lock UI -->
+  <div id="password-ui" class="su-lock">
+    <div class="su-lock-card">
+      <div class="su-lock-icon">
+        <Icon name="material-symbols:lock-outline" width="20" height="20" />
+      </div>
+      <p class="su-lock-title">{labels.protected}</p>
+      <p class="su-lock-desc">{labels.desc}</p>
+      {hint && <p class="su-lock-hint">{labels.hint}: {hint}</p>}
+
+      <form id="password-form" class="su-lock-form">
+        <input
+          id="password-input"
+          name="password"
+          type="password"
+          placeholder={labels.placeholder}
+          autocomplete="off"
+          class="su-lock-input"
+        />
+        <button type="submit" class="su-lock-submit">{labels.submit}</button>
+      </form>
+
+      <p id="password-error" class="su-lock-error hidden">{labels.error}</p>
+    </div>
+  </div>
+
+  <!-- Decrypted content injected here -->
+  <div id="decrypted-content" class="hidden"></div>
+</div>
+
+<style>
+  .su-lock {
+    display: flex;
+    justify-content: center;
+    padding: 32px 0 48px;
+  }
+
+  .su-lock-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 380px;
+    padding: 32px 28px;
+    border: 1px solid var(--su-border);
+    border-radius: 12px;
+    background-color: var(--su-card);
+  }
+
+  .su-lock-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 16px;
+    border: 1px solid var(--su-border);
+    border-radius: 8px;
+    color: var(--su-muted-foreground);
+  }
+
+  .su-lock-title {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--su-foreground);
+  }
+
+  .su-lock-desc {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--su-muted-foreground);
+    text-align: center;
+  }
+
+  .su-lock-hint {
+    margin: 8px 0 0;
+    font-family: var(--font-mono-supabase);
+    font-size: 12px;
+    color: var(--su-ink-faint);
+    text-align: center;
+  }
+
+  .su-lock-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    margin-top: 20px;
+  }
+
+  .su-lock-input {
+    width: 100%;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--su-border);
+    border-radius: 6px;
+    background-color: var(--su-background);
+    color: var(--su-foreground);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .su-lock-input::placeholder {
+    color: var(--su-ink-faint);
+  }
+
+  .su-lock-input:focus {
+    border-color: var(--su-primary);
+  }
+
+  .su-lock-submit {
+    height: 36px;
+    border: 1px solid var(--su-primary);
+    border-radius: 6px;
+    background-color: var(--su-primary);
+    color: var(--su-primary-foreground);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .su-lock-submit:hover {
+    background-color: var(--su-emerald-deep);
+    border-color: var(--su-emerald-deep);
+  }
+
+  .su-lock-error {
+    margin: 12px 0 0;
+    font-size: 12px;
+    color: var(--su-destructive);
+  }
+</style>
+
+<script is:inline>
+(function() {
+  var ITERATIONS = 100000;
+  var SALT_LEN = 16;
+  var IV_LEN = 12;
+  var TAG_LEN = 16;
+
+  var container = document.getElementById('encrypted-container');
+  if (!container) return;
+
+  var encryptedData = container.getAttribute('data-encrypted');
+  var slug = container.getAttribute('data-slug');
+  var cacheKey = 'pw:' + slug;
+
+  var ui = document.getElementById('password-ui');
+  var form = document.getElementById('password-form');
+  var input = document.getElementById('password-input');
+  var errorEl = document.getElementById('password-error');
+  var contentEl = document.getElementById('decrypted-content');
+
+  function showContent(html) {
+    contentEl.innerHTML = html;
+    contentEl.classList.remove('hidden');
+    ui.classList.add('hidden');
+    // Scripts injected via innerHTML are inert — re-create them so they execute
+    // Reset mermaid singleton so its render script re-initializes after decryption
+    if (typeof window.mermaidInitialized !== 'undefined') {
+      window.mermaidInitialized = false;
+    }
+    var scripts = contentEl.querySelectorAll('script');
+    for (var i = 0; i < scripts.length; i++) {
+      var old = scripts[i];
+      var ns = document.createElement('script');
+      for (var j = 0; j < old.attributes.length; j++) {
+        ns.setAttribute(old.attributes[j].name, old.attributes[j].value);
+      }
+      ns.textContent = old.textContent;
+      old.parentNode.replaceChild(ns, old);
+    }
+    // Re-init TOC after content is in DOM
+    setTimeout(function() {
+      document.dispatchEvent(new CustomEvent('password:decrypted'));
+    }, 100);
+  }
+
+  function showError() {
+    errorEl.classList.remove('hidden');
+  }
+
+  function hideError() {
+    errorEl.classList.add('hidden');
+  }
+
+  function base64ToBytes(b64) {
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) {
+      bytes[i] = bin.charCodeAt(i);
+    }
+    return bytes;
+  }
+
+  async function decrypt(pwd) {
+    var raw = base64ToBytes(encryptedData);
+    var salt = raw.slice(0, SALT_LEN);
+    var iv = raw.slice(SALT_LEN, SALT_LEN + IV_LEN);
+    var authTag = raw.slice(SALT_LEN + IV_LEN, SALT_LEN + IV_LEN + TAG_LEN);
+    var ciphertext = raw.slice(SALT_LEN + IV_LEN + TAG_LEN);
+
+    var combined = new Uint8Array(ciphertext.length + TAG_LEN);
+    combined.set(ciphertext);
+    combined.set(authTag, ciphertext.length);
+
+    var enc = new TextEncoder();
+    var keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(pwd), 'PBKDF2', false, ['deriveBits', 'deriveKey']
+    );
+    var key = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: salt, iterations: ITERATIONS, hash: 'SHA-256' },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['decrypt']
+    );
+    var decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, combined);
+    return new TextDecoder().decode(decrypted);
+  }
+
+  // Handle form submit
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var pwd = input.value.trim();
+    if (!pwd) return;
+    hideError();
+    decrypt(pwd).then(function(html) {
+      sessionStorage.setItem(cacheKey, pwd);
+      showContent(html);
+    }).catch(function() {
+      showError();
+    });
+  });
+
+  // Try cached password
+  var cached = sessionStorage.getItem(cacheKey);
+  if (cached) {
+    decrypt(cached).then(function(html) {
+      showContent(html);
+    }).catch(function() {
+      sessionStorage.removeItem(cacheKey);
+    });
+  }
+})();
+</script>

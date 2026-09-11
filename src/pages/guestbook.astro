@@ -1,0 +1,114 @@
+---
+import { getEntry, render } from "astro:content";
+import Comment from "@components/comment/index.astro";
+import Markdown from "@components/common/Markdown.astro";
+import { Icon } from "astro-icon/components";
+import { commentConfig, siteConfig } from "@/config";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import SupabaseLayout from "@layouts/SupabaseLayout.astro";
+
+// 检查页面是否启用
+if (!siteConfig.pages.guestbook) {
+	return Astro.redirect("/404/");
+}
+
+const guestbookPost = await getEntry("spec", "guestbook");
+
+if (!guestbookPost) {
+	throw new Error("guestbook page content not found");
+}
+
+const { Content } = await render(guestbookPost);
+
+// 检查评论系统是否启用
+const isCommentEnabled = commentConfig?.type && commentConfig.type !== "none";
+
+const title = i18n(I18nKey.guestbook);
+const description = i18n(I18nKey.guestbookDescription);
+---
+
+<SupabaseLayout title={title} description={description}>
+  <div class="su-prose-page">
+    <header class="su-page-head">
+      <p class="su-kicker">{i18n(I18nKey.guestbook)}</p>
+      <h1 class="su-title">{title}</h1>
+      {description && <p class="su-page-desc">{description}</p>}
+    </header>
+
+    <div class="su-prose-body">
+      <Markdown class="markdown-content">
+        <Content />
+      </Markdown>
+    </div>
+
+    <section class="su-comment-section">
+      {
+        isCommentEnabled ? (
+          <Comment post={guestbookPost} customPath="/guestbook/" />
+        ) : (
+          <div class="su-empty-state">
+            <Icon
+              name="material-symbols:chat-bubble-outline"
+              width="20"
+              height="20"
+            />
+            <p class="su-empty-title">{i18n(I18nKey.commentNotConfigured)}</p>
+            <p class="su-empty-desc">{i18n(I18nKey.guestbookCommentHint)}</p>
+          </div>
+        )
+      }
+    </section>
+  </div>
+</SupabaseLayout>
+
+<style>
+  .su-prose-page {
+    max-width: 820px;
+    margin-inline: auto;
+  }
+
+  .su-page-head {
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--su-border);
+  }
+
+  .su-title {
+    margin: 8px 0 12px;
+  }
+
+  .su-page-desc {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--su-muted-foreground);
+  }
+
+  .su-comment-section {
+    margin-top: 64px;
+  }
+
+  .su-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 48px 24px;
+    border: 1px solid var(--su-border);
+    border-radius: 12px;
+    color: var(--su-muted-foreground);
+    text-align: center;
+  }
+
+  .su-empty-title {
+    margin: 0;
+    font-size: 14px;
+    color: var(--su-foreground);
+  }
+
+  .su-empty-desc {
+    margin: 0;
+    font-size: 13px;
+  }
+</style>

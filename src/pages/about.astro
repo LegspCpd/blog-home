@@ -1,0 +1,129 @@
+---
+import { getEntry, render } from "astro:content";
+import Markdown from "@components/common/Markdown.astro";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import SupabaseLayout from "@layouts/SupabaseLayout.astro";
+import ContactList from "@components/misc/ContactList.astro";
+import SiteAvatar from "@components/common/SiteAvatar.astro";
+import { profileConfig } from "@/config/profileConfig";
+import { siteConfig } from "@/config/siteConfig";
+
+const aboutPost = await getEntry("spec", "about");
+
+if (!aboutPost) {
+	throw new Error("About page content not found");
+}
+
+const { Content } = await render(aboutPost);
+
+const links = profileConfig.links ?? [];
+---
+
+<SupabaseLayout title={i18n(I18nKey.about)} description={siteConfig.description}>
+  <div class="su-prose-page">
+    <header class="su-page-head">
+      <!-- 站点头像：独占一行，块级布局，不存在基线/居中导致的位移 -->
+      <div class="su-head-avatar">
+        <SiteAvatar size={56} alt={profileConfig.name} />
+      </div>
+      <p class="su-kicker">{profileConfig.name} 的个人介绍</p>
+      <h1 class="su-title">{i18n(I18nKey.about)}</h1>
+      <p class="su-page-desc">{siteConfig.description}</p>
+    </header>
+
+    <div class="su-prose-body">
+      <Markdown class="markdown-content">
+        <Content />
+      </Markdown>
+    </div>
+
+    <!-- 联系方式：纵向列表，加多少条都自然容纳 -->
+    <ContactList links={links} title="联系" />
+
+    <!--
+      服务条款与隐私政策已从「关于我」拆出，单独的页面：/privacy/
+      这里只保留一行入口，和正文左对齐。
+    -->
+    <p class="su-about-legal">
+      本页面仅介绍本人；法律条款另见
+      <a href="/privacy/">服务条款与隐私政策</a>
+    </p>
+  </div>
+</SupabaseLayout>
+
+<style>
+  .su-prose-page {
+    max-width: 820px;
+    margin-inline: auto;
+  }
+
+  .su-page-head {
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--su-border);
+  }
+
+  .su-head-avatar {
+    margin-bottom: 20px;
+  }
+
+  .su-title {
+    margin: 8px 0 12px;
+  }
+
+  .su-page-desc {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--su-muted-foreground);
+  }
+
+  .su-about-links {
+    margin-top: 64px;
+  }
+
+  /* 底部条款入口：单行、与正文同宽同左边界，不做额外位移 */
+  .su-about-legal {
+    margin: 40px 0 0;
+    padding-top: 24px;
+    border-top: 1px solid var(--su-border);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--su-muted-foreground);
+  }
+
+  .su-about-legal a {
+    color: var(--su-foreground);
+    text-decoration: underline;
+    text-decoration-color: var(--su-border);
+    text-underline-offset: 3px;
+    transition:
+      color 0.15s ease,
+      text-decoration-color 0.15s ease;
+  }
+
+  .su-about-legal a:hover {
+    color: var(--su-primary);
+    text-decoration-color: var(--su-primary);
+  }
+
+  .su-about-links .su-row {
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .su-about-links .su-row-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+  }
+
+  .su-row-value {
+    overflow: hidden;
+    max-width: 50%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+</style>

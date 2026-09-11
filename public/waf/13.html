@@ -1,0 +1,28 @@
+<!DOCTYPE html><html><head><meta charset=utf-8><title>403</title><style>
+body{background:#088;margin:0;display:flex;align-items:center;justify-content:center;height:100vh;font:12px Tahoma,sans-serif}
+.w{background:#c0c0c0;width:480px;border:2px solid #000;border-top-color:#fff;border-left-color:#fff;box-shadow:1px 1px #808080 inset;position:absolute}
+.t{background:linear-gradient(90deg,#000080,#0849ca);color:#fff;height:18px;display:flex;justify-content:space-between;align-items:center;padding:2px 4px;cursor:move}
+.b{display:flex;gap:2px}.s{width:16px;height:14px;background:#c0c0c0;border:1px solid #000;border-top-color:#fff;border-left-color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.c{display:flex;padding:15px}
+.m{font-size:12px}
+.tr{background:#fff;border:2px solid #808080;border-right-color:#fff;border-bottom-color:#fff;padding:5px;font:11px monospace;height:100px;overflow:auto;margin-top:8px;white-space:pre-wrap}
+.f{display:flex;justify-content:flex-end;padding:0 10px 10px}
+.btn{min-width:70px;height:22px;background:#c0c0c0;border:1px solid #000;border-top-color:#fff;border-left-color:#fff;margin-left:6px;cursor:pointer}
+</style></head><body>
+<div class=w id=w>
+<div class=t id=h><span>HTTP 403</span><div class=b><div class=s>_</div><div class=s>?</div><div class=s onclick=location.reload()>×</div></div></div>
+<div class=c>
+<svg width=28 height=28><circle cx=14 cy=14 r=12 fill=red stroke=#000/><path d="M8 8L20 20M20 8L8 20" stroke=#fff stroke-width=3/></svg>
+<div class=m><b>Access Denied</b><br>WAF BLOCK (CN ONLY)
+<div class=tr id=o>Loading...</div></div></div>
+<div class=f><button class=btn onclick=location.reload()>Retry</button><button class=btn onclick=alert(1)>Info</button></div>
+</div>
+<script>
+fetch('/cdn-cgi/trace').then(r=>r.text()).then(t=>{
+let ip='',loc='';t.split('\n').map(l=>{let[k,v]=l.split('=');if(k=='ip')ip=v;if(k=='loc')loc=v});
+o.textContent=`IP:${ip}\nLOC:${loc}\nTIME:${new Date().toISOString()}`
+}).catch(()=>o.textContent='ERR '+new Date().toISOString());
+let d=0,x,y;h.onmousedown=e=>{d=1;x=e.clientX-w.offsetLeft;y=e.clientY-w.offsetTop};
+onmousemove=e=>d&&(w.style.left=e.clientX-x+'px',w.style.top=e.clientY-y+'px');
+onmouseup=_=>d=0;
+</script></body></html>

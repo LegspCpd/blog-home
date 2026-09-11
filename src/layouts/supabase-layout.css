@@ -1,0 +1,173 @@
+/* ==========================================================================
+   Supabase Layout（全站默认布局）作用域样式
+   - 侧栏与主内容区是普通兄弟节点，不做任何 DOM 搬移
+   - 颜色/圆角/字体全部来自 DESIGN-supabase.md 的 --su-* 令牌
+   ========================================================================== */
+
+/* ---------- 侧栏作用域 ---------- */
+.su-scope {
+	min-height: 100vh;
+	background-color: var(--su-background);
+	color: var(--su-foreground);
+	font-family: var(--font-supabase);
+	/* shadcn-svelte Sidebar 尺寸契约：展开 240px / 折叠 64px */
+	--sidebar-width: 240px;
+	--sidebar-width-icon: 64px;
+	--sidebar-width-mobile: 272px;
+}
+
+/* 图标在作用域内跟随文字颜色 */
+.su-scope,
+.su-main {
+	--lucide-color: currentColor;
+}
+
+/* 折叠/展开动画平滑；尊重「减少动效」偏好 */
+.su-scope [data-slot="sidebar-container"],
+.su-scope [data-slot="sidebar-gap"],
+.su-scope [data-slot="sidebar-inset"] {
+	transition: width 0.2s ease-in-out, left 0.2s ease-in-out, right 0.2s ease-in-out;
+}
+
+/* 折叠时禁止任何文字溢出，只保留图标 */
+.su-scope [data-state="collapsed"] [data-sidebar="menu-button"] > span:last-child {
+	display: none;
+}
+
+/* Sidebar 容器边框：设计稿 hairline 只有 1px，避免双线 */
+.su-scope [data-slot="sidebar-container"] {
+	border-width: 0 1px 0 0;
+	border-style: solid;
+	border-color: var(--su-sidebar-border);
+}
+
+/* 侧栏滚动条：细、透明轨道，保持克制 */
+.su-scope [data-slot="sidebar-content"] {
+	scrollbar-width: thin;
+	scrollbar-color: var(--su-border) transparent;
+}
+
+/* ==========================================================================
+   Sidebar 的 astro-island 容器
+   它内部是「固定定位的侧栏」，但作为文档流兄弟节点时会占满一屏高度，
+   且 .su-scope 的背景会盖住主内容。这里收敛为不占位、不绘制、不拦截交互，
+   仅让侧栏本体与移动端触发按钮可点击。
+   ========================================================================== */
+body > astro-island:has([data-slot="sidebar-wrapper"]) {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 0;
+	z-index: 40;
+}
+
+body > astro-island:has([data-slot="sidebar-wrapper"]) [data-slot="sidebar-wrapper"] {
+	height: 0;
+	min-height: 0;
+	background: transparent;
+	pointer-events: none;
+}
+
+body > astro-island:has([data-slot="sidebar-wrapper"]) [data-slot="sidebar"],
+body > astro-island:has([data-slot="sidebar-wrapper"]) [data-slot="sidebar-container"],
+body > astro-island:has([data-slot="sidebar-wrapper"]) .su-mobile-trigger {
+	pointer-events: auto;
+}
+
+/* ==========================================================================
+   主内容区
+   展开 240px / 折叠 64px —— 与 AppSidebar 的 --sidebar-width* 保持一致。
+   上下留白按设计稿的 section padding（64–96px）给足。
+   ========================================================================== */
+.su-main {
+	min-height: 100vh;
+	padding: 64px 40px 96px calc(240px + 40px);
+	background-color: var(--su-background);
+	color: var(--su-foreground);
+	font-family: var(--font-supabase);
+	transition: padding-inline-start 0.2s ease-in-out;
+}
+
+/* 桌面端折叠后：只让出 64px 图标栏宽度 */
+body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
+	padding-inline-start: calc(64px + 40px);
+}
+
+/* 移动端为抽屉式侧栏，不占据横向空间 */
+@media (max-width: 767px) {
+	.su-main,
+	body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
+		padding: 72px 16px 40px;
+	}
+}
+
+/* ==========================================================================
+   侧栏折叠：首屏同步（无闪烁）
+   Layout.astro 的 head 内联脚本会在首次绘制前读取 sidebar_state cookie，
+   并给 <html> 加上 .su-sidebar-collapsed。这里给出对应的即时几何与文字隐藏，
+   随后由 SidebarStateSync 把 Svelte 状态对齐到 cookie 并移除该标记类。
+   仅在桌面端生效（移动端是抽屉，不折叠）。
+   ========================================================================== */
+@media (min-width: 768px) {
+	html.su-sidebar-collapsed .su-scope [data-slot="sidebar-gap"],
+	html.su-sidebar-collapsed .su-scope [data-slot="sidebar-container"] {
+		width: 64px !important;
+	}
+
+	/* 文字全隐藏：导航项 / 分组标题 / 自定义标签（主题切换、品牌文字） */
+	html.su-sidebar-collapsed .su-scope [data-sidebar="menu-button"] > span:last-child,
+	html.su-sidebar-collapsed .su-scope [data-sidebar="group-label"],
+	html.su-sidebar-collapsed .su-scope .su-label {
+		display: none !important;
+	}
+
+	html.su-sidebar-collapsed .su-main {
+		padding-inline-start: calc(64px + 40px);
+	}
+}
+
+/* 内容宽度上限：与设计稿 ~1280px 容器一致
+   #swup-container 是 swup 唯一替换的容器，侧栏在其之外所以跨页持久。 */
+.su-main > * {
+	width: 100%;
+	max-width: 1280px;
+	margin-inline: auto;
+}
+
+/* swup 容器自身不额外产生布局影响，只做宽度收敛 */
+.su-main > #swup-container {
+	display: block;
+	width: 100%;
+	max-width: 1280px;
+	margin-inline: auto;
+}
+
+/* 尊重用户的减少动效偏好（设计稿要求克制） */
+@media (prefers-reduced-motion: reduce) {
+	.su-main {
+		transition: none;
+	}
+}
+
+/* 正文容器交给页面自己控制宽度 */
+.su-main #content-wrapper {
+	max-width: none;
+}
+
+/* ==========================================================================
+   移动端抽屉触发按钮
+   ========================================================================== */
+.su-mobile-trigger {
+	position: fixed;
+	top: 12px;
+	inset-inline-start: 12px;
+	z-index: 40;
+	display: block;
+}
+
+@media (min-width: 768px) {
+	.su-mobile-trigger {
+		display: none;
+	}
+}

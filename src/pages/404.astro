@@ -1,0 +1,59 @@
+---
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import SupabaseLayout from "@layouts/SupabaseLayout.astro";
+import { Icon } from "astro-icon/components";
+import { defaultNavItems } from "@/config/sidebarNav";
+---
+
+<SupabaseLayout
+  title={i18n(I18nKey.notFoundTitle)}
+  description={i18n(I18nKey.notFoundDescription)}
+>
+  <div class="su-404">
+    <p class="su-404-code">404</p>
+    <h1 class="su-title">{i18n(I18nKey.notFoundTitle)}</h1>
+    <p class="su-404-desc">{i18n(I18nKey.notFoundDescription)}</p>
+
+    <nav class="su-404-links">
+      {
+        defaultNavItems.slice(0, 5).map((item) => (
+          <a class="su-btn" href={item.href}>
+            <Icon name="material-symbols:arrow-outward" width="14" height="14" />
+            {item.title}
+          </a>
+        ))
+      }
+    </nav>
+  </div>
+</SupabaseLayout>
+
+<style>
+  .su-404 {
+    max-width: 560px;
+    padding: 40px 0 80px;
+  }
+
+  .su-404-code {
+    margin: 0 0 16px;
+    font-family: var(--font-mono-supabase);
+    font-size: 64px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -1.92px;
+    color: var(--su-border);
+  }
+
+  .su-404-desc {
+    margin: 12px 0 32px;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--su-muted-foreground);
+  }
+
+  .su-404-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+</style>

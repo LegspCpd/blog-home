@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>403 Forbidden</title>
+<style>
+body{
+    margin:0;
+    background:#2b2b2b;
+    color:#e6e6e6;
+    font-family:MS PGothic,monospace;
+    overflow-x:hidden;
+}
+.wrap{
+    max-width:760px;
+    margin:40px auto;
+    padding:0 12px;
+    position:relative;
+    z-index:1;
+}
+.box{
+    border:2px solid #555;
+    padding:12px;
+    margin-bottom:12px;
+    background:#3a3a3a;
+    box-shadow:0 0 8px rgba(0,0,0,0.4);
+}
+h1{
+    font-size:22px;
+    margin:0 0 8px;
+    color:#ffffff;
+}
+small{
+    color:#b0b0b0;
+}
+pre{
+    white-space:pre-wrap;
+    font-size:13px;
+    line-height:1.5;
+    color:#dddddd;
+}
+.tag{
+    display:inline-block;
+    border:1px solid #777;
+    padding:2px 6px;
+    margin-right:6px;
+    background:#4a4a4a;
+}
+.warn{
+    color:#ff6b6b;
+    font-weight:bold;
+}
+
+/* 漂浮图片 */
+.side-img{
+    position:fixed;
+    top:0;
+    width:120px;
+    opacity:1;
+    pointer-events:none;
+    z-index:0;
+    animation:floatY 8s ease-in-out infinite;
+}
+
+.left-img{ left:10px; }
+.right-img{ right:10px; animation-delay:4s; }
+
+@keyframes floatY{
+    0%   { transform:translate(0,0); }
+    50%  { transform:translate(10px,40px); }
+    100% { transform:translate(0,0); }
+}
+</style>
+</head>
+<body>
+
+<!-- 左右装饰图 -->
+<img src="https://2x.nz/files/img/l_hyw.webp" class="side-img left-img">
+<img src="https://2x.nz/files/img/l_hyw.webp" class="side-img right-img">
+
+<div class="wrap">
+
+<div class="box">
+<h1>403 Forbidden</h1>
+<div><span class="tag">ERROR</span><span class="warn">アクセス拒否</span></div>
+<p>このサイトは中国本土IPのみ許可されています。</p>
+<small>※ プロキシ / VPN 使用時はブロックされる場合があります</small>
+</div>
+
+<div class="box">
+<b>[Cloudflare Trace]</b>
+<pre id="trace">loading...</pre>
+</div>
+
+<div class="box">
+<b>[Hint]</b>
+<pre>
+・海外IPは拒否されます
+・VPN/Proxyを無効化してください
+・しばらく待って再試行してください
+</pre>
+</div>
+
+<div class="box">
+<b>[Credits]</b>
+<pre>
+このHTMLページは RATING3PRO によって提供されました。
+ご協力に感謝いたします。
+</pre>
+</div>
+
+</div>
+
+<script>
+fetch("/cdn-cgi/trace").then(r=>r.text()).then(t=>{
+document.getElementById("trace").textContent=t;
+}).catch(()=>{
+document.getElementById("trace").textContent="trace取得失敗";
+});
+</script>
+
+</body>
+</html>

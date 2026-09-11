@@ -1,0 +1,115 @@
+---
+import { licenseConfig } from "@/config/licenseConfig";
+import { profileConfig } from "@/config/profileConfig";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+import { formatDateToYYYYMMDD } from "@/utils/date-utils";
+
+interface Props {
+	title: string;
+	id: string;
+	pubDate: Date;
+	class?: string;
+	author?: string;
+	sourceLink?: string;
+	licenseName?: string;
+	licenseUrl?: string;
+}
+
+const { title, pubDate, author, sourceLink, licenseName, licenseUrl } = Astro.props;
+const className = Astro.props.class ?? "";
+const profileConf = profileConfig;
+const licenseConf = licenseConfig;
+const postUrl = sourceLink || decodeURIComponent(Astro.url.toString());
+
+const licenseHref = licenseName ? licenseUrl || undefined : licenseConf.url;
+const licenseLabel = licenseName || licenseConf.name;
+---
+
+<div class:list={["su-license", className]} data-pagefind-ignore>
+  <p class="su-license-title">{title}</p>
+  <a class="su-license-url" href={postUrl}>{postUrl}</a>
+
+  <dl class="su-license-meta">
+    <div class="su-license-cell">
+      <dt>{i18n(I18nKey.author)}</dt>
+      <dd>{author || profileConf.name}</dd>
+    </div>
+    <div class="su-license-cell">
+      <dt>{i18n(I18nKey.publishedAt)}</dt>
+      <dd>{formatDateToYYYYMMDD(pubDate)}</dd>
+    </div>
+    <div class="su-license-cell">
+      <dt>{i18n(I18nKey.license)}</dt>
+      <dd>
+        <a href={licenseHref} target="_blank" rel="noopener noreferrer">{licenseLabel}</a>
+      </dd>
+    </div>
+  </dl>
+</div>
+
+<style>
+  .su-license {
+    margin-top: 32px;
+    padding: 20px;
+    border: 1px solid var(--su-border);
+    border-radius: 12px;
+    background-color: var(--su-card);
+  }
+
+  .su-license-title {
+    margin: 0 0 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--su-foreground);
+  }
+
+  .su-license-url {
+    display: block;
+    overflow: hidden;
+    font-family: var(--font-mono-supabase);
+    font-size: 12px;
+    color: var(--su-muted-foreground);
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .su-license-url:hover {
+    color: var(--su-primary);
+  }
+
+  .su-license-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    margin: 16px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--su-border);
+  }
+
+  .su-license-cell {
+    min-width: 0;
+  }
+
+  .su-license-cell dt {
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: var(--su-muted-foreground);
+  }
+
+  .su-license-cell dd {
+    margin: 0;
+    font-size: 14px;
+    color: var(--su-foreground);
+  }
+
+  .su-license-cell dd a {
+    color: var(--su-foreground);
+    text-decoration: none;
+  }
+
+  .su-license-cell dd a:hover {
+    color: var(--su-primary);
+  }
+</style>

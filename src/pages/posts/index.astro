@@ -1,0 +1,136 @@
+---
+import SupabaseLayout from "@layouts/SupabaseLayout.astro";
+import { getSortedPosts } from "@/utils/content-utils";
+import { formatDateToYYYYMMDD } from "@/utils/date-utils";
+import { getPostUrlBySlug } from "@/utils/url-utils";
+
+const posts = await getSortedPosts();
+
+const years = new Map<number, typeof posts>();
+for (const post of posts) {
+	const year = new Date(post.data.published).getFullYear();
+	const bucket = years.get(year);
+	if (bucket) bucket.push(post);
+	else years.set(year, [post]);
+}
+const yearGroups = [...years.entries()].sort((a, b) => b[0] - a[0]);
+---
+
+<SupabaseLayout title="文章" description={`共 ${posts.length} 篇文章`}>
+  <div class="su-list-page">
+    <header class="su-page-head">
+      <p class="su-kicker">文章</p>
+      <h1 class="su-title">全部文章</h1>
+      <p class="su-page-desc">
+        共 <span class="su-num">{posts.length}</span> 篇文章
+      </p>
+      <div class="su-page-tabs">
+        <a class="su-pill" href="/archive/">按年份归档</a>
+        <a class="su-pill" href="/rss/">RSS 订阅</a>
+      </div>
+    </header>
+
+    {
+      yearGroups.map(([year, entries]) => (
+        <section class="su-year">
+          <h2 class="su-year-head">
+            <span class="su-year-num">{year}</span>
+            <span class="su-num">{entries.length} 篇</span>
+          </h2>
+          <ul class="su-list">
+            {entries.map((post) => (
+              <li>
+                <a class="su-row" href={getPostUrlBySlug(post.id)}>
+                  <span class="su-row-date">
+                    {formatDateToYYYYMMDD(post.data.published)}
+                  </span>
+                  <span class="su-row-title">{post.data.title}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+</SupabaseLayout>
+
+<style>
+  .su-list-page {
+    max-width: 860px;
+    margin-inline: auto;
+  }
+
+  .su-page-head {
+    margin-bottom: 48px;
+  }
+
+  .su-title {
+    margin: 8px 0 12px;
+  }
+
+  .su-page-desc {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 20px;
+    font-size: 14px;
+    color: var(--su-muted-foreground);
+  }
+
+  .su-page-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .su-year + .su-year {
+    margin-top: 56px;
+  }
+
+  .su-year-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0 0 4px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--su-border);
+  }
+
+  .su-year-num {
+    font-family: var(--font-mono-supabase);
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.2px;
+    color: var(--su-foreground);
+  }
+
+  .su-year .su-list > li:first-child {
+    border-top: 0;
+  }
+
+  .su-row-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .su-row-tag {
+    font-family: var(--font-mono-supabase);
+    font-size: 11px;
+    color: var(--su-ink-faint);
+    text-decoration: none;
+  }
+
+  .su-row-tag:hover {
+    color: var(--su-primary);
+  }
+
+  @media (max-width: 640px) {
+    .su-row-tags {
+      margin-left: 0;
+    }
+  }
+</style>

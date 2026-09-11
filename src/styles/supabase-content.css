@@ -1,0 +1,687 @@
+/* ==========================================================================
+   Supabase 设计系统 —— 内容与基础组件层
+   被 SupabaseLayout 引入（全站生效），替代旧的 markdown.css / expressive-code.css。
+   规则全部使用 DESIGN-supabase.md 的 --su-* 令牌，不依赖任何旧变量。
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. 基础排版原语
+   -------------------------------------------------------------------------- */
+
+/* 主标题（页面级 H1）：display-lg 36px / 500 / 1.15 / -0.72px */
+.su-title {
+	margin: 0;
+	font-size: 36px;
+	line-height: 1.15;
+	font-weight: 500;
+	letter-spacing: -0.72px;
+	color: var(--su-foreground);
+}
+
+/* 分区标题：heading-lg 22px / 500 / 1.2 */
+.su-section-title {
+	margin: 0;
+	font-size: 22px;
+	line-height: 1.2;
+	font-weight: 500;
+	letter-spacing: 0;
+	color: var(--su-foreground);
+}
+
+/* 小标签（kicker）：13px 等宽、灰、可带绿色圆点 */
+.su-kicker {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-family: var(--font-mono-supabase);
+	font-size: 13px;
+	line-height: 1.4;
+	color: var(--su-muted-foreground);
+}
+
+.su-kicker::before {
+	content: "";
+	width: 6px;
+	height: 6px;
+	border-radius: 9999px;
+	background-color: var(--su-primary);
+}
+
+.su-kicker.is-plain::before {
+	display: none;
+}
+
+/* 元信息行：13px 灰字，用 · 分隔 */
+.su-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--su-muted-foreground);
+}
+
+.su-meta .su-dot {
+	color: var(--su-border);
+}
+
+/* 等宽数值（日期、字数、统计） */
+.su-num {
+	font-family: var(--font-mono-supabase);
+	font-variant-numeric: tabular-nums;
+	font-size: 13px;
+	color: var(--su-muted-foreground);
+}
+
+/* 细分隔线 */
+.su-hairline {
+	width: 100%;
+	height: 1px;
+	background-color: var(--su-border);
+	border: 0;
+}
+
+/* --------------------------------------------------------------------------
+   2. 卡片（12px 圆角 / 1px 细边框 / 无阴影）
+   -------------------------------------------------------------------------- */
+.su-card {
+	background-color: var(--su-card);
+	border: 1px solid var(--su-border);
+	border-radius: 12px;
+}
+
+/* --------------------------------------------------------------------------
+   3. 标签胶囊 pill-tag：rounded.full + 柔和底色，不用边框
+   -------------------------------------------------------------------------- */
+.su-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 10px;
+	border: 0;
+	border-radius: 9999px;
+	background-color: var(--su-muted);
+	font-family: var(--font-mono-supabase);
+	font-size: 12px;
+	line-height: 1.45;
+	color: var(--su-muted-foreground);
+	text-decoration: none;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease;
+}
+
+.su-pill:hover {
+	background-color: var(--su-accent);
+	color: var(--su-foreground);
+}
+
+/* 激活态用品牌绿（pill-tag-green），全站唯一的高饱和色块 */
+.su-pill.is-active {
+	background-color: var(--su-primary);
+	color: var(--su-primary-foreground);
+}
+
+.su-pill.is-active:hover {
+	background-color: var(--su-emerald-deep);
+	color: var(--su-primary-foreground);
+}
+
+/* --------------------------------------------------------------------------
+   4. 按钮（固定 6px 圆角）
+   -------------------------------------------------------------------------- */
+.su-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 36px;
+	padding: 8px 16px;
+	border: 1px solid var(--su-border);
+	border-radius: 6px;
+	background-color: transparent;
+	color: var(--su-foreground);
+	font-family: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 1;
+	text-decoration: none;
+	cursor: pointer;
+	transition:
+		background-color 0.15s ease,
+		border-color 0.15s ease;
+}
+
+.su-btn:hover {
+	background-color: var(--su-accent);
+	border-color: var(--su-muted-foreground);
+}
+
+.su-btn.is-primary {
+	background-color: var(--su-primary);
+	border-color: var(--su-primary);
+	color: var(--su-primary-foreground);
+}
+
+.su-btn.is-primary:hover {
+	background-color: var(--su-emerald-deep);
+	border-color: var(--su-emerald-deep);
+}
+
+.su-btn[aria-disabled="true"],
+.su-btn:disabled {
+	opacity: 0.4;
+	pointer-events: none;
+}
+
+/* 文字箭头链接 */
+.su-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--su-foreground);
+	text-decoration: none;
+	transition: color 0.15s ease;
+}
+
+.su-link:hover {
+	color: var(--su-primary);
+}
+
+/* --------------------------------------------------------------------------
+   5. 列表行（最新文章 / 归档 / 相关文章 / 搜索结果）
+   -------------------------------------------------------------------------- */
+.su-list {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.su-list > li + li {
+	border-top: 1px solid var(--su-border);
+}
+
+.su-row {
+	display: flex;
+	align-items: baseline;
+	gap: 16px;
+	padding: 12px 0;
+	text-decoration: none;
+	color: var(--su-foreground);
+	transition: color 0.15s ease;
+}
+
+.su-row:hover {
+	color: var(--su-primary);
+}
+
+.su-row .su-row-title {
+	font-size: 16px;
+	line-height: 1.5;
+}
+
+.su-row .su-row-date {
+	flex: none;
+	width: 92px;
+	font-family: var(--font-mono-supabase);
+	font-variant-numeric: tabular-nums;
+	font-size: 13px;
+	color: var(--su-muted-foreground);
+}
+
+@media (max-width: 640px) {
+	.su-row {
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.su-row .su-row-date {
+		width: auto;
+	}
+}
+
+/* --------------------------------------------------------------------------
+   6. 文章正文（.custom-md 由 Markdown.astro 输出）
+   -------------------------------------------------------------------------- */
+.su-main .custom-md {
+	font-size: 16px;
+	line-height: 1.7;
+	color: var(--su-foreground);
+}
+
+.su-main .custom-md > *:first-child {
+	margin-top: 0;
+}
+
+/*
+	. not-prose 是 MDX 里的「退出正文排版」开关（如 friends.mdx 的卡片）。
+	所有正文规则都带 `:not(.not-prose *)`，否则标题/段落的大外边距会渗进去
+	把 flex 行撑高，导致行内的头像被迫垂直居中而看起来「下坠」。
+	该条件在 .not-prose 之外永远为真 → 对文章正文零影响。
+*/
+.su-main .custom-md p:not(.not-prose *) {
+	margin: 16px 0;
+	font-size: 16px;
+	line-height: 1.7;
+	color: var(--su-foreground);
+}
+
+.su-main .custom-md :is(h1, h2, h3, h4, h5, h6):not(.not-prose *) {
+	position: relative;
+	color: var(--su-foreground);
+	font-weight: 500;
+	scroll-margin-top: 96px;
+}
+
+.su-main .custom-md h1:not(.not-prose *) {
+	margin: 48px 0 16px;
+	font-size: 36px;
+	line-height: 1.15;
+	letter-spacing: -0.72px;
+}
+
+.su-main .custom-md h2:not(.not-prose *) {
+	margin: 48px 0 16px;
+	font-size: 28px;
+	line-height: 1.2;
+	letter-spacing: -0.42px;
+}
+
+.su-main .custom-md h3:not(.not-prose *) {
+	margin: 32px 0 12px;
+	font-size: 22px;
+	line-height: 1.2;
+}
+
+.su-main .custom-md h4:not(.not-prose *) {
+	margin: 32px 0 8px;
+	font-size: 18px;
+	line-height: 1.4;
+}
+
+.su-main .custom-md :is(h5, h6):not(.not-prose *) {
+	margin: 24px 0 8px;
+	font-size: 16px;
+	line-height: 1.5;
+	color: var(--su-muted-foreground);
+}
+
+.su-main .custom-md strong:not(.not-prose *) {
+	font-weight: 500;
+	color: var(--su-foreground);
+}
+
+.su-main .custom-md em:not(.not-prose *) {
+	font-style: italic;
+}
+
+/* 正文链接：默认取前景色 + 细下划线，hover 才点出绿色（克制使用强调色） */
+.su-main .custom-md a:not(.no-styling):not(.not-prose *) {
+	color: var(--su-foreground);
+	text-decoration: underline;
+	text-decoration-color: var(--su-border);
+	text-decoration-thickness: 1px;
+	text-underline-offset: 3px;
+	background: none;
+	transition:
+		color 0.15s ease,
+		text-decoration-color 0.15s ease;
+}
+
+.su-main .custom-md a:not(.no-styling):hover,
+.su-main .custom-md a:not(.no-styling):active {
+	color: var(--su-primary);
+	text-decoration-color: var(--su-primary);
+	background: none;
+}
+
+/* 标题锚点 */
+.su-main .custom-md :is(h1, h2, h3, h4, h5, h6) .anchor {
+	margin-left: 8px;
+	opacity: 0;
+	text-decoration: none;
+	color: var(--su-muted-foreground);
+	transition: opacity 0.15s ease;
+}
+
+.su-main .custom-md :is(h1, h2, h3, h4, h5, h6):hover .anchor {
+	opacity: 1;
+}
+
+/* 行内代码 */
+.su-main .custom-md :not(pre) > code:not(.not-prose *) {
+	padding: 2px 6px;
+	border: 1px solid var(--su-border);
+	border-radius: 4px;
+	background-color: var(--su-muted);
+	color: var(--su-foreground);
+	font-family: var(--font-mono-supabase);
+	font-size: 14px;
+}
+
+.su-main .custom-md :not(pre) > code:not(.not-prose *)::before,
+.su-main .custom-md :not(pre) > code:not(.not-prose *)::after {
+	content: none;
+}
+
+/* 引用块：左侧 2px 细线，不倾斜 */
+.su-main .custom-md blockquote:not(.not-prose *) {
+	position: relative;
+	margin: 24px 0;
+	padding: 0 0 0 16px;
+	border: 0;
+	border-left: 2px solid var(--su-border);
+	background: none;
+	color: var(--su-muted-foreground);
+	font-style: normal;
+	font-weight: inherit;
+	quotes: none;
+}
+
+.su-main .custom-md blockquote::before {
+	content: none;
+}
+
+.su-main .custom-md blockquote > p:not(.not-prose *) {
+	margin: 8px 0;
+	color: inherit;
+}
+
+.su-main .custom-md blockquote p::before,
+.su-main .custom-md blockquote p::after {
+	content: none;
+}
+
+/* 列表 */
+.su-main .custom-md :is(ul, ol):not(.not-prose *) {
+	margin: 16px 0;
+	padding-left: 24px;
+}
+
+.su-main .custom-md ul:not(.not-prose *) {
+	list-style: disc;
+}
+
+.su-main .custom-md ol:not(.not-prose *) {
+	list-style: decimal;
+}
+
+.su-main .custom-md li:not(.not-prose *) {
+	margin: 8px 0;
+	font-size: 16px;
+	line-height: 1.7;
+}
+
+.su-main .custom-md li:not(.not-prose *)::marker {
+	color: var(--su-muted-foreground);
+}
+
+/* 嵌套列表收紧间距 */
+.su-main .custom-md li > :is(ul, ol):not(.not-prose *) {
+	margin: 8px 0;
+}
+
+/* 图片 */
+.su-main .custom-md img:not(.not-prose *) {
+	margin: 24px auto;
+	border: 1px solid var(--su-border);
+	border-radius: 12px;
+}
+
+.su-main .custom-md figure:not(.not-prose *) {
+	margin: 24px 0;
+}
+
+.su-main .custom-md figcaption:not(.not-prose *) {
+	margin-top: 8px;
+	font-size: 13px;
+	line-height: 1.45;
+	color: var(--su-muted-foreground);
+	text-align: center;
+}
+
+.su-main .custom-md .image-grid img:not(.not-prose *) {
+	border-radius: 12px;
+}
+
+/* 表格：hairline 网格，表头浅底 */
+.su-main .custom-md table:not(.not-prose *) {
+	width: 100%;
+	margin: 24px 0;
+	border: 1px solid var(--su-border);
+	border-radius: 8px;
+	border-collapse: separate;
+	border-spacing: 0;
+	overflow: hidden;
+	font-size: 14px;
+}
+
+.su-main .custom-md thead:not(.not-prose *) {
+	background-color: var(--su-muted);
+}
+
+.su-main .custom-md th:not(.not-prose *) {
+	padding: 10px 14px;
+	border-bottom: 1px solid var(--su-border);
+	color: var(--su-foreground);
+	font-weight: 500;
+	text-align: left;
+}
+
+.su-main .custom-md td:not(.not-prose *) {
+	padding: 10px 14px;
+	border-bottom: 1px solid var(--su-border);
+	color: var(--su-foreground);
+	text-align: left;
+}
+
+.su-main .custom-md tbody tr:last-child td:not(.not-prose *) {
+	border-bottom: 0;
+}
+
+.su-main .custom-md th:not(:last-child):not(.not-prose *),
+.su-main .custom-md td:not(:last-child):not(.not-prose *) {
+	border-right: 1px solid var(--su-border);
+}
+
+.su-main .custom-md .horizontal-scroll-container:not(.not-prose *) {
+	margin: 24px 0;
+	border-radius: 8px;
+}
+
+.su-main .custom-md .horizontal-scroll-container > table:not(.not-prose *) {
+	margin: 0;
+}
+
+/* 分隔线 */
+.su-main .custom-md hr:not(.not-prose *) {
+	margin: 48px 0;
+	height: 1px;
+	border: 0;
+	background-color: var(--su-border);
+}
+
+/* 折叠块 / details */
+.su-main .custom-md details:not(.not-prose *) {
+	margin: 24px 0;
+	padding: 16px;
+	border: 1px solid var(--su-border);
+	border-radius: 8px;
+	background-color: var(--su-card);
+}
+
+.su-main .custom-md summary:not(.not-prose *) {
+	cursor: pointer;
+	color: var(--su-foreground);
+	font-weight: 500;
+}
+
+/* KaTeX / Mermaid 容器可横向滚动 */
+.su-main .custom-md .katex-display-container,
+.su-main .custom-md .horizontal-scroll-container {
+	max-width: 100%;
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+}
+
+/* --------------------------------------------------------------------------
+   7. Expressive Code 代码块：code-block = rounded.sm 6px + 16px 内边距，无边框
+   -------------------------------------------------------------------------- */
+.su-main .expressive-code {
+	margin: 24px 0;
+}
+
+.su-main .expressive-code .frame {
+	border: 0;
+	border-radius: 6px;
+	box-shadow: none;
+	overflow: hidden;
+}
+
+.su-main .expressive-code .frame.is-terminal,
+.su-main .expressive-code .frame.has-title {
+	border-radius: 6px;
+}
+
+.su-main .expressive-code .frame pre {
+	border: 0;
+	border-radius: 0;
+	padding: 16px;
+}
+
+.su-main .expressive-code .title,
+.su-main .expressive-code code,
+.su-main .expressive-code pre {
+	font-family: var(--font-mono-supabase);
+}
+
+.su-main .expressive-code .title {
+	font-size: 13px;
+}
+
+/* 语言角标：改为低调的灰底 */
+.su-main .expressive-code [data-language]::before {
+	color: var(--su-muted-foreground) !important;
+	background: var(--su-muted) !important;
+	border: 1px solid var(--su-border);
+	border-radius: 4px !important;
+}
+
+/* 折叠按钮 */
+.su-main .expressive-code .ec-collapse__toggle {
+	color: var(--su-foreground) !important;
+	background-color: var(--su-card) !important;
+	border-color: var(--su-border) !important;
+	border-radius: 6px !important;
+	opacity: 1 !important;
+}
+
+.su-main .expressive-code .ec-collapse__toggle:hover {
+	background-color: var(--su-accent) !important;
+}
+
+/* 复制按钮 */
+.su-main .expressive-code .copy button {
+	border-radius: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   8. 旧业务组件的「新皮肤」
+   这些组件（封面、分页、评论、加密提示、许可协议等）保留业务逻辑，
+   仅在此处统一替换视觉，保证全站观感一致。
+   -------------------------------------------------------------------------- */
+
+/* 旧变量映射：让残留的旧组件拿到新设计令牌 */
+.su-main {
+	--card-bg: var(--su-card);
+	--card-bg-transparent: var(--su-card);
+	--card-bg-transparent90: var(--su-card);
+	--line-divider: var(--su-border);
+	--line-color: var(--su-border);
+	--radius-large: 12px;
+	--radius-medium: 8px;
+	--radius-small: 6px;
+	--btn-content: var(--su-foreground);
+	--btn-regular-bg: var(--su-muted);
+	--btn-regular-bg-hover: var(--su-accent);
+	--btn-regular-bg-active: var(--su-accent);
+	--btn-plain-bg-hover: var(--su-accent);
+	--btn-plain-bg-active: var(--su-accent);
+	--btn-card-bg-hover: var(--su-accent);
+	--inline-code-bg: var(--su-muted);
+	--inline-code-color: var(--su-foreground);
+	--link-underline: var(--su-border);
+	--link-hover: var(--su-primary);
+}
+
+/* 卡片 */
+.su-main .card-base,
+.su-main .card-base-transparent {
+	background-color: var(--su-card);
+	border: 1px solid var(--su-border);
+	border-radius: 12px;
+	box-shadow: none;
+}
+
+.su-main .card-base > .card-content,
+.su-main .card-base > :not(header) {
+	padding: 0;
+}
+
+/* 旧按钮类：统一为 6px 圆角 + 细边框 */
+.su-main .btn-card,
+.su-main .btn-regular,
+.su-main .btn-plain {
+	border-radius: 6px;
+	border: 1px solid var(--su-border);
+	background-color: transparent;
+	color: var(--su-foreground);
+	box-shadow: none;
+	transition:
+		background-color 0.15s ease,
+		border-color 0.15s ease;
+}
+
+.su-main .btn-card:hover,
+.su-main .btn-regular:hover,
+.su-main .btn-plain:hover {
+	background-color: var(--su-accent);
+	border-color: var(--su-muted-foreground);
+}
+
+/* 去掉旧的大圆角与动画 */
+.su-main .banner,
+.su-main .post-card,
+.su-main .widget {
+	border-radius: 12px;
+}
+
+.su-main .onload-animation,
+.su-main .float-panel {
+	animation: none !important;
+	opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   9. 评论组件（Waline / Twikoo / Giscus 等）在暗色下的基本适配
+   -------------------------------------------------------------------------- */
+.su-main #comment-container,
+.su-main .comment-section {
+	margin-top: 64px;
+}
+
+/* --------------------------------------------------------------------------
+   10. 减少动效
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+	.su-main *,
+	.su-scope * {
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+	}
+}

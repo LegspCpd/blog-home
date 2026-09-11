@@ -1,0 +1,26 @@
+---
+// 只加载基础的等宽字体，减少加载时间
+import "@fontsource-variable/jetbrains-mono";
+
+interface Props {
+	class: string;
+	/**
+	 * 是否由本组件提供 Pagefind 索引根节点。
+	 *
+	 * 默认 true（about / friends / guestbook 这类「整页就是正文」的页面直接用它）。
+	 * 文章详情页需设为 false：文章页把 data-pagefind-body 放在外层 <article> 上，
+	 * 让标题、元信息与正文合并成「一条」搜索结果；
+	 * 否则一篇文章会被拆成两条（标题一条、正文一条），搜索命中质量很差。
+	 */
+	pagefindBody?: boolean;
+}
+
+const { class: className, pagefindBody = true } = Astro.props;
+---
+
+<div
+	data-pagefind-body={pagefindBody ? "" : undefined}
+	class={`prose dark:prose-invert prose-base max-w-none! custom-md ${className}`}
+>
+    <slot/>
+</div>

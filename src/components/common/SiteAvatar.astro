@@ -1,0 +1,88 @@
+---
+/**
+ * SiteAvatar — 站点头像（唯一渲染入口）
+ *
+ * 尺寸/圆角/描边都按 DESIGN-supabase.md：
+ *   - 正方形 + 8px 圆角（squircle），或 full 圆形
+ *   - 1px 细描边，不使用阴影
+ *   - `display:block` + 不参与 baseline 对齐，**不带任何位移**
+ *     （以前用默认 inline 会出现基线沉底式的「下坠」）
+ */
+import { getSiteAvatar } from "@/utils/site-avatar";
+
+interface Props {
+	/** 边长（px） */
+	size?: number;
+	/** squircle = 8px 圆角；circle = 正圆 */
+	shape?: "squircle" | "circle";
+	/** 是否显示 1px 描边 */
+	bordered?: boolean;
+	class?: string;
+	alt?: string;
+}
+
+const {
+	size = 40,
+	shape = "squircle",
+	bordered = true,
+	class: className = "",
+	alt = "",
+} = Astro.props;
+
+const avatar = await getSiteAvatar();
+const radius = shape === "circle" ? "9999px" : `${Math.max(4, Math.round(size / 5))}px`;
+---
+
+{
+	avatar.src ? (
+		<img
+			src={avatar.src}
+			width={size}
+			height={size}
+			alt={alt}
+			loading="lazy"
+			decoding="async"
+			class:list={["su-avatar", className]}
+			style={`--su-avatar-size:${size}px;--su-avatar-radius:${radius};`}
+			data-bordered={bordered ? "true" : "false"}
+		/>
+	) : (
+		<span
+			class:list={["su-avatar su-avatar-fallback", className]}
+			style={`--su-avatar-size:${size}px;--su-avatar-radius:${radius};`}
+			data-bordered={bordered ? "true" : "false"}
+			aria-hidden="true"
+		>
+			{(alt || "?").trim().charAt(0) || "?"}
+		</span>
+	)
+}
+
+<style>
+	.su-avatar {
+		display: block;
+		flex: none;
+		inline-size: var(--su-avatar-size);
+		block-size: var(--su-avatar-size);
+		border-radius: var(--su-avatar-radius);
+		object-fit: cover;
+		/* 关键：不参与基线对齐，避免行内布局把头向下挤 */
+		vertical-align: middle;
+		background-color: var(--su-muted);
+	}
+
+	.su-avatar[data-bordered="true"] {
+		border: 1px solid var(--su-border);
+	}
+
+	.su-avatar-fallback {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: calc(var(--su-avatar-size) * 0.42);
+		font-weight: 500;
+		line-height: 1;
+		color: var(--su-muted-foreground);
+		user-select: none;
+	}
+</style>

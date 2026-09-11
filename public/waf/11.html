@@ -1,0 +1,18 @@
+<!doctype html><meta charset=utf-8><title>403</title><style>
+body{margin:0;font:14px sans-serif;background:#f6f6f6;display:flex;align-items:center;justify-content:center;height:100vh}
+.box{background:#fff;padding:20px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.05);max-width:420px}
+h1{margin:0;color:#f38020;font-size:40px}
+p{line-height:1.5}
+small{color:#888}
+</style>
+<div class=box>
+<h1>IP不行</h1>
+<p>你访问的是反代服务，但你的IP不在中国大陆，请直连！</p>
+<p>你的IP：<b id=i>获取中...</b></p>
+<small>Access denied</small>
+</div>
+<script>
+fetch("https://www.cloudflare.com/cdn-cgi/trace").then(r=>r.text()).then(t=>{
+let m=t.match(/ip=([^\n]+)/);if(m)i.innerText=m[1]
+}).catch(()=>i.innerText="获取失败");
+</script>
