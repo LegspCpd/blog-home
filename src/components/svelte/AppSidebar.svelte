@@ -50,7 +50,7 @@
 		return current === pathOnly || current.startsWith(`${pathOnly}/`);
 	};
 
-	const githubUrl = "https://github.com/LegspCpd/Firefly";
+	const githubUrl = "https://github.com/LegspCpd/blog-home";
 
 	onMount(() => {
 		const sync = () => {
