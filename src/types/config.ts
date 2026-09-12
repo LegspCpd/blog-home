@@ -304,6 +304,10 @@ export type CommentConfig = {
 		inputPosition: string;
 		lang: string;
 		loading: string;
+		/** 亮色模式下的 Giscus 主题名，见 https://giscus.app/zh-CN 的 theme 选项 */
+		lightTheme?: string;
+		/** 暗色模式下的 Giscus 主题名 */
+		darkTheme?: string;
 	};
 	disqus?: {
 		shortname: string;

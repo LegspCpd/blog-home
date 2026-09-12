@@ -6,8 +6,9 @@ if (!commentConfig || !commentConfig.giscus) {
 }
 
 const giscus = commentConfig.giscus;
-const lightTheme = "light";
-const darkTheme = "dark";
+// 主题名统一放在 src/config/commentConfig.ts 的 giscus.lightTheme / darkTheme
+const lightTheme = giscus.lightTheme ?? "light";
+const darkTheme = giscus.darkTheme ?? "dark";
 ---
 
 <script is:inline type="module" src="https://esm.sh/giscus"></script>

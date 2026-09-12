@@ -8,10 +8,12 @@ import FancyboxManager from "@components/features/FancyboxManager.astro";
 import FontManager from "@components/features/FontManager.astro";
 import SakuraEffect from "@components/features/SakuraEffect.astro";
 import ConfigCarrier from "@components/layout/ConfigCarrier.astro";
+import PageLoader from "@components/common/PageLoader.astro";
 
 import {
 	backgroundWallpaper,
 	expressiveCodeConfig,
+	loadingConfig,
 	profileConfig,
 	siteConfig,
 } from "@/config";
@@ -34,6 +36,7 @@ import { getSiteAvatarAbsoluteUrl } from "@utils/site-avatar";
 import "@/styles/main.css";
 import "@/styles/variables.styl";
 import "@/styles/markdown-extend.styl";
+import "@/styles/loading.css";
 import "@rehype-callouts-theme";
 
 interface Props {
@@ -104,6 +107,16 @@ if (!lang) {
 }
 const siteLang = lang.replace("_", "-");
 
+/**
+ * 图片渐进显现：blur / 初始透明度 / 时长都写成 <html> 上的 CSS 变量，
+ * 由 src/styles/loading.css 消费。这里静态输出，不依赖 JS ——
+ * 即使 JS 挂了，图片也只是「正常显示」，不会消失。
+ */
+const imageReveal = loadingConfig.imageReveal;
+const imageRevealStyle = imageReveal.enable
+	? `--su-img-blur: ${imageReveal.blurPx}px; --su-img-start-opacity: ${imageReveal.startOpacity}; --su-img-duration: ${imageReveal.durationMs}ms;`
+	: undefined;
+
 const toExternalOrigin = (value?: string) => {
 	if (!value) return null;
 	try {
@@ -171,7 +184,15 @@ const connectionHintOrigins = Array.from(
 ---
 
 <!doctype html>
-<html lang={siteLang} class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode={backgroundWallpaper.mode}>
+<html
+  lang={siteLang}
+  class:list={[
+    "bg-(--page-bg) text-[14px] md:text-[16px]",
+    imageReveal.enable && "su-img-reveal",
+  ]}
+  data-wallpaper-mode={backgroundWallpaper.mode}
+  style={imageRevealStyle}
+>
   <head>
     <meta charset="UTF-8" />
 
@@ -678,6 +699,9 @@ const connectionHintOrigins = Array.from(
   >
 
     <div id="progress-bar"></div>
+
+    <!-- 页面 / 路由加载指示器：圆环动画，只做视觉提示，不拦截点击 -->
+    <PageLoader />
 
     <ConfigCarrier />
     <slot />
@@ -1545,6 +1569,15 @@ function disableAnimation() {
   // Initialize wallpaper mode
   import { initWallpaperMode, initThemeListener } from "@/utils/setting-utils";
   import { initIconLoader } from "@/utils/icon-loader";
+  import { initImageReveal } from "@/utils/image-reveal";
+
+  // 图片渐进显现：首屏 + 每次 SPA 换页后都要重新扫描一遍
+  initImageReveal();
+  document.addEventListener("astro:page-load", initImageReveal);
+  document.addEventListener("swup:enable", () => {
+    window.swup?.hooks?.on("content:replace", () => setTimeout(initImageReveal, 0));
+  });
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
       updateMainGridCols();
@@ -1552,6 +1585,7 @@ function disableAnimation() {
       initWallpaperMode();
       initThemeListener();
       initIconLoader();
+      initImageReveal();
     });
   } else {
     updateMainGridCols();
@@ -1559,5 +1593,6 @@ function disableAnimation() {
     initWallpaperMode();
     initThemeListener();
     initIconLoader();
+    initImageReveal();
   }
 </script>

@@ -1,0 +1,161 @@
+/* ==========================================================================
+   Loading UX
+   1. 图片渐进显现（progressive image reveal）
+   2. 页面 / 路由加载指示器（Microsoft 风格圆环）
+   配置：src/config/loadingConfig.ts
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. 图片渐进显现
+   --------------------------------------------------------------------------
+   由 src/utils/image-reveal.ts 在合适的时机给 <img> 加上 .su-revealable。
+   关键点：动画的 from 帧就是「模糊 + 低透明」，所以无论图片此刻是
+   已缓存还是刚下载完，加上类的瞬间都会从模糊开始 → 单调变清晰，
+   不会出现「先清晰再糊一下」的抖动。
+
+   变量来自 <html style="--su-img-*">（Layout.astro 静态输出）：
+     --su-img-blur            初始模糊强度（px）
+     --su-img-start-opacity   初始不透明度
+     --su-img-duration        过渡时长（ms）
+    每张图还可以用 --su-img-delay 做错开（由 JS 写入）。
+   -------------------------------------------------------------------------- */
+
+html.su-img-reveal img.su-revealable {
+	animation: su-img-reveal var(--su-img-duration, 520ms) cubic-bezier(0.22, 0.61, 0.36, 1) both;
+	animation-delay: var(--su-img-delay, 0ms);
+	/* 避免模糊层在部分浏览器上露出边缘锯齿 */
+	backface-visibility: hidden;
+}
+
+@keyframes su-img-reveal {
+	from {
+		opacity: var(--su-img-start-opacity, 0.25);
+		filter: blur(var(--su-img-blur, 14px));
+	}
+	to {
+		opacity: 1;
+		filter: blur(0);
+	}
+}
+
+/* 尊重「减少动效」偏好：直接显示清晰图片 */
+@media (prefers-reduced-motion: reduce) {
+	html.su-img-reveal img.su-revealable {
+		animation: none;
+	}
+}
+
+/* --------------------------------------------------------------------------
+   2. 页面 / 路由加载指示器
+   -------------------------------------------------------------------------- */
+
+#su-page-loader {
+	position: fixed;
+	inset: 0;
+	z-index: 100;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	/* 只做视觉提示，绝不拦截点击：即使遮罩还在，用户也能直接操作 */
+	pointer-events: none;
+	opacity: 0;
+	visibility: hidden;
+	transition:
+		opacity 160ms ease-out,
+		visibility 0s linear 160ms;
+}
+
+/* 半透明底色 + 轻微背景模糊放在伪元素上，
+   这样圆环本身保持完全不透明 */
+#su-page-loader::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: var(--su-background, #111111);
+	opacity: var(--su-loader-opacity, 0.55);
+	backdrop-filter: blur(var(--su-loader-blur, 2px));
+	-webkit-backdrop-filter: blur(var(--su-loader-blur, 2px));
+}
+
+#su-page-loader.is-active {
+	opacity: 1;
+	visibility: visible;
+	transition:
+		opacity 160ms ease-out,
+		visibility 0s;
+}
+
+/* 圆环本体：底圈是 hairline，进度弧是主色 */
+#su-page-loader .su-loader-ring {
+	position: relative;
+	width: var(--su-loader-size, 40px);
+	height: var(--su-loader-size, 40px);
+	display: block;
+}
+
+#su-page-loader .su-loader-track,
+#su-page-loader .su-loader-arc {
+	fill: none;
+	stroke-width: var(--su-loader-stroke, 3);
+	stroke-linecap: round;
+	transform-origin: 50% 50%;
+}
+
+#su-page-loader .su-loader-track {
+	stroke: var(--su-border, #292929);
+	opacity: 0.6;
+}
+
+#su-page-loader .su-loader-arc {
+	stroke: var(--su-loader-color, #3ecf8e);
+	/* 先转一圈、圆弧再伸长收短 —— 微软/Windows 11 那套平滑的「扫过」手感 */
+	animation:
+		su-loader-dash 1.4s ease-in-out infinite,
+		su-loader-rotate 1.4s linear infinite;
+}
+
+#su-page-loader .su-loader-label {
+	position: relative;
+	margin: 0;
+	font-family: var(--font-supabase, system-ui, sans-serif);
+	font-size: 13px;
+	line-height: 1.45;
+	color: var(--su-muted-foreground, #b0b0b0);
+}
+
+@keyframes su-loader-rotate {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* 弧长在 1 与 90 之间变化（周长 ≈ 126，r=20），
+   配合 dashoffset 的推移形成连续、不跳变的扫描感 */
+@keyframes su-loader-dash {
+	0% {
+		stroke-dasharray: 1 150;
+		stroke-dashoffset: 0;
+	}
+	50% {
+		stroke-dasharray: 90 150;
+		stroke-dashoffset: -35;
+	}
+	100% {
+		stroke-dasharray: 90 150;
+		stroke-dashoffset: -124;
+	}
+}
+
+/* 减少动效：保留圆环但停止旋转，只给出「在加载」的静态提示 */
+@media (prefers-reduced-motion: reduce) {
+	#su-page-loader .su-loader-arc {
+		animation: none;
+		stroke-dasharray: 90 150;
+		stroke-dashoffset: 0;
+	}
+	#su-page-loader {
+		transition: none;
+	}
+}

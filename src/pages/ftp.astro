@@ -1,21 +1,15 @@
 ---
-// ==========================================
-// 📝 在这里加文件！只需要改这里！
-// 格式：一行一个文件名，用英文引号包起来，最后加个逗号
-// ==========================================
-const fileList = [
-  "MaaEnd-win-x86_64-v2.7.0.zip",
-  "wldyly-2021_BD.mp4",
-  "MudRunner.7z",
-  "GitHub-Store-1.7.0.exe",
-  "QQListenerv1.1.exe",
-  "Cloudflare_WARP_2026.3.851.0.msi",
-  // "下一个文件.apk",
-  // "再下一个文件.zip",
-];
+import { pagesConfig, siteConfig } from "@/config";
 
-// 🔧 固定配置（不用改）
-const RELEASE_BASE = "https://github.com/LegspCpd/files-01.github.io/releases/download/end/";
+// ==========================================
+// 文件清单已移到 src/config/pagesConfig.ts 的 ftp 段
+// 加文件：只改那个文件的 ftp.files 数组即可
+// 下载前缀：改 ftp.releaseBase
+// ==========================================
+const { releaseBase, files } = pagesConfig.ftp;
+
+// AdSense 客户端 id 复用站点配置，避免两处不一致
+const adsenseClientId = siteConfig.analytics?.googleAdsenseClientId;
 ---
 
 <!DOCTYPE html>
@@ -26,13 +20,13 @@ const RELEASE_BASE = "https://github.com/LegspCpd/files-01.github.io/releases/do
   <!-- Google AdSense -->
   <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin="anonymous" />
   <link rel="preconnect" href="https://googleads.g.doubleclick.net" crossorigin="anonymous" />
-  <script is:inline async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5451911549695673" crossorigin="anonymous"></script>
+  <script is:inline async src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`} crossorigin="anonymous"></script>
 </head>
 <body>
   <h1>文件列表</h1>
   <ul>
-    {fileList.map((name) => (
-      <li><a href={RELEASE_BASE + name} download={name}>{name}</a></li>
+    {files.map((name) => (
+      <li><a href={releaseBase + name} download={name}>{name}</a></li>
     ))}
   </ul>
 </body>

@@ -11,7 +11,10 @@
  *    但那个节点会被 hydration 随机回收，导致内容整块消失（约半数刷新）。
  */
 import AppSidebar from "@components/layout/AppSidebar.astro";
+import { backgroundAtmosphere } from "@/config/backgroundAtmosphere";
 import { defaultNavItems as navDefaults } from "@/config/sidebarNav";
+import type { SidebarNavItem } from "@/config/sidebarNav";
+import { getAmbientBackgroundStyle } from "@/utils/ambient-background";
 import "../styles/supabase-content.css";
 import "./supabase-layout.css";
 import Layout from "./Layout.astro";
@@ -27,7 +30,7 @@ interface Props {
 	/** SEO：og:image */
 	ogImage?: string;
 	/** 可选：覆盖侧栏导航项 */
-	navItems?: Array<{ title: string; href: string; icon: string }>;
+	navItems?: SidebarNavItem[];
 }
 
 const {
@@ -39,6 +42,10 @@ const {
 	ogImage,
 	navItems = navDefaults,
 } = Astro.props;
+
+// 背景氛围：把配置编译成 CSS 变量挂在 <main> 上，由 supabase-layout.css 消费。
+// 关闭时返回 undefined → 不输出内联样式，也不加类名，等同于旧行为。
+const ambientStyle = getAmbientBackgroundStyle();
 ---
 
 <Layout
@@ -56,7 +63,15 @@ const {
   <AppSidebar items={navItems} />
 
   <!-- 右侧主内容区：宽度偏移由 supabase-layout.css 控制 -->
-  <main id="su-main" class="su-main">
+  <main
+    id="su-main"
+    class:list={[
+      "su-main",
+      ambientStyle && "su-ambient",
+      backgroundAtmosphere.interactiveElevation && "su-elevate",
+    ]}
+    style={ambientStyle}
+  >
     <!-- swup 唯一替换容器，必须是全站每个页面都存在且结构一致 -->
     <div id="swup-container">
       <slot />

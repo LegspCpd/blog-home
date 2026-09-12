@@ -1,8 +1,12 @@
 ---
 import SupabaseLayout from "@layouts/SupabaseLayout.astro";
+import { pagesConfig } from "@/config";
 import { getSortedPosts } from "@/utils/content-utils";
 import { formatDateToYYYYMMDD } from "@/utils/date-utils";
 import { getPostUrlBySlug } from "@/utils/url-utils";
+
+// 页头文案来自 src/config/pagesConfig.ts 的 postList 段
+const postList = pagesConfig.postList;
 
 const posts = await getSortedPosts();
 
@@ -16,11 +20,11 @@ for (const post of posts) {
 const yearGroups = [...years.entries()].sort((a, b) => b[0] - a[0]);
 ---
 
-<SupabaseLayout title="文章" description={`共 ${posts.length} 篇文章`}>
+<SupabaseLayout title={postList.title} description={`共 ${posts.length} 篇文章`}>
   <div class="su-list-page">
     <header class="su-page-head">
-      <p class="su-kicker">文章</p>
-      <h1 class="su-title">全部文章</h1>
+      <p class="su-kicker">{postList.kicker}</p>
+      <h1 class="su-title">{postList.title}</h1>
       <p class="su-page-desc">
         共 <span class="su-num">{posts.length}</span> 篇文章
       </p>

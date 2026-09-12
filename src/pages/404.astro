@@ -3,7 +3,11 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import SupabaseLayout from "@layouts/SupabaseLayout.astro";
 import { Icon } from "astro-icon/components";
+import { pagesConfig } from "@/config";
 import { defaultNavItems } from "@/config/sidebarNav";
+
+// 显示几个快捷入口由 src/config/pagesConfig.ts 的 notFound 段控制
+const notFoundNavItems = defaultNavItems.slice(0, pagesConfig.notFound.maxNavItems);
 ---
 
 <SupabaseLayout
@@ -17,7 +21,7 @@ import { defaultNavItems } from "@/config/sidebarNav";
 
     <nav class="su-404-links">
       {
-        defaultNavItems.slice(0, 5).map((item) => (
+        notFoundNavItems.map((item) => (
           <a class="su-btn" href={item.href}>
             <Icon name="material-symbols:arrow-outward" width="14" height="14" />
             {item.title}

@@ -4,10 +4,10 @@ import SupabaseLayout from "@layouts/SupabaseLayout.astro";
 import { getSortedPosts } from "@utils/content-utils";
 import { formatDateToYYYYMMDD } from "@utils/date-utils";
 import I18nKey from "@/i18n/i18nKey";
-import { i18n } from "@/i18n/translation";
-
+import { i18n } from "@/i18n/translation";import { pagesConfig } from "@/config";
 const posts = await getSortedPosts();
-const recentPosts = posts.slice(0, 6);
+// 最近文章条数与复制提示时长见 src/config/pagesConfig.ts 的 rss 段
+const recentPosts = posts.slice(0, pagesConfig.rss.recentCount);
 const feedUrl = `${Astro.site}rss.xml`;
 ---
 
@@ -78,6 +78,11 @@ const feedUrl = `${Astro.site}rss.xml`;
   </div>
 
   <script>
+    import { pagesConfig } from "@/config";
+
+    // 复制后提示文字保持多久（毫秒），配置见 pagesConfig.rss.copyFeedbackMs
+    const copyFeedbackMs = pagesConfig.rss.copyFeedbackMs;
+
     function initRssCopy() {
       const copyBtn = document.getElementById("copy-rss-btn");
       if (!copyBtn) return;
@@ -98,7 +103,7 @@ const feedUrl = `${Astro.site}rss.xml`;
         }
         setTimeout(() => {
           this.textContent = originalText;
-        }, 2000);
+        }, copyFeedbackMs);
       });
     }
 

@@ -2,6 +2,7 @@
 import { getEntry, render } from "astro:content";
 import Markdown from "@components/common/Markdown.astro";
 import SupabaseLayout from "@layouts/SupabaseLayout.astro";
+import { pagesConfig } from "@/config";
 import { siteConfig } from "@/config/siteConfig";
 
 const privacyPost = await getEntry("spec", "privacy");
@@ -12,14 +13,15 @@ if (!privacyPost) {
 
 const { Content } = await render(privacyPost);
 
-const description = "本站的服务条款与隐私政策，包含数据收集范围、使用方式与第三方 API 合规声明。";
+// 标题与描述来自 src/config/pagesConfig.ts 的 privacy 段
+const { title: pageTitle, description } = pagesConfig.privacy;
 ---
 
-<SupabaseLayout title="服务条款与隐私政策" description={description}>
+<SupabaseLayout title={pageTitle} description={description}>
   <div class="su-prose-page">
     <header class="su-page-head">
       <p class="su-kicker">法律条款</p>
-      <h1 class="su-title">服务条款与隐私政策</h1>
+      <h1 class="su-title">{pageTitle}</h1>
       <p class="su-page-desc">{description}</p>
       <p class="su-page-meta">
         <span class="su-num">{siteConfig.title}</span>

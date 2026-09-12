@@ -68,6 +68,10 @@ export const commentConfig: CommentConfig = {
 		lang: "zh-CN",
 		// 获取 Giscus 评论系统加载方式
 		loading: "lazy",
+		// 亮色模式下使用的 Giscus 主题（见 https://giscus.app 的 theme 选项）
+		lightTheme: "light",
+		// 暗色模式下使用的 Giscus 主题（可换成 dark_dimmed / transparent_dark 等）
+		darkTheme: "dark",
 	},
 
 	//disqus评论系统配置

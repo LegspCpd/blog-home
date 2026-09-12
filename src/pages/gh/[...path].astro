@@ -4,10 +4,11 @@ export const prerender = false;
 // 适配Vercel边缘运行时
 export const runtime = 'edge';
 
-// 你的博客域名，不要改
-const YOUR_DOMAIN = 'blog.legspcpd.indevs.in';
-// GitHub目标地址，不要改
-const GITHUB_BASE = 'https://github.com';
+import { pagesConfig } from "@/config";
+
+// 域名 / 上游 / UA 统一放在 src/config/pagesConfig.ts 的 ghProxy 段
+const { domain: YOUR_DOMAIN, upstreamBase: GITHUB_BASE, userAgent: GITHUB_USER_AGENT } =
+  pagesConfig.ghProxy;
 
 // 正确获取访问的路径（适配你的 trailingSlash: "always"）
 const fullPath = Array.isArray(Astro.params.path) 
@@ -24,7 +25,7 @@ try {
   const githubResponse = await fetch(targetUrl.toString(), {
     method: Astro.request.method,
     headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      'User-Agent': GITHUB_USER_AGENT,
       'Accept': Astro.request.headers.get('accept') || 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     },
     redirect: 'follow',

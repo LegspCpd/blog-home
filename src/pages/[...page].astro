@@ -1,7 +1,7 @@
 ---
 import type { GetStaticPaths } from "astro";
 import { Icon } from "astro-icon/components";
-import { siteConfig } from "@/config";
+import { pagesConfig, siteConfig } from "@/config";
 import { profileConfig } from "@/config/profileConfig";
 import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
 import SiteAvatar from "@components/common/SiteAvatar.astro";
@@ -33,25 +33,12 @@ const socialLinks = profileConfig.links ?? [];
 const isExternal = (href: string) => /^(https?:|mailto:)/.test(href);
 
 // ===================================================================
-// 首页三张卡片：按需直接改这里（图标只能取 astro.config 里已注册的图标集）
+// 首页与文章列表的文案 / 卡片 / 阈值全部来自 src/config/pagesConfig.ts
+// （想改首页就改那个文件的 home 段，不用动这里）
 // ===================================================================
-const homeHighlights = [
-	{
-		icon: "material-symbols:edit-note-outline",
-		title: "写作 / 教程",
-		text: "把踩过的坑整理成能按步骤复现的教程，而不是只可远观的结论。",
-	},
-	{
-		icon: "material-symbols:dns-outline",
-		title: "自部署 / 服务",
-		text: "维护自托管服务与 Macro / API 接口，能自己拿在手里的就不交出去。",
-	},
-	{
-		icon: "material-symbols:bolt-outline",
-		title: "边缘 / CDN 优选",
-		text: "Cloudflare、EdgeOne 优选与边缘部署，让国内访问不再是减速器。",
-	},
-];
+const home = pagesConfig.home;
+const postList = pagesConfig.postList;
+const homeHighlights = home.highlights;
 ---
 
 {
@@ -65,14 +52,15 @@ const homeHighlights = [
           <p class="su-hero-lead">{siteConfig.description}</p>
 
           <div class="su-hero-actions">
-            <a class="su-btn is-primary" href={url("/posts/")}>
-              查看文章
-              <Icon name="material-symbols:arrow-forward" width="14" height="14" />
-            </a>
-            <a class="su-btn" href={url("/about/")}>
-              关于我
-              <Icon name="material-symbols:arrow-outward" width="14" height="14" />
-            </a>
+            {home.actions.map((action, index) => (
+              <a
+                class:list={["su-btn", index === 0 && "is-primary"]}
+                href={isExternal(action.href) ? action.href : url(action.href)}
+              >
+                {action.label}
+                {action.icon && <Icon name={action.icon} width="14" height="14" />}
+              </a>
+            ))}
           </div>
         </header>
 
@@ -81,19 +69,17 @@ const homeHighlights = [
           <SiteAvatar size={56} alt={profileConfig.name} />
           <div class="su-profile-text">
             <p class="su-profile-name">{profileConfig.name}</p>
-            <p class="su-profile-role">写教程 · 自部署 · 折腾边缘</p>
+            <p class="su-profile-role">{home.roleTagline}</p>
           </div>
         </section>
 
-        <!-- ③ 三张卡片：写作 / 自部署 / 边缘加速（内容来自本站真实主题） -->
+        <!-- ③ 三张卡片：内容来自 pagesConfig.home.highlights -->
         <section class="su-home-section" aria-labelledby="su-highlights-title">
           <div class="su-section-head">
             <h2 id="su-highlights-title" class="su-section-title">
-              小而清晰，先把每一次打开做好
+              {home.highlightsTitle}
             </h2>
-            <p class="su-section-desc">
-              统一的版式、克制的配色、能按步骤复现的内容 —— 其余的交给速度。
-            </p>
+            <p class="su-section-desc">{home.highlightsDescription}</p>
           </div>
 
           <ul class="su-highlight-grid">
@@ -111,8 +97,8 @@ const homeHighlights = [
 
         <!-- ④ 社交链接 -->
         <section class="su-home-section" aria-labelledby="su-social-title">
-          <h2 id="su-social-title" class="su-section-title">社交链接</h2>
-          <nav class="su-social" aria-label="社交链接">
+          <h2 id="su-social-title" class="su-section-title">{home.socialTitle}</h2>
+          <nav class="su-social" aria-label={home.socialTitle}>
             {socialLinks.map((link) => (
               <a
                 href={isExternal(link.url) ? link.url : url(link.url)}
@@ -140,15 +126,15 @@ const homeHighlights = [
             )}
           </p>
 
-          <!-- 站点级入口：一眼能看到（含服务条款与隐私政策） -->
+          <!-- 站点级入口：一眼能看到（含服务条款与隐私政策）
+               内容来自 pagesConfig.home.footerLinks -->
           <nav class="su-home-legal" aria-label="站点信息">
-            <a href={url("/privacy/")}>服务条款与隐私政策</a>
-            <span class="su-dot">·</span>
-            <a href={url("/about/")}>关于我</a>
-            <span class="su-dot">·</span>
-            <a href={url("/rss/")}>RSS 订阅</a>
-            <span class="su-dot">·</span>
-            <a href={url("/guestbook/")}>留言板</a>
+            {home.footerLinks.map((link, index) => (
+              <>
+                {index > 0 && <span class="su-dot">·</span>}
+                <a href={isExternal(link.href) ? link.href : url(link.href)}>{link.label}</a>
+              </>
+            ))}
           </nav>
         </footer>
       </div>
@@ -157,8 +143,8 @@ const homeHighlights = [
     <SupabaseLayout>
       <div class="su-list-page">
         <header class="su-page-head">
-          <p class="su-kicker">文章</p>
-          <h1 class="su-title">全部文章</h1>
+          <p class="su-kicker">{postList.kicker}</p>
+          <h1 class="su-title">{postList.title}</h1>
           <p class="su-page-desc">
             第 <span class="su-num">{page.currentPage}</span> /{" "}
             <span class="su-num">{page.lastPage}</span> 页 · 共{" "}
@@ -184,12 +170,12 @@ const homeHighlights = [
             {page.url.prev ? (
               <a class="su-btn" href={page.url.prev}>
                 <Icon name="material-symbols:chevron-left-rounded" width="16" height="16" />
-                上一页
+                {postList.prevLabel}
               </a>
             ) : (
               <span class="su-btn" aria-disabled="true">
                 <Icon name="material-symbols:chevron-left-rounded" width="16" height="16" />
-                上一页
+                {postList.prevLabel}
               </span>
             )}
             <span class="su-num">
@@ -197,12 +183,12 @@ const homeHighlights = [
             </span>
             {page.url.next ? (
               <a class="su-btn" href={page.url.next}>
-                下一页
+                {postList.nextLabel}
                 <Icon name="material-symbols:chevron-right-rounded" width="16" height="16" />
               </a>
             ) : (
               <span class="su-btn" aria-disabled="true">
-                下一页
+                {postList.nextLabel}
                 <Icon name="material-symbols:chevron-right-rounded" width="16" height="16" />
               </span>
             )}

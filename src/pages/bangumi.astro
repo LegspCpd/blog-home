@@ -2,7 +2,7 @@
 import { Icon } from "astro-icon/components";
 import BangumiSection from "@/components/pages/bangumi/BangumiSection.astro";
 import TabNav from "@/components/pages/bangumi/TabNav.astro";
-import { siteConfig } from "@/config";
+import { bangumiPageConfig, buildCategoryMap, siteConfig } from "@/config";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
@@ -23,41 +23,21 @@ if (!siteConfig.pages.bangumi) {
 const buildTime = formatDateI18nWithTime(new Date());
 
 ////////////// Bangumi 配置 ////////////////////////
+// 所有可调项都在 src/config/bangumiConfig.ts
+// （API 地址、显示哪些分类、抓取条数、状态颜色…）
 const bangumiConfig = {
-	username: siteConfig.bangumi?.userId, // 在这里配置你的Bangumi用户名
-	apiUrl: "https://api.bgm.tv",
-	categories: {
-		book: true,
-		anime: true,
-		music: true,
-		game: true,
-		real: false,
-	},
+	username: siteConfig.bangumi?.userId, // 用户名在 siteConfig.bangumi.userId
+	apiUrl: bangumiPageConfig.apiUrl,
+	categories: Object.fromEntries(
+		bangumiPageConfig.categories.map((category) => [category.id, category.enable]),
+	) as Record<string, boolean>,
 	// 数据获取设置
-	pagination: {
-		limit: 50, // 每页获取数量
-		delay: 50, // 请求间隔毫秒数，避免频率限制
-		maxTotal: 1000, // 最大获取总数，防止无限循环（0=无限制）
-	},
+	pagination: bangumiPageConfig.pagination,
 };
 //////////////////////////////////////////////////
 
-// 分类映射
-const categoryMap = {
-	book: { id: "book", name: i18n(I18nKey.bangumiCategoryBook), subjectType: 1 },
-	anime: {
-		id: "anime",
-		name: i18n(I18nKey.bangumiCategoryAnime),
-		subjectType: 2,
-	},
-	music: {
-		id: "music",
-		name: i18n(I18nKey.bangumiCategoryMusic),
-		subjectType: 3,
-	},
-	game: { id: "game", name: i18n(I18nKey.bangumiCategoryGame), subjectType: 4 },
-	real: { id: "real", name: i18n(I18nKey.bangumiCategoryReal), subjectType: 6 },
-};
+// 分类映射（分类名走 i18n，由页面注入翻译函数）
+const categoryMap = buildCategoryMap((key) => i18n(key));
 
 // 获取Bangumi数据的函数 - 支持分页获取所有数据
 async function fetchBangumiData(username: string, subjectType: number) {

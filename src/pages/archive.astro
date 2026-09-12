@@ -3,7 +3,11 @@ import ArchivePanel from "@components/controls/ArchivePanel.svelte";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import SupabaseLayout from "@layouts/SupabaseLayout.astro";
+import { pagesConfig } from "@/config";
 import { getSortedPostsList } from "@/utils/content-utils";
+
+// 归档页标题复用文章列表的文案（src/config/pagesConfig.ts 的 postList 段）
+const archiveTitle = pagesConfig.postList.archiveTitle;
 
 const sortedPostsList = await getSortedPostsList();
 const totalPosts = sortedPostsList.length;
@@ -18,7 +22,7 @@ const years = new Set(
 >
   <header class="su-page-head">
     <p class="su-kicker">{i18n(I18nKey.archive)}</p>
-    <h1 class="su-title">全部文章</h1>
+    <h1 class="su-title">{archiveTitle}</h1>
     <p class="su-page-desc">
       <span class="su-num">{totalPosts}</span> 篇文章 ·
       <span class="su-num">{years}</span> 个年份

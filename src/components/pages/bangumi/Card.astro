@@ -1,6 +1,7 @@
 ---
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
+import { bangumiPageConfig } from "@/config/bangumiConfig";
 import type { UserSubjectCollection } from "@/types/bangumi";
 
 interface Props {
@@ -10,24 +11,11 @@ interface Props {
 
 const { item, loadImage = false } = Astro.props;
 
-const subject_base_url = "https://bgm.tv/subject/";
+// 条目详情页前缀与状态颜色都在 src/config/bangumiConfig.ts
+const subject_base_url = bangumiPageConfig.subjectBaseUrl;
 
-const getStatusColor = (type: number) => {
-	switch (type) {
-		case 1:
-			return "bg-blue-500";
-		case 2:
-			return "bg-green-500";
-		case 3:
-			return "bg-yellow-500";
-		case 4:
-			return "bg-orange-500";
-		case 5:
-			return "bg-red-500";
-		default:
-			return "bg-gray-500";
-	}
-};
+const getStatusColor = (type: number) =>
+	bangumiPageConfig.statusColors[type] ?? "bg-gray-500";
 
 const getStatusText = (type: number) => {
 	const subjectType = item.subject.type;

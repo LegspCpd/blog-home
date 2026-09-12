@@ -3,10 +3,13 @@ import AdvancedSearch from "@components/pages/AdvancedSearch.svelte";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import SupabaseLayout from "@layouts/SupabaseLayout.astro";
+import { pagesConfig } from "@/config";
 import { url } from "@/utils/url-utils";
 
 const title = i18n(I18nKey.search);
+// 描述留在页面（搜索页本身是 noindex），摘要长度走配置
 const description = "";
+const excerptLength = pagesConfig.search.excerptLength;
 ---
 
 <SupabaseLayout title={title} description={description}>
@@ -17,7 +20,7 @@ const description = "";
 </SupabaseLayout>
 
 {import.meta.env.PROD && (
-  <script is:inline define:vars={{ scriptUrl: url("/pagefind/pagefind.js") }}>
+  <script is:inline define:vars={{ scriptUrl: url("/pagefind/pagefind.js"), excerptLength }}>
     if (!window.pagefind) {
       async function loadPagefind() {
         const target = scriptUrl.replace(/\/$/, "");
@@ -27,7 +30,7 @@ const description = "";
             return;
           }
           const pagefind = await import(scriptUrl);
-          await pagefind.options({ excerptLength: 20 });
+          await pagefind.options({ excerptLength });
           window.pagefind = pagefind;
           window.dispatchEvent(new Event("pagefindready"));
         } catch (error) {

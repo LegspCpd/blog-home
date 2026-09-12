@@ -89,6 +89,49 @@ body > astro-island:has([data-slot="sidebar-wrapper"]) .su-mobile-trigger {
 	transition: padding-inline-start 0.2s ease-in-out;
 }
 
+/* ==========================================================================
+   背景氛围（ambient atmosphere）
+   --------------------------------------------------------------------------
+   参考 DESIGN-vercel.md：网格渐变只出现在 hero，页面其余部分保持干净；
+   再借 DESIGN-x.ai.md 的「近黑画布 + 一点冷/暖光」。
+
+   实现要点：直接作为 .su-main 的 background-image，而不是插一层 fixed 的 DOM。
+   好处是它天然画在所有内容之下，不需要动任何 z-index / stacking context，
+   也就不会影响侧栏、抽屉、返回顶部按钮等既有层级。
+   多个径向渐变各自的 65% 处已经透明，所以底部不会出现硬边；滚动时随首屏
+   一起离开，符合「颜色只出现在 hero」的克制原则。
+
+   变量由 src/utils/ambient-background.ts 从配置编译后内联到 <main> 上；
+   配置在 src/config/backgroundAtmosphere.ts。
+   ========================================================================== */
+.su-ambient {
+	background-image: var(--su-ambient-light, none);
+	background-repeat: no-repeat;
+	background-position: top center;
+	background-size: var(--su-ambient-size, auto);
+}
+
+.dark .su-ambient {
+	background-image: var(--su-ambient-dark, none);
+}
+
+/* ==========================================================================
+   交互元素轻微抬升（hover elevation）
+   --------------------------------------------------------------------------
+   两份设计稿都强调「1px hairline + 极轻阴影」，且只在交互时出现。
+   这里只用已有的 --su-shadow-1 令牌，不做玻璃拟态、不做位移。
+   仅在 backgroundAtmosphere.interactiveElevation = true 时生效（<main> 上的 .su-elevate）。
+   ========================================================================== */
+.su-elevate :is(a.su-project, a.su-row, a.su-social-link, a.su-btn, a.su-card):hover {
+	box-shadow: var(--su-shadow-1);
+}
+
+.su-elevate :is(a.su-project, a.su-row, a.su-social-link, a.su-btn, a.su-card) {
+	transition:
+		box-shadow 160ms ease-out,
+		border-color 160ms ease-out;
+}
+
 /* 桌面端折叠后：只让出 64px 图标栏宽度 */
 body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
 	padding-inline-start: calc(64px + 40px);
