@@ -31,43 +31,101 @@ const lastUpdated =
 	latestPosts[0]?.data.updated ?? latestPosts[0]?.data.published;
 const socialLinks = profileConfig.links ?? [];
 const isExternal = (href: string) => /^(https?:|mailto:)/.test(href);
+
+// ===================================================================
+// 首页三张卡片：按需直接改这里（图标只能取 astro.config 里已注册的图标集）
+// ===================================================================
+const homeHighlights = [
+	{
+		icon: "material-symbols:edit-note-outline",
+		title: "写作 / 教程",
+		text: "把踩过的坑整理成能按步骤复现的教程，而不是只可远观的结论。",
+	},
+	{
+		icon: "material-symbols:dns-outline",
+		title: "自部署 / 服务",
+		text: "维护自托管服务与 Macro / API 接口，能自己拿在手里的就不交出去。",
+	},
+	{
+		icon: "material-symbols:bolt-outline",
+		title: "边缘 / CDN 优选",
+		text: "Cloudflare、EdgeOne 优选与边缘部署，让国内访问不再是减速器。",
+	},
+];
 ---
 
 {
   isHomePage ? (
     <SupabaseLayout>
       <div class="su-home">
-        <header class="su-home-intro">
-          <!-- 站点头像：块级独占一行，无基线位移 -->
-          <div class="su-home-avatar">
-            <SiteAvatar size={56} alt={profileConfig.name} />
+        <!-- ① 主视觉：一句话主张 + 两个清晰入口 -->
+        <header class="su-hero">
+          <p class="su-kicker">{siteConfig.title}</p>
+          <h1 class="su-hero-title">{profileConfig.bio}</h1>
+          <p class="su-hero-lead">{siteConfig.description}</p>
+
+          <div class="su-hero-actions">
+            <a class="su-btn is-primary" href={url("/posts/")}>
+              查看文章
+              <Icon name="material-symbols:arrow-forward" width="14" height="14" />
+            </a>
+            <a class="su-btn" href={url("/about/")}>
+              关于我
+              <Icon name="material-symbols:arrow-outward" width="14" height="14" />
+            </a>
           </div>
-          <p class="su-kicker">{profileConfig.bio}</p>
-          <h1 class="su-home-name">{profileConfig.name}</h1>
-          <p class="su-home-desc">{siteConfig.description}</p>
-          <nav class="su-home-links" aria-label="社交链接">
+        </header>
+
+        <!-- ② 个人名片：头像 + 名字 + 一句签名 -->
+        <section class="su-profile su-card" aria-label="个人名片">
+          <SiteAvatar size={56} alt={profileConfig.name} />
+          <div class="su-profile-text">
+            <p class="su-profile-name">{profileConfig.name}</p>
+            <p class="su-profile-role">写教程 · 自部署 · 折腾边缘</p>
+          </div>
+        </section>
+
+        <!-- ③ 三张卡片：写作 / 自部署 / 边缘加速（内容来自本站真实主题） -->
+        <section class="su-home-section" aria-labelledby="su-highlights-title">
+          <div class="su-section-head">
+            <h2 id="su-highlights-title" class="su-section-title">
+              小而清晰，先把每一次打开做好
+            </h2>
+            <p class="su-section-desc">
+              统一的版式、克制的配色、能按步骤复现的内容 —— 其余的交给速度。
+            </p>
+          </div>
+
+          <ul class="su-highlight-grid">
+            {homeHighlights.map((item) => (
+              <li class="su-card su-highlight">
+                <span class="su-highlight-icon" aria-hidden="true">
+                  <Icon name={item.icon} width="16" height="16" />
+                </span>
+                <h3 class="su-highlight-title">{item.title}</h3>
+                <p class="su-highlight-text">{item.text}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <!-- ④ 社交链接 -->
+        <section class="su-home-section" aria-labelledby="su-social-title">
+          <h2 id="su-social-title" class="su-section-title">社交链接</h2>
+          <nav class="su-social" aria-label="社交链接">
             {socialLinks.map((link) => (
               <a
                 href={isExternal(link.url) ? link.url : url(link.url)}
                 target={/^https?:/.test(link.url) ? "_blank" : undefined}
                 rel={/^https?:/.test(link.url) ? "noopener noreferrer" : undefined}
-                class="su-home-link"
+                class="su-social-link"
               >
                 <Icon name={link.icon} width="14" height="14" />
                 {link.name}
               </a>
             ))}
           </nav>
-
-          <!-- 主入口：一个克制的 CTA + 一个文字链接，不做按钮堆砌 -->
-          <div class="su-home-actions">
-            <a class="su-btn is-primary" href={url("/posts/")}>
-              查看文章
-              <Icon name="material-symbols:arrow-forward" width="14" height="14" />
-            </a>
-            <a class="su-home-more" href={url("/about/")}>关于我 →</a>
-          </div>
-        </header>
+        </section>
 
         <footer class="su-home-footer">
           <p class="su-home-stats">
@@ -162,71 +220,170 @@ const isExternal = (href: string) => /^(https?:|mailto:)/.test(href);
     margin-inline: auto;
   }
 
-  .su-home-avatar {
-    margin-bottom: 20px;
+  /* ── ① 主视觉 ───────────────────────────────────────── */
+  .su-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .su-home-name {
-    margin: 20px 0 0;
-    font-size: 28px;
-    line-height: 1.2;
+  .su-hero .su-kicker {
+    margin: 0 0 16px;
+  }
+
+  /* display-xl 48px / 500 / 1.1 / -1.44px（移动端降到 display-lg 36px） */
+  .su-hero-title {
+    margin: 0;
+    max-width: 620px;
+    font-size: 48px;
+    line-height: 1.1;
     font-weight: 500;
-    letter-spacing: -0.42px;
+    letter-spacing: -1.44px;
     color: var(--su-foreground);
+    text-wrap: balance;
   }
 
-  .su-home-desc {
+  /* body-lg 18px / 400 / 1.55 */
+  .su-hero-lead {
     max-width: 560px;
-    margin: 12px 0 0;
+    margin: 16px 0 0;
     font-size: 18px;
     line-height: 1.55;
     color: var(--su-muted-foreground);
   }
 
-  .su-home-links {
+  .su-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 32px;
+  }
+
+  /* ── ② 个人名片（12px 圆角 + 1px 细边框，无阴影） ─────── */
+  .su-profile {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 40px;
+    padding: 20px 24px;
+  }
+
+  .su-profile-text {
+    min-width: 0;
+  }
+
+  /* heading-md 18px / 500 / 1.4 */
+  .su-profile-name {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--su-foreground);
+  }
+
+  /* caption 13px / 400 / 1.45 */
+  .su-profile-role {
+    margin: 4px 0 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--su-muted-foreground);
+  }
+
+  /* ── ③④ 分区：64px 上留白 + 一道 hairline ─────────────── */
+  .su-home-section {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid var(--su-border);
+  }
+
+  .su-section-head {
+    margin-bottom: 24px;
+  }
+
+  /* body-md 16px / 400 / 1.5 */
+  .su-section-desc {
+    max-width: 560px;
+    margin: 8px 0 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--su-muted-foreground);
+  }
+
+  .su-highlight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .su-highlight {
+    padding: 20px;
+    transition: border-color 0.15s ease;
+  }
+
+  .su-highlight:hover {
+    border-color: var(--su-muted-foreground);
+  }
+
+  .su-highlight-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--su-border);
+    border-radius: 6px;
+    color: var(--su-muted-foreground);
+    transition: color 0.15s ease;
+  }
+
+  /* 绿色只在悬停时出现，保持强调色稀缺 */
+  .su-highlight:hover .su-highlight-icon {
+    color: var(--su-primary);
+  }
+
+  .su-highlight-title {
+    margin: 16px 0 0;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--su-foreground);
+  }
+
+  .su-highlight-text {
+    margin: 8px 0 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--su-muted-foreground);
+  }
+
+  /* ── 社交链接 ──────────────────────────────────────── */
+  .su-social {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 8px 20px;
-    margin-top: 24px;
+    margin-top: 20px;
   }
 
-  .su-home-link {
+  .su-social-link {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--su-muted-foreground);
     text-decoration: none;
     transition: color 0.15s ease;
   }
 
-  .su-home-link:hover {
+  .su-social-link:hover {
     color: var(--su-primary);
   }
 
-  /* 首页主入口：单个主按钮 + 一个次级文字链接 */
-  .su-home-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px 20px;
-    margin-top: 32px;
-  }
-
-  /* 次级文字链接（首页「关于我」入口 / 列表页复用） */
-  .su-home-more {
-    font-size: 13px;
-    color: var(--su-muted-foreground);
-    text-decoration: none;
-    transition: color 0.15s ease;
-  }
-
-  .su-home-more:hover {
-    color: var(--su-primary);
-  }
-
-  /* 页脚：intro 之后唯一的分区，hairline 之上 96px、之下 32px */
+  /* 页脚：最后一个分区，hairline 之上 96px、之下 32px */
   .su-home-footer {
     margin-top: 96px;
     padding: 32px 0 8px;
@@ -286,5 +443,13 @@ const isExternal = (href: string) => /^(https?:|mailto:)/.test(href);
     justify-content: space-between;
     gap: 12px;
     margin-top: 48px;
+  }
+
+  /* 移动端：display 从 48px 降到 36px（DESIGN-supabase 响应式约定） */
+  @media (max-width: 767px) {
+    .su-hero-title {
+      font-size: 36px;
+      letter-spacing: -0.72px;
+    }
   }
 </style>

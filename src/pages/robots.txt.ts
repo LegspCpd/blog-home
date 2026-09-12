@@ -14,8 +14,8 @@ Allow: /
 Allow: /posts/
 Allow: /archive/
 Allow: /about/
-Allow: /tags/
-Allow: /categories/
+Allow: /privacy/
+Allow: /projects/
 
 # 屏蔽无需索引的内部路径
 Disallow: /_astro/
@@ -66,7 +66,9 @@ Disallow: /*.tar$
 # ============================================
 # Sitemap
 # ============================================
-Sitemap: ${new URL("sitemap-index.xml", import.meta.env.SITE).href}
+# Single canonical sitemap entry point. Generated at build time by
+# scripts/build-seo-files.js from the @astrojs/sitemap shard output.
+Sitemap: ${new URL("sitemap.xml", import.meta.env.SITE).href}
 
 # IndexNow - 通知搜索引擎内容更新
 # 详见 https://www.indexnow.org/

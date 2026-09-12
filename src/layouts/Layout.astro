@@ -118,6 +118,10 @@ const currentPath = Astro.url.pathname;
 const canonicalUrl = getCanonicalUrl(currentPath);
 // 头像必须走统一解析（avatar 可能是 src 相对路径，拼 URL 会 404）
 const authorAvatarUrl = await getSiteAvatarAbsoluteUrl();
+// 社交分享图兵底：文章页用封面，其余页面用站点头像，
+// 否则首页等页面完全没有 og:image，分享出去就是一条光秃秃的链接。
+const socialImageUrl = ogImageUrl || authorAvatarUrl;
+const socialImageAlt = `${siteConfig.title} - ${profileConfig.name}`;
 const siteStructuredData = getSiteStructuredData({ authorAvatarUrl });
 const breadcrumbStructuredData = getBreadcrumbStructuredData(currentPath);
 const routeMeta = resolveRouteMeta(currentPath);
@@ -251,7 +255,9 @@ const connectionHintOrigins = Array.from(
       property="og:description"
       content={description || siteConfig.description || pageTitle}
     />
-    {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
+    <meta property="og:locale" content={siteConfig.lang?.replace("_", "-") || "zh-CN"} />
+    {socialImageUrl && <meta property="og:image" content={socialImageUrl} />}
+    {socialImageUrl && <meta property="og:image:alt" content={socialImageAlt} />}
     {
       setOGTypeArticle ? (
         <meta property="og:type" content="article" />
@@ -266,9 +272,13 @@ const connectionHintOrigins = Array.from(
       name="twitter:description"
       content={description || siteConfig.description || pageTitle}
     />
-    <meta name="twitter:image" content={ogImageUrl || url("/favicon/favicon.ico")} />
+    <meta name="twitter:image" content={socialImageUrl || url("/favicon/favicon.ico")} />
+    <meta name="twitter:image:alt" content={socialImageAlt} />
 
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- 移动端浏览器 UI 配色：与设计系统的画布色保持一致 -->
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#111111" media="(prefers-color-scheme: dark)" />
     <meta name="generator" content={Astro.generator} />
     {
       favicons.map((favicon) => (

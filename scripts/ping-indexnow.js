@@ -51,7 +51,7 @@ function discoverIndexNowKey() {
 
 async function main() {
 	const sitemapUrl =
-		process.argv[2] || `${SITE_URL}/sitemap-index.xml`;
+		process.argv[2] || `${SITE_URL}/sitemap.xml`;
 
 	// 从环境变量或 public 目录中的 key 文件读取 IndexNow key
 	const indexnowKey = discoverIndexNowKey();
@@ -116,8 +116,10 @@ async function main() {
 			`[IndexNow] Submitted ${submitted}/${urls.length} URL(s) to Bing IndexNow`,
 		);
 	} catch (error) {
-		console.error("[IndexNow] Error: submission failed:", error.message);
-		process.exit(1);
+		// IndexNow is a best-effort notification: the sitemap it reads is fetched
+		// from the LIVE site, so a fresh build (before deploy) legitimately 404s.
+		// Never fail the build because a search-engine ping could not be sent.
+		console.warn(`[IndexNow] Warning: submission skipped: ${error.message}`);
 	}
 }
 

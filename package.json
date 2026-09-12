@@ -7,7 +7,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "check": "astro check",
-    "build": "node scripts/generate-icons.js && astro build && node scripts/build-pagefind.js && node scripts/ping-indexnow.js",
+    "build": "node scripts/generate-icons.js && astro build && node scripts/build-pagefind.js && node scripts/build-seo-files.js && node scripts/ping-indexnow.js",
     "build:edgeone": "node scripts/build-edgeone.js",
     "build:vercel": "cross-env DEPLOY_TARGET=vercel npm run build",
     "build:cloudflare": "cross-env DEPLOY_TARGET=cloudflare node scripts/generate-icons.js && cross-env DEPLOY_TARGET=cloudflare astro build && node scripts/build-pagefind.js && node scripts/ping-indexnow.js",
