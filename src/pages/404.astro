@@ -1,0 +1,60 @@
+---
+import { Icon } from "astro-icon/components";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+import SupabaseShell from "@/layouts/SupabaseShell.astro";
+import { url } from "@/utils/url-utils";
+---
+
+<SupabaseShell title={i18n(I18nKey.notFound)} description={i18n(I18nKey.notFoundDescription)}>
+    <meta slot="head" name="robots" content="noindex, nofollow" />
+
+    <div class="sb-404 sb-animate">
+        <!-- 404 大号数字 -->
+        <div class="sb-404__code sb-mono">{i18n(I18nKey.notFound)}</div>
+
+        <!-- 标题 -->
+        <h1 class="sb-display-lg" style="margin-bottom:12px;">
+            {i18n(I18nKey.notFoundTitle)}
+        </h1>
+
+        <!-- 描述 -->
+        <p class="sb-body-md sb-text-mute" style="max-width:44ch;margin:0 auto 32px;">
+            {i18n(I18nKey.notFoundDescription)}
+        </p>
+
+        <!-- 返回首页按钮 -->
+        <a href={url("/")} class="sb-btn sb-btn--primary">
+            <Icon name="material-symbols:home" style="font-size:16px;" />
+            {i18n(I18nKey.backToHome)}
+        </a>
+    </div>
+</SupabaseShell>
+
+<style>
+  .sb-404 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 56vh;
+    padding-block: 64px;
+  }
+
+  .sb-404__code {
+    font-size: 96px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -3px;
+    color: var(--sb-primary);
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 640px) {
+    .sb-404__code {
+      font-size: 64px;
+      letter-spacing: -2px;
+    }
+  }
+</style>

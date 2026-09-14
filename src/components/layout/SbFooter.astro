@@ -1,0 +1,109 @@
+---
+/**
+ * Supabase-style site footer.
+ *   - White canvas, hairline top border, muted caption type
+ *   - 4-column link grid (brand + up to 3 link groups) + legal row
+ */
+import { Icon } from "astro-icon/components";
+import { siteConfig } from "@/config";
+import { url } from "@/utils/url-utils";
+
+interface Props {
+	siteTitle?: string;
+}
+
+const { siteTitle = siteConfig.title || "LegspCpd Blog" } = Astro.props;
+const year = new Date().getFullYear();
+
+const columns: { title: string; links: { name: string; href: string; external?: boolean }[] }[] = [
+	{
+		title: "内容",
+		links: [
+			{ name: "主页", href: "/" },
+			{ name: "归档", href: "/archive/" },
+			{ name: "分类", href: "/archive/" },
+			{ name: "标签", href: "/archive/" },
+		],
+	},
+	{
+		title: "互动",
+		links: [
+			{ name: "留言板", href: "/guestbook/" },
+			{ name: "友链", href: "/friends/" },
+			{ name: "相册", href: "/gallery/" },
+			{ name: "番组计划", href: "/bangumi/" },
+		],
+	},
+	{
+		title: "关于",
+		links: [
+			{ name: "关于我", href: "/about/" },
+			{ name: "赞助", href: "/sponsor/" },
+			{ name: "RSS 订阅", href: "/rss.xml" },
+		],
+	},
+];
+
+// 站外资源（沿用原站点配置中的社交链接）
+const socials = [
+	{ name: "GitHub", href: "https://github.com/LegspCpd/Firefly", icon: "fa7-brands:github" },
+	{ name: "Gitee", href: "https://gitee.com/LegspCpd/Firefly", icon: "fa7-brands:gitee" },
+	{ name: "Discord", href: "https://discord.gg/legspcpd", icon: "fa7-brands:discord" },
+];
+---
+
+<footer class="sb-footer">
+  <div class="sb-container">
+    <div class="sb-footer__grid">
+      <!-- Brand column -->
+      <div>
+        <a href={url("/")} class="sb-footer__brand">
+          <Icon name="material-symbols:terminal" style="font-size:20px;color:var(--sb-primary)" />
+          {siteTitle}<span class="sb-nav__dot" aria-hidden="true"></span>
+        </a>
+        <p class="sb-caption" style="max-width:34ch;margin:0 0 18px;color:var(--sb-ink-mute);">
+          {siteConfig.description || "记录技术、日常与思考的个人博客。"}
+        </p>
+        <div style="display:flex;gap:8px;">
+          {
+            socials.map((s) => (
+              <a
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="sb-btn sb-btn--ghost sb-btn--sm"
+                aria-label={s.name}
+                title={s.name}
+              >
+                <Icon name={s.icon} style="font-size:16px;" />
+              </a>
+            ))
+          }
+        </div>
+      </div>
+
+      <!-- Link columns -->
+      {
+        columns.map((col) => (
+          <div>
+            <div class="sb-footer__col-title">{col.title}</div>
+            <nav class="sb-footer__links">
+              {col.links.map((link) => (
+                <a href={url(link.href)}>{link.name}</a>
+              ))}
+            </nav>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="sb-footer__legal">
+      <span>© {year} {siteTitle}. All rights reserved.</span>
+      <span>
+        由 <a class="sb-link" href="https://astro.build" target="_blank" rel="noopener noreferrer">Astro</a> 驱动 ·
+        <a class="sb-link" href="https://pages.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare Pages</a> /
+        <a class="sb-link" href="https://edgeone.ai/" target="_blank" rel="noopener noreferrer">EdgeOne Pages</a> 部署
+      </span>
+    </div>
+  </div>
+</footer>

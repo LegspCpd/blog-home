@@ -1,0 +1,6 @@
+﻿src\pages\friends.astro | bad=0 | cjk=77
+src\pages\guestbook.astro | bad=0 | cjk=35
+src\pages\sponsor.astro | bad=0 | cjk=68
+src\pages\bangumi.astro | bad=0 | cjk=363
+src\pages\gallery\index.astro | bad=0 | cjk=49
+src\pages\gallery\[album].astro | bad=0 | cjk=31

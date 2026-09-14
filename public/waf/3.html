@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>访问被阻止</title>
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: #00ff00;
+      font-family: monospace;
+      padding: 10px;
+    }
+    #terminal {
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .cursor {
+      display: inline-block;
+      width: 8px;
+      background: #00ff00;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      50% { background: transparent; }
+    }
+  </style>
+</head>
+<body>
+  <div id="terminal"></div>
+
+  <script>
+    const term = document.getElementById("terminal");
+
+    function print(text, delay = 20) {
+      return new Promise(resolve => {
+        let i = 0;
+        function type() {
+          if (i < text.length) {
+            term.textContent += text[i++];
+            setTimeout(type, delay);
+          } else {
+            resolve();
+          }
+        }
+        type();
+      });
+    }
+
+    async function run() {
+      const url = window.location.href;
+
+      await print(`$ curl ${url}\n\n`);
+
+      try {
+        const res = await fetch(url);
+        const text = await res.text();
+
+        await print(`${res.status} ${res.statusText} ${text}`);
+      } catch (err) {
+        await print("curl: (x) " + err.message);
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>

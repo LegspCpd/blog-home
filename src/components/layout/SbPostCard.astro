@@ -1,0 +1,189 @@
+---
+/**
+ * SbPostCard.astro
+ * ---------------------------------------------------------------------------
+ * Supabase-style post card for the centered grid.
+ *   - White surface, 1px hairline, 12px radius
+ *   - Flat, quiet chrome: title / meta / description / tags
+ *   - Emerald only appears as the hover accent and the pinned dot
+ */
+import type { CollectionEntry } from "astro:content";
+import { render } from "astro:content";
+import { Icon } from "astro-icon/components";
+import { formatDateToYYYYMMDD } from "@/utils/date-utils";
+import { getTagUrl } from "@/utils/url-utils";
+
+interface Props {
+	entry: CollectionEntry<"posts">;
+	title: string;
+	url: string;
+	published: Date;
+	updated?: Date;
+	tags: string[];
+	category: string | null;
+	description: string;
+	pinned?: boolean;
+	password?: boolean;
+	style?: string;
+}
+
+const {
+	entry,
+	title,
+	url,
+	published,
+	tags = [],
+	category,
+	description,
+	pinned,
+	password,
+	style,
+} = Astro.props;
+
+const { remarkPluginFrontmatter } = await render(entry);
+const descriptionText = description || remarkPluginFrontmatter.excerpt || "";
+const visibleTags = (tags || []).slice(0, 3);
+---
+
+<article class="sb-card sb-card--hover sb-post-card sb-animate" style={style}>
+  <a href={url} class="sb-post-card__link" aria-label={title}>
+    <!-- Meta row -->
+    <div class="sb-post-card__meta">
+      <time datetime={published.toISOString()} class="sb-mono">
+        {formatDateToYYYYMMDD(published)}
+      </time>
+      {
+        category && (
+          <>
+            <span class="sb-post-card__sep" aria-hidden="true">/</span>
+            <span>{category}</span>
+          </>
+        )
+      }
+      {
+        pinned && (
+          <span class="sb-pill sb-pill--green" style="margin-left:auto;">
+            <Icon name="material-symbols:push-pin" style="font-size:11px;" />
+            置顶
+          </span>
+        )
+      }
+      {
+        password && (
+          <Icon
+            name="material-symbols:lock-outline"
+            class="sb-post-card__lock"
+            style="margin-left:auto;"
+            title="需要密码"
+          />
+        )
+      }
+    </div>
+
+    <!-- Title -->
+    <h2 class="sb-post-card__title">{title}</h2>
+
+    <!-- Description -->
+    {descriptionText && <p class="sb-post-card__desc">{descriptionText}</p>}
+
+    <!-- Tags -->
+    {
+      visibleTags.length > 0 && (
+        <div class="sb-post-card__tags">
+          {visibleTags.map((tag) => (
+            <span class="sb-pill sb-pill--outline">#{tag.trim()}</span>
+          ))}
+        </div>
+      )
+    }
+
+    <!-- Read more -->
+    <span class="sb-post-card__more">
+      阅读全文
+      <Icon name="material-symbols:arrow-right-alt" style="font-size:16px;" />
+    </span>
+  </a>
+</article>
+
+<style>
+  .sb-post-card {
+    display: flex;
+    height: 100%;
+  }
+
+  .sb-post-card__link {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 24px;
+    text-decoration: none;
+    color: inherit;
+    gap: 12px;
+  }
+
+  .sb-post-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--sb-ink-mute-2);
+    min-height: 20px;
+  }
+
+  .sb-post-card__sep {
+    color: var(--sb-hairline-strong);
+  }
+
+  .sb-post-card__lock {
+    font-size: 15px;
+    color: var(--sb-ink-faint);
+  }
+
+  .sb-post-card__title {
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: -0.2px;
+    margin: 0;
+    color: var(--sb-ink);
+    transition: color 0.15s ease;
+  }
+
+  .sb-post-card:hover .sb-post-card__title {
+    color: var(--sb-primary-deep);
+  }
+
+  .sb-post-card__desc {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--sb-ink-mute);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex-grow: 1;
+  }
+
+  .sb-post-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .sb-post-card__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--sb-ink);
+    margin-top: auto;
+    padding-top: 4px;
+  }
+
+  .sb-post-card:hover .sb-post-card__more {
+    color: var(--sb-primary-deep);
+  }
+</style>

@@ -1,0 +1,601 @@
+---
+/**
+ * Supabase-styled blog post page.
+ * ---------------------------------------------------------------------------
+ * Preserves the Firefly content pipeline (markdown, KaTeX, TOC, comments,
+ * licensing, related posts, encrypted posts) while rendering it inside the
+ * Supabase design language:
+ *   - Centered reading column on white canvas
+ *   - Flat meta row (no icon chips), display-tier title
+ *   - Hairline-separated prev/next navigation
+ */
+import { render } from "astro:content";
+import * as path from "node:path";
+import Comment from "@components/comment/index.astro";
+import Markdown from "@components/common/Markdown.astro";
+import EncryptedPost from "@components/features/EncryptedPost.astro";
+import KatexManager from "@components/features/KatexManager.astro";
+import License from "@components/misc/License.astro";
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import SupabaseShell from "@layouts/SupabaseShell.astro";
+import { getRelatedPosts, getSortedPosts } from "@utils/content-utils";
+import {
+	getFileDirFromPath,
+	getPostUrlBySlug,
+	removeFileExtension,
+} from "@utils/url-utils";
+import { Icon } from "astro-icon/components";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import CoverImage from "@/components/common/CoverImage.astro";
+import SbPostCard from "@/components/layout/SbPostCard.astro";
+import SbToc from "@/components/layout/SbToc.astro";
+import SharePoster from "@/components/misc/SharePoster.svelte";
+import { coverImageConfig } from "@/config/coverImageConfig";
+import { licenseConfig } from "@/config/licenseConfig";
+import { profileConfig } from "@/config/profileConfig";
+import { siteConfig } from "@/config/siteConfig";
+import { sponsorConfig } from "@/config/sponsorConfig";
+import { formatDateToYYYYMMDD } from "@/utils/date-utils";
+import { getBlogPostStructuredData } from "@/lib/seo/json-ld";
+import { getApiUrlList, processCoverImageSync } from "@/utils/image-utils";
+import { url } from "@/utils/url-utils";
+
+export async function getStaticPaths() {
+	const blogEntries = await getSortedPosts();
+	return blogEntries.map((entry) => ({
+		params: { slug: removeFileExtension(entry.id) },
+		props: { entry },
+	}));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+const { remarkPluginFrontmatter } = await render(entry);
+
+const processedImage = processCoverImageSync(entry.data.image, entry.id);
+const apiUrls = getApiUrlList(entry.data.image, entry.id);
+
+let posterCoverUrl = processedImage;
+if (processedImage) {
+	const isLocal = !(
+		processedImage.startsWith("/") ||
+		processedImage.startsWith("http") ||
+		processedImage.startsWith("https") ||
+		processedImage.startsWith("data:")
+	);
+	if (isLocal) {
+		const basePath = getFileDirFromPath(entry.filePath || "");
+		const files = import.meta.glob<ImageMetadata>("../../**", {
+			import: "default",
+		});
+		const normalizedPath = path
+			.normalize(path.join("../../", basePath, processedImage))
+			.replace(/\\/g, "/");
+		const file = files[normalizedPath];
+		if (file) {
+			const img = await file();
+			posterCoverUrl = img.src;
+		}
+	}
+}
+
+let posterAvatarUrl: string | null = profileConfig.avatar || null;
+if (posterAvatarUrl) {
+	const isLocalAvatar = !(
+		posterAvatarUrl.startsWith("/") ||
+		posterAvatarUrl.startsWith("http") ||
+		posterAvatarUrl.startsWith("https") ||
+		posterAvatarUrl.startsWith("data:")
+	);
+	if (isLocalAvatar) {
+		const files = import.meta.glob<ImageMetadata>("../../**", {
+			import: "default",
+		});
+		const normalizedPath = path
+			.normalize(path.join("../../", posterAvatarUrl))
+			.replace(/\\/g, "/");
+		const file = files[normalizedPath];
+		if (file) {
+			const img = await file();
+			posterAvatarUrl = img.src;
+		}
+	}
+}
+
+dayjs.extend(utc);
+
+const jsonLdRaw = getBlogPostStructuredData({
+	title: entry.data.title,
+	description:
+		entry.data.description?.trim() ||
+		remarkPluginFrontmatter.excerpt?.trim() ||
+		entry.data.title,
+	publishedDate: formatDateToYYYYMMDD(entry.data.published),
+	updatedDate: entry.data.updated
+		? formatDateToYYYYMMDD(entry.data.updated)
+		: undefined,
+	slug: entry.id,
+	tags: entry.data.tags,
+	coverImage: processedImage || undefined,
+	authorName: profileConfig.name,
+	inLanguage: entry.data.lang
+		? entry.data.lang.replace("_", "-")
+		: siteConfig.lang.replace("_", "-"),
+});
+
+const relatedPosts = await getRelatedPosts(entry, 3);
+
+const postDescription = (
+	entry.data.description?.trim() ||
+	remarkPluginFrontmatter.excerpt?.trim() ||
+	entry.data.title
+).slice(0, 200);
+const postOgImage = processedImage || undefined;
+
+const hasToc = headings.filter((h) => h.depth > 1 && h.depth <= 3).length > 0;
+const showActionCard =
+	siteConfig.sharePoster ||
+	(sponsorConfig.showButtonInPost && siteConfig.pages.sponsor);
+---
+
+<SupabaseShell
+  contained={false}
+  title={entry.data.title}
+  description={postDescription}
+  lang={entry.data.lang}
+  setOGTypeArticle={true}
+  postSlug={entry.id}
+  ogImage={postOgImage}
+>
+  <KatexManager slot="head" />
+  <script is:inline slot="head" type="application/ld+json" set:html={jsonLdRaw} />
+
+  <div class="sb-post-layout sb-container">
+    <!-- ===== Article ===== -->
+    <article class="sb-article">
+      <!-- Breadcrumb -->
+      <nav class="sb-article__crumb" aria-label="面包屑">
+        <a href={url("/")}>主页</a>
+        <span aria-hidden="true">/</span>
+        <a href={url("/archive/")}>归档</a>
+        {
+          entry.data.category && (
+            <>
+              <span aria-hidden="true">/</span>
+              <span>{entry.data.category}</span>
+            </>
+          )
+        }
+      </nav>
+
+      <!-- Title block -->
+      <header class="sb-article__head">
+        <h1 class="sb-article__title sb-animate">{entry.data.title}</h1>
+
+        <div class="sb-article__meta">
+          <span class="sb-mono">{formatDateToYYYYMMDD(entry.data.published)}</span>
+          {
+            entry.data.updated && (
+              <>
+                <span class="sb-article__dot" aria-hidden="true" />
+                <span class="sb-mono">
+                  更新于 {formatDateToYYYYMMDD(entry.data.updated)}
+                </span>
+              </>
+            )
+          }
+          {
+            entry.data.category && (
+              <>
+                <span class="sb-article__dot" aria-hidden="true" />
+                <span>{entry.data.category}</span>
+              </>
+            )
+          }
+          <span class="sb-article__dot" aria-hidden="true" />
+          <span>
+            {remarkPluginFrontmatter.words} 字 · {remarkPluginFrontmatter.minutes} 分钟
+          </span>
+          {
+            entry.data.password && (
+              <>
+                <span class="sb-article__dot" aria-hidden="true" />
+                <span style="display:inline-flex;align-items:center;gap:4px;">
+                  <Icon
+                    name="material-symbols:lock-outline"
+                    style="font-size:14px;"
+                  />
+                  {i18n(I18nKey.postEncrypted)}
+                </span>
+              </>
+            )
+          }
+        </div>
+
+        {
+          entry.data.tags && entry.data.tags.length > 0 && (
+            <div class="sb-article__tags">
+              {entry.data.tags.map((tag) => (
+                <span class="sb-pill sb-pill--soft">#{tag.trim()}</span>
+              ))}
+            </div>
+          )
+        }
+      </header>
+
+      <!-- Cover -->
+      {
+        processedImage && coverImageConfig.enableInPost && (
+          <div class="sb-article__cover">
+            <CoverImage
+              id="post-cover"
+              src={processedImage}
+              basePath={getFileDirFromPath(entry.filePath || "")}
+              alt={`${entry.data.title} - ${siteConfig.title}`}
+              preview={false}
+              apiUrls={apiUrls}
+            />
+          </div>
+        )
+      }
+
+      <!-- Body -->
+      {
+        entry.data.password ? (
+          <EncryptedPost
+            password={entry.data.password}
+            slug={entry.id}
+            hint={entry.data.passwordHint}
+          >
+            <Markdown class="markdown-content sb-animate">
+              <Content />
+            </Markdown>
+          </EncryptedPost>
+        ) : (
+          <Markdown class="markdown-content sb-animate">
+            <Content />
+          </Markdown>
+        )
+      }
+
+      <!-- Tags footer -->
+      {
+        entry.data.tags && entry.data.tags.length > 0 && (
+          <div class="sb-article__tags sb-article__tags--foot">
+            {entry.data.tags.map((tag) => (
+              <a class="sb-pill sb-pill--outline" href={url("/archive/")}>
+                #{tag.trim()}
+              </a>
+            ))}
+          </div>
+        )
+      }
+
+      <!-- Action card -->
+      {
+        showActionCard && (
+          <div class="sb-card sb-action-card">
+            <div class="sb-action-card__text">
+              <div class="sb-heading-md">
+                {sponsorConfig.showButtonInPost && siteConfig.pages.sponsor
+                  ? i18n(I18nKey.sponsorButton)
+                  : i18n(I18nKey.shareOnSocial)}
+              </div>
+              <p class="sb-caption sb-text-mute" style="margin-top:4px;">
+                {sponsorConfig.showButtonInPost && siteConfig.pages.sponsor
+                  ? i18n(I18nKey.sponsorButtonText)
+                  : i18n(I18nKey.shareOnSocialDescription)}
+              </p>
+            </div>
+            <div class="sb-action-card__actions">
+              {
+                siteConfig.sharePoster && (
+                  <SharePoster
+                    client:visible
+                    title={entry.data.title}
+                    author={profileConfig.name}
+                    description={entry.data.description || entry.data.title}
+                    pubDate={formatDateToYYYYMMDD(entry.data.published)}
+                    coverImage={posterCoverUrl}
+                    url={Astro.url.href}
+                    siteTitle={siteConfig.title}
+                    avatar={posterAvatarUrl}
+                  />
+                )
+              }
+              {
+                sponsorConfig.showButtonInPost && siteConfig.pages.sponsor && (
+                  <a href={url("/sponsor/")} class="sb-btn sb-btn--primary">
+                    {i18n(I18nKey.sponsor)}
+                  </a>
+                )
+              }
+            </div>
+          </div>
+        )
+      }
+
+      <!-- License -->
+      {
+        licenseConfig.enable && (
+          <License
+            title={entry.data.title}
+            id={entry.id}
+            pubDate={entry.data.published}
+            author={entry.data.author}
+            sourceLink={entry.data.sourceLink}
+            licenseName={entry.data.licenseName}
+            licenseUrl={entry.data.licenseUrl}
+            class="license-container sb-animate"
+          />
+        )
+      }
+    </article>
+
+    <!-- ===== Side rail (TOC) ===== -->
+    {hasToc && <SbToc headings={headings} />}
+  </div>
+
+  <!-- Prev / Next -->
+  <div class="sb-container">
+    <nav class="sb-prevnext" aria-label="文章导航">
+      <a
+        href={entry.data.nextSlug
+          ? getPostUrlBySlug(entry.data.nextSlug)
+          : url("/")}
+        class="sb-card sb-card--hover sb-prevnext__item"
+      >
+        <span class="sb-prevnext__label">
+          <Icon name="material-symbols:arrow-back" style="font-size:15px;" />
+          上一篇
+        </span>
+        <span class="sb-prevnext__title">
+          {entry.data.nextTitle || i18n(I18nKey.home)}
+        </span>
+      </a>
+
+      <a
+        href={entry.data.prevSlug
+          ? getPostUrlBySlug(entry.data.prevSlug)
+          : url("/")}
+        class="sb-card sb-card--hover sb-prevnext__item sb-prevnext__item--next"
+      >
+        <span class="sb-prevnext__label">
+          下一篇
+          <Icon name="material-symbols:arrow-forward" style="font-size:15px;" />
+        </span>
+        <span class="sb-prevnext__title">
+          {entry.data.prevTitle || i18n(I18nKey.home)}
+        </span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- Related -->
+  {
+    relatedPosts.length > 0 && (
+      <section class="sb-section-sm">
+        <div class="sb-container">
+          <h2 class="sb-display-md" style="margin-bottom:24px;">
+            相关文章
+          </h2>
+          <div class="sb-related-grid">
+            {relatedPosts.map((post) => (
+              <SbPostCard
+                entry={post}
+                title={post.data.title}
+                url={getPostUrlBySlug(post.id)}
+                published={post.data.published}
+                updated={post.data.updated}
+                tags={post.data.tags}
+                category={post.data.category}
+                description={post.data.description}
+                pinned={post.data.pinned}
+                password={!!post.data.password}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- Comments -->
+  {
+    entry.data.comment && !entry.data.password && (
+      <div class="sb-container" style="padding-bottom:32px;">
+        <Comment post={entry} />
+      </div>
+    )
+  }
+</SupabaseShell>
+
+<style is:global>
+  .sb-post-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 48px;
+    align-items: start;
+    padding-top: 48px;
+  }
+
+  .sb-article {
+    min-width: 0;
+    max-width: 720px;
+  }
+
+  .sb-article__crumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--sb-ink-mute-2);
+    margin-bottom: 20px;
+  }
+
+  .sb-article__crumb a {
+    color: var(--sb-ink-mute);
+    text-decoration: none;
+  }
+
+  .sb-article__crumb a:hover {
+    color: var(--sb-ink);
+  }
+
+  .sb-article__head {
+    margin-bottom: 32px;
+  }
+
+  .sb-article__title {
+    font-size: 48px;
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -1.44px;
+    margin: 0 0 20px;
+    color: var(--sb-ink);
+  }
+
+  .sb-article__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--sb-ink-mute);
+    margin-bottom: 20px;
+  }
+
+  .sb-article__dot {
+    width: 3px;
+    height: 3px;
+    border-radius: var(--sb-radius-full);
+    background: var(--sb-hairline-strong);
+  }
+
+  .sb-article__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .sb-article__tags--foot {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--sb-hairline-cool);
+  }
+
+  .sb-article__cover {
+    margin-bottom: 32px;
+    border-radius: var(--sb-radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--sb-hairline);
+  }
+
+  .sb-action-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 20px 24px;
+    margin-top: 32px;
+    background: var(--sb-canvas-soft);
+  }
+
+  .sb-action-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .sb-prevnext {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .sb-prevnext__item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px;
+    text-decoration: none;
+    min-width: 0;
+  }
+
+  .sb-prevnext__item--next {
+    text-align: right;
+    align-items: flex-end;
+  }
+
+  .sb-prevnext__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--sb-ink-mute-2);
+  }
+
+  .sb-prevnext__title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--sb-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  .sb-prevnext__item:hover .sb-prevnext__title {
+    color: var(--sb-primary-deep);
+  }
+
+  .sb-related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  @media (max-width: 1199px) {
+    .sb-post-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .sb-toc-rail {
+      display: none;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .sb-article__title {
+      font-size: 36px;
+      letter-spacing: -0.72px;
+    }
+    .sb-related-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .sb-post-layout {
+      padding-top: 32px;
+      gap: 32px;
+    }
+    .sb-article__title {
+      font-size: 28px;
+      letter-spacing: -0.42px;
+    }
+    .sb-prevnext {
+      grid-template-columns: 1fr;
+    }
+    .sb-prevnext__item--next {
+      text-align: left;
+      align-items: flex-start;
+    }
+    .sb-related-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

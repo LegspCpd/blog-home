@@ -1,0 +1,358 @@
+/* ==========================================================================
+   Supabase Design Tokens
+   - Single emerald primary (#3ecf8e) as the only chromatic event
+   - White canvas marketing track with a calibrated grey ladder
+   - Near-black ink (#171717), never pure black
+   ========================================================================== */
+
+/* ===== 基础变量定义 ===== */
+:root
+  --radius-large: 0.75rem          /* {rounded.lg} 12px */
+  --radius-medium: 0.5rem          /* {rounded.md} 8px */
+  --radius-small: 0.375rem         /* {rounded.sm} 6px */
+  --radius-xs: 0.25rem             /* {rounded.xs} 4px */
+  --content-delay: 150ms
+
+  /* ===== Supabase 品牌色板 ===== */
+  --sb-primary: #3ecf8e
+  --sb-primary-deep: #24b47e
+  --sb-primary-soft: #4ade80
+  --sb-ink: #171717
+  --sb-ink-secondary: #212121
+  --sb-ink-mute: #707070
+  --sb-ink-mute-2: #9a9a9a
+  --sb-ink-faint: #b2b2b2
+  --sb-on-primary: #171717
+  --sb-canvas: #ffffff
+  --sb-canvas-soft: #fafafa
+  --sb-canvas-night: #1c1c1c
+  --sb-canvas-night-soft: #202020
+  --sb-hairline: #dfdfdf
+  --sb-hairline-strong: #c7c7c7
+  --sb-hairline-cool: #ededed
+  --sb-hairline-cool-2: #efefef
+  --sb-hairline-cool-3: #d4d4d4
+
+/* ===== 主题相关变量（浅色：白画布 Track） ===== */
+:root
+  --primary: var(--sb-primary)
+  --primary-deep: var(--sb-primary-deep)
+  --primary-soft: var(--sb-primary-soft)
+
+  --page-bg: var(--sb-canvas)
+  --card-bg: var(--sb-canvas)
+  --card-bg-transparent: unquote("rgb(255 255 255 / var(--card-transparent-opacity, 0.85))")
+
+  /* 按钮：emerald 填充 + 近黑文字（品牌标志性选择） */
+  --btn-content: var(--sb-ink)
+  --btn-regular-bg: var(--sb-primary)
+  --btn-regular-bg-hover: var(--sb-primary-deep)
+  --btn-regular-bg-active: var(--sb-primary-deep)
+
+  --btn-plain-bg-hover: var(--sb-canvas-soft)
+  --btn-plain-bg-active: var(--sb-hairline-cool)
+
+  --btn-card-bg-hover: var(--sb-canvas-soft)
+  --btn-card-bg-active: var(--sb-hairline-cool)
+
+  --enter-btn-bg: var(--sb-primary)
+  --enter-btn-bg-hover: var(--sb-primary-deep)
+  --enter-btn-bg-active: var(--sb-primary-deep)
+
+  --deep-text: var(--sb-ink)
+  --title-active: var(--sb-ink-mute)
+
+  --line-divider: var(--sb-hairline)
+  --line-color: var(--sb-hairline-cool)
+  --meta-divider: var(--sb-hairline-cool-3)
+  --content-meta: var(--sb-ink-mute)
+
+  --inline-code-bg: var(--sb-canvas-soft)
+  --inline-code-color: var(--sb-ink)
+  --selection-bg: rgba(62, 207, 142, 0.25)
+  --codeblock-bg: var(--sb-canvas-night)
+  --codeblock-topbar-bg: var(--sb-canvas-night-soft)
+
+  --license-block-bg: var(--sb-canvas-soft)
+
+  --link-underline: var(--sb-hairline-strong)
+  --link-hover: var(--sb-canvas-soft)
+  --link-active: var(--sb-hairline-cool)
+
+  --float-panel-bg: var(--sb-canvas)
+
+  --scrollbar-bg-light: rgba(0, 0, 0, 0.25)
+  --scrollbar-bg-hover-light: rgba(0, 0, 0, 0.4)
+  --scrollbar-bg-active-light: rgba(0, 0, 0, 0.5)
+
+  --scrollbar-bg-dark: rgba(255, 255, 255, 0.3)
+  --scrollbar-bg-hover-dark: rgba(255, 255, 255, 0.45)
+  --scrollbar-bg-active-dark: rgba(255, 255, 255, 0.6)
+
+  --scrollbar-bg: var(--scrollbar-bg-light)
+  --scrollbar-bg-hover: var(--scrollbar-bg-hover-light)
+  --scrollbar-bg-active: var(--scrollbar-bg-active-light)
+
+  --display-light-icon: 1
+  --display-dark-icon: 0
+
+  --admonitions-color-tip: var(--sb-primary-deep)
+  --admonitions-color-note: #054cff
+  --admonitions-color-important: #6b01c2
+  --admonitions-color-warning: #b8860b
+  --admonitions-color-caution: #e2005a
+
+  /* TOC相关变量 */
+  --toc-badge-bg: var(--sb-hairline-cool)
+  --toc-btn-hover: var(--sb-canvas-soft)
+  --toc-btn-active: var(--sb-hairline-cool)
+  --toc-width: calc((100vw - var(--page-width)) / 2 - 1rem)
+  --toc-item-active: var(--sb-ink)
+
+  /* 主题色选择条渐变（品牌不依赖渐变，保持克制） */
+  --color-selection-bar: linear-gradient(to right, #dfdfdf, #3ecf8e)
+
+/* 卡片风格跟随主题色相（Supabase 不使用色相跟随，保持中性白） */
+:root:not(.dark) body.card-follow-theme-hue
+  --card-bg: var(--sb-canvas)
+
+/* ===== 暗色主题变量（canvas-night 反色） ===== */
+:root.dark
+  --primary: var(--sb-primary)
+  --page-bg: var(--sb-canvas-night)
+  --card-bg: var(--sb-canvas-night-soft)
+  --card-bg-transparent: unquote("rgb(28 28 28 / var(--card-transparent-opacity, 0.85))")
+
+  --btn-content: var(--sb-on-primary)
+  --btn-regular-bg: var(--sb-primary)
+  --btn-regular-bg-hover: var(--sb-primary-deep)
+  --btn-regular-bg-active: var(--sb-primary-deep)
+
+  --btn-plain-bg-hover: var(--sb-canvas-night-soft)
+  --btn-plain-bg-active: #2a2a2a
+
+  --btn-card-bg-hover: #242424
+  --btn-card-bg-active: #2a2a2a
+
+  --line-divider: rgba(255, 255, 255, 0.12)
+  --line-color: rgba(255, 255, 255, 0.1)
+  --meta-divider: rgba(255, 255, 255, 0.2)
+  --content-meta: rgba(255, 255, 255, 0.65)
+
+  --selection-bg: rgba(62, 207, 142, 0.3)
+  --codeblock-bg: #141414
+  --codeblock-topbar-bg: #101010
+
+  --license-block-bg: #181818
+
+  --link-underline: rgba(255, 255, 255, 0.35)
+  --link-hover: #242424
+  --link-active: #2a2a2a
+
+  --float-panel-bg: var(--sb-canvas-night-soft)
+
+  --scrollbar-bg: var(--scrollbar-bg-dark)
+  --scrollbar-bg-hover: var(--scrollbar-bg-hover-dark)
+  --scrollbar-bg-active: var(--scrollbar-bg-active-dark)
+
+  --display-light-icon: 0
+  --display-dark-icon: 1
+
+  --admonitions-color-tip: var(--sb-primary)
+  --admonitions-color-note: #4d8bff
+  --admonitions-color-important: #a86bff
+  --admonitions-color-warning: #ffdb13
+  --admonitions-color-caution: #ff2201
+
+  /* TOC相关变量 - 暗色主题 */
+  --toc-badge-bg: #2a2a2a
+  --toc-btn-hover: #242424
+  --toc-btn-active: #2a2a2a
+  --toc-item-active: #ffffff
+
+  --deep-text: #ffffff
+  --title-active: var(--sb-ink-mute-2)
+  --inline-code-bg: #242424
+  --inline-code-color: #ffffff
+
+  /* 主题色选择条渐变 - 暗色主题 */
+  --color-selection-bar: linear-gradient(to right, #2a2a2a, #3ecf8e)
+
+/* ===== 响应式断点变量 ===== */
+:root
+  /* 断点定义 */
+  --breakpoint-xs: 320px
+  --breakpoint-sm: 480px
+  --breakpoint-md: 768px
+  --breakpoint-lg: 1024px
+  --breakpoint-xl: 1280px
+  --breakpoint-2xl: 1536px
+  
+  /* 容器宽度 */
+  --container-xs: 100%
+  --container-sm: 100%
+  --container-md: 100%
+  --container-lg: 1024px
+  --container-xl: 1280px
+  --container-2xl: 1536px
+
+/* ===== 动画变量 ===== */
+:root
+  /* 缓动函数 */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1)
+  --ease-decelerate: cubic-bezier(0.25, 0.46, 0.45, 0.94)
+  --ease-accelerate: cubic-bezier(0.55, 0.055, 0.675, 0.19)
+  --ease-sharp: cubic-bezier(0.4, 0, 0.6, 1)
+  
+  /* 动画时长 */
+  --duration-fast: 100ms
+  --duration-normal: 150ms
+  --duration-medium: 200ms
+  --duration-slow: 250ms
+  --duration-slower: 300ms
+  
+  /* 动画延迟 */
+  --delay-none: 0ms
+  --delay-short: 30ms
+  --delay-medium: 60ms
+  --delay-long: 90ms
+  --delay-longer: 120ms
+
+/* ===== 间距变量 ===== */
+:root
+  /* 基础间距 */
+  --spacing-xs: 0.25rem    /* 4px */
+  --spacing-sm: 0.5rem     /* 8px */
+  --spacing-md: 0.75rem    /* 12px */
+  --spacing-lg: 1rem       /* 16px */
+  --spacing-xl: 1.25rem    /* 20px */
+  --spacing-2xl: 1.5rem    /* 24px */
+  --spacing-3xl: 2rem      /* 32px */
+  --spacing-4xl: 2.5rem    /* 40px */
+  --spacing-5xl: 3rem      /* 48px */
+  
+  /* 组件间距 */
+  --widget-gap-mobile: var(--spacing-md)
+  --widget-gap-tablet: var(--spacing-lg)
+  --widget-gap-desktop: var(--spacing-xl)
+  
+  /* 侧边栏宽度 */
+  --sidebar-width-mobile: 100%
+  --sidebar-width-tablet: 280px
+  --sidebar-width-desktop: 320px
+
+/* ===== 阴影变量 ===== */
+:root
+  /* 基础阴影 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05)
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1)
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1)
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1)
+  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.25)
+  
+  /* 特殊阴影 */
+  --shadow-navbar: 0 4px 16px rgba(0, 0, 0, 0.1)
+  --shadow-navbar-dark: 0 4px 16px rgba(0, 0, 0, 0.2)
+  --shadow-button: 0 4px 12px rgba(0, 0, 0, 0.15)
+  --shadow-button-dark: 0 4px 12px rgba(255, 255, 255, 0.1)
+
+/* ===== 边框半径变量 ===== */
+:root
+  --radius-sm: 0.25rem     /* 4px */
+  --radius-md: 0.375rem    /* 6px */
+  --radius-lg: 0.5rem      /* 8px */
+  --radius-xl: 0.75rem     /* 12px */
+  --radius-2xl: 1rem       /* 16px */
+  --radius-3xl: 1.5rem     /* 24px */
+  --radius-full: 9999px
+
+/* ===== 透明度变量 ===== */
+:root
+  --opacity-0: 0
+  --opacity-5: 0.05
+  --opacity-10: 0.1
+  --opacity-20: 0.2
+  --opacity-25: 0.25
+  --opacity-30: 0.3
+  --opacity-40: 0.4
+  --opacity-50: 0.5
+  --opacity-55: 0.55
+  --opacity-60: 0.6
+  --opacity-70: 0.7
+  --opacity-75: 0.75
+  --opacity-80: 0.8
+  --opacity-85: 0.85
+  --opacity-90: 0.9
+  --opacity-95: 0.95
+  --opacity-100: 1
+
+/* ===== 模糊效果变量 ===== */
+:root
+  --blur-sm: 4px
+  --blur-md: 8px
+  --blur-lg: 12px
+  --blur-xl: 16px
+  --blur-2xl: 20px
+  --blur-3xl: 24px
+
+/* ===== 变换变量 ===== */
+:root
+  /* 平移 */
+  --translate-xs: 0.125rem   /* 2px */
+  --translate-sm: 0.25rem     /* 4px */
+  --translate-md: 0.5rem      /* 8px */
+  --translate-lg: 0.75rem     /* 12px */
+  --translate-xl: 1rem        /* 16px */
+  --translate-2xl: 1.5rem      /* 24px */
+  --translate-3xl: 2rem       /* 32px */
+  
+  /* 缩放 */
+  --scale-95: 0.95
+  --scale-98: 0.98
+  --scale-100: 1
+  --scale-105: 1.05
+  --scale-110: 1.1
+
+/* ===== 层级变量 ===== */
+:root
+  --z-dropdown: 1000
+  --z-sticky: 1020
+  --z-fixed: 1030
+  --z-modal-backdrop: 1040
+  --z-modal: 1050
+  --z-popover: 1060
+  --z-tooltip: 1070
+  --z-toast: 1080
+  --z-navbar: 20
+  --z-banner: 10
+  --z-content: 30
+
+/* ===== 性能优化变量 ===== */
+:root
+  /* GPU加速 */
+  --gpu-transform: translateZ(0)
+  --gpu-backface: hidden
+  
+  /* 动画性能 */
+  --animation-fill-mode: both
+  --animation-timing: var(--ease-standard)
+  --animation-duration: var(--duration-medium)
+
+/* ===== 响应式工具类 ===== */
+@media (max-width: 767px)
+  :root
+    --container-width: var(--container-sm)
+    --widget-gap: var(--widget-gap-mobile)
+    --sidebar-width: var(--sidebar-width-mobile)
+
+@media (min-width: 768px) and (max-width: 1279px)
+  :root
+    --container-width: var(--container-md)
+    --widget-gap: var(--widget-gap-tablet)
+    --sidebar-width: var(--sidebar-width-tablet)
+
+@media (min-width: 1280px)
+  :root
+    --container-width: var(--container-lg)
+    --widget-gap: var(--widget-gap-desktop)
+    --sidebar-width: var(--sidebar-width-desktop)

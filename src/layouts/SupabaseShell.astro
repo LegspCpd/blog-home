@@ -1,0 +1,86 @@
+---
+/**
+ * SupabaseShell.astro
+ * ---------------------------------------------------------------------------
+ * The Supabase design-language page shell.
+ *
+ * Unlike `MainGridLayout.astro` (Firefly's sidebar/banner grid), this shell
+ * implements DESIGN-supabase.md faithfully:
+ *   - Thin sticky white nav with a single emerald CTA
+ *   - Centered ~1280px container, no fixed sidebar
+ *   - White canvas committed; dark mode inverts to canvas-night
+ *   - Footer with 4-column link groups + legal row
+ *
+ * It delegates <head>, SEO, fonts and analytics to `Layout.astro`.
+ */
+import SbFooter from "@/components/layout/SbFooter.astro";
+import SbNavbar from "@/components/layout/SbNavbar.astro";
+import { siteConfig } from "@/config";
+import Layout from "./Layout.astro";
+import "@/styles/supabase.css";
+
+interface Props {
+	title?: string;
+	description?: string;
+	lang?: string;
+	setOGTypeArticle?: boolean;
+	postSlug?: string;
+	ogImage?: string;
+	/** Center the content inside the Supabase container (default true). */
+	contained?: boolean;
+	/** Extra class on <main>. */
+	mainClass?: string;
+}
+
+const {
+	title,
+	description,
+	lang,
+	setOGTypeArticle,
+	postSlug,
+	ogImage,
+	contained = true,
+	mainClass = "",
+} = Astro.props;
+
+const siteTitle = siteConfig.title || "LegspCpd Blog";
+---
+
+<Layout
+  title={title}
+  description={description}
+  lang={lang}
+  setOGTypeArticle={setOGTypeArticle}
+  postSlug={postSlug}
+  ogImage={ogImage}
+>
+  <div class="sb-app">
+    <SbNavbar />
+
+    <main class:list={["sb-main", mainClass]}>
+      {contained ? (
+        <div class="sb-container">
+          <slot />
+        </div>
+      ) : (
+        <slot />
+      )}
+    </main>
+
+    <SbFooter siteTitle={siteTitle} />
+  </div>
+</Layout>
+
+<style is:global>
+  .sb-app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--sb-canvas);
+  }
+
+  .sb-main {
+    flex: 1 0 auto;
+    padding-bottom: 64px;
+  }
+</style>

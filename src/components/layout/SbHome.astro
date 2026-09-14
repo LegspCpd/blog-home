@@ -1,0 +1,158 @@
+---
+/**
+ * SbHome.astro
+ * ---------------------------------------------------------------------------
+ * Supabase-style home page composition:
+ *   1. Hero — eyebrow pill, 64px display headline, muted subtitle, emerald CTA
+ *   2. Composited product-UI panes (the brand's decorative depth motif)
+ *   3. Centered post card grid
+ */
+import type { CollectionEntry } from "astro:content";
+import { Icon } from "astro-icon/components";
+import SbPostCard from "@/components/layout/SbPostCard.astro";
+import { siteConfig } from "@/config";
+import { getSortedPosts } from "@/utils/content-utils";
+import { formatDateToYYYYMMDD } from "@/utils/date-utils";
+import { getPostUrlBySlug, url } from "@/utils/url-utils";
+
+const allPosts = await getSortedPosts();
+const posts = allPosts.slice(0, 9) as CollectionEntry<"posts">[];
+const totalPosts = allPosts.length;
+const latest = allPosts[0];
+
+const siteTitle = siteConfig.title || "LegspCpd Blog";
+const subtitle = siteConfig.subtitle || siteConfig.description || "记录技术、生活与思考";
+
+let delay = 0;
+const interval = 60;
+---
+
+<!-- ============ HERO ============ -->
+<section class="sb-hero">
+  <div class="sb-container">
+    <div class="sb-hero__eyebrow sb-animate">
+      <span class="sb-pill sb-pill--green">New</span>
+      共 {totalPosts} 篇文章 · 持续更新
+    </div>
+
+    <h1 class="sb-display-xxl sb-hero__title sb-animate" style="animation-delay:60ms">
+      {subtitle}
+    </h1>
+
+    <p class="sb-body-lg sb-hero__subtitle sb-animate" style="animation-delay:120ms">
+      一个纯粹的个人空间，写下技术笔记、日常随想与那些值得被记住的瞬间。
+    </p>
+
+    <div class="sb-hero__actions sb-animate" style="animation-delay:180ms">
+      <a href="#posts" class="sb-btn sb-btn--primary">
+        开始阅读
+        <Icon name="material-symbols:arrow-right-alt" style="font-size:16px;" />
+      </a>
+      <a href={url("/archive/")} class="sb-btn sb-btn--outline">浏览归档</a>
+    </div>
+
+    <!-- Composited product-UI panes -->
+    <div class="sb-panes sb-animate" style="animation-delay:240ms">
+      <div class="sb-pane sb-pane--a">
+        <div class="sb-pane__bar">
+          <span class="sb-pane__dot"></span>
+          <span class="sb-pane__dot"></span>
+          <span class="sb-pane__dot"></span>
+          <span class="sb-pane__file">latest.md</span>
+        </div>
+        <div class="sb-pane__body">
+{
+  latest
+    ? `title: ${JSON.stringify(latest.data.title)}
+published: ${formatDateToYYYYMMDD(latest.data.published)}
+tags: [${(latest.data.tags || []).map((t) => JSON.stringify(t)).join(", ")}]`
+    : "// 还没有文章"
+}</div>
+      </div>
+
+      <div class="sb-pane sb-pane--b">
+        <div class="sb-pane__bar">
+          <span class="sb-pane__dot"></span>
+          <span class="sb-pane__dot"></span>
+          <span class="sb-pane__dot"></span>
+          <span class="sb-pane__file">deploy.sh</span>
+        </div>
+        <div class="sb-pane__body">
+{
+  `$ pnpm build
+✓ build complete
+
+$ wrangler pages deploy dist
+✓ Deployed to Cloudflare Pages`
+}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ POST GRID ============ -->
+<section class="sb-section-sm" id="posts">
+  <div class="sb-container">
+    <div class="sb-section-head">
+      <div>
+        <h2 class="sb-display-lg">最新文章</h2>
+        <p class="sb-body-md sb-text-mute" style="margin-top:8px;">
+          按发布时间倒序排列，置顶文章优先展示。
+        </p>
+      </div>
+      <a href={url("/archive/")} class="sb-btn sb-btn--outline sb-btn--sm">
+        查看全部
+        <Icon name="material-symbols:arrow-right-alt" style="font-size:15px;" />
+      </a>
+    </div>
+
+    <div class="sb-post-grid">
+      {
+        posts.map((entry) => (
+          <SbPostCard
+            entry={entry}
+            title={entry.data.title}
+            url={getPostUrlBySlug(entry.id)}
+            published={entry.data.published}
+            updated={entry.data.updated}
+            tags={entry.data.tags}
+            category={entry.data.category}
+            description={entry.data.description}
+            pinned={entry.data.pinned}
+            password={!!entry.data.password}
+            style={`animation-delay: ${delay++ * interval}ms;`}
+          />
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .sb-section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+
+  .sb-post-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  @media (max-width: 1023px) {
+    .sb-post-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .sb-post-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

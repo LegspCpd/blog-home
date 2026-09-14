@@ -1,0 +1,145 @@
+---
+/**
+ * Supabase-style table of contents rail.
+ *   - Sticky, quiet, hairline-bordered
+ *   - Active item marked with the emerald accent
+ */
+import type { MarkdownHeading } from "astro";
+
+interface Props {
+	headings: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+const toc = headings
+	.filter((h) => h.depth > 1 && h.depth <= 3)
+	// Strip the trailing anchor marker injected by rehype-autolink-headings.
+	.map((h) => ({ ...h, text: h.text.replace(/#+\s*$/, "").trim() }));
+
+// Server-render the nested list with the same data attributes the client
+// script below uses for scroll-spy.
+---
+
+{toc.length > 0 && (
+  <aside class="sb-toc-rail" aria-label="目录">
+    <div class="sb-toc">
+      <div class="sb-toc__title">本页目录</div>
+      <nav class="sb-toc__nav">
+        {toc.map((h) => (
+          <a
+            href={`#${h.slug}`}
+            class:list={["sb-toc__item", `sb-toc__item--h${h.depth}`]}
+            data-toc-link={h.slug}
+          >
+            {h.text}
+          </a>
+        ))}
+      </nav>
+    </div>
+  </aside>
+)}
+
+<style is:global>
+  .sb-toc-rail {
+    position: sticky;
+    top: calc(var(--sb-nav-height) + 32px);
+    align-self: start;
+    max-height: calc(100vh - var(--sb-nav-height) - 64px);
+    overflow-y: auto;
+  }
+
+  .sb-toc {
+    border-left: 1px solid var(--sb-hairline-cool);
+    padding-left: 16px;
+  }
+
+  .sb-toc__title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--sb-ink);
+    margin-bottom: 12px;
+    letter-spacing: 0;
+  }
+
+  .sb-toc__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .sb-toc__item {
+    display: block;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--sb-ink-mute-2);
+    text-decoration: none;
+    padding: 4px 0 4px 10px;
+    margin-left: -17px;
+    border-left: 2px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .sb-toc__item:hover {
+    color: var(--sb-ink);
+  }
+
+  .sb-toc__item--h3 {
+    padding-left: 22px;
+    font-size: 12.5px;
+  }
+
+  .sb-toc__item.is-active {
+    color: var(--sb-ink);
+    font-weight: 500;
+    border-left-color: var(--sb-primary);
+  }
+</style>
+
+<script>
+  // Scroll-spy: highlight the heading currently in view.
+  const links = Array.from(
+    document.querySelectorAll<HTMLAnchorElement>("[data-toc-link]"),
+  );
+  if (links.length > 0) {
+    const map = new Map<string, HTMLAnchorElement>();
+    for (const link of links) {
+      const id = link.getAttribute("data-toc-link");
+      if (id) map.set(id, link);
+    }
+
+    const targets = Array.from(map.keys())
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => Boolean(el));
+
+    if (targets.length > 0) {
+      let ticking = false;
+
+      const update = () => {
+        ticking = false;
+        const offset = 120;
+        let current: HTMLElement | null = null;
+
+        for (const target of targets) {
+          if (target.getBoundingClientRect().top <= offset) {
+            current = target;
+          } else {
+            break;
+          }
+        }
+
+        for (const link of map.values()) link.classList.remove("is-active");
+        if (current) map.get(current.id)?.classList.add("is-active");
+      };
+
+      const onScroll = () => {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(update);
+        }
+      };
+
+      update();
+      window.addEventListener("scroll", onScroll, { passive: true });
+    }
+  }
+</script>

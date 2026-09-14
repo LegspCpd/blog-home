@@ -1,0 +1,12 @@
+---
+import SbHome from "@/components/layout/SbHome.astro";
+import SupabaseShell from "@/layouts/SupabaseShell.astro";
+
+// The Supabase-style home is a single centered composition; pagination is
+// intentionally dropped in this first pass in favour of the card grid +
+// "view all" link into /archive/.
+---
+
+<SupabaseShell contained={false} title={undefined}>
+  <SbHome />
+</SupabaseShell>

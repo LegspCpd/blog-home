@@ -1,0 +1,26 @@
+---
+interface Props {
+	clientId: string;
+}
+
+const { clientId } = Astro.props;
+---
+
+<!-- Google AdSense -->
+<link
+  rel="preconnect"
+  href="https://pagead2.googlesyndication.com"
+  crossorigin="anonymous"
+/>
+<link
+  rel="preconnect"
+  href="https://googleads.g.doubleclick.net"
+  crossorigin="anonymous"
+/>
+<script
+  is:inline
+  data-swup-ignore-script
+  async
+  src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${clientId}`}
+  crossorigin="anonymous"
+></script>

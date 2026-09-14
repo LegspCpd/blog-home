@@ -1,0 +1,85 @@
+﻿/**
+ * Supabase 风格导航栏
+ *
+ * 设计约束（见 DESIGN-supabase.md）：
+ * - 白画布承诺：导航栏为纯白表面，不使用毛玻璃 / 大气渐变
+ * - 仅以 1px hairline 作为分隔，靠留白建立层级
+ * - 品牌方形化圆角，标题使用 weight 500 + 负字距
+ * - 仅 emerald 主色作为填充 CTA，其余全部走中性灰阶梯
+ */
+
+@reference "tailwindcss";
+
+@utility navbar-surface-transition {
+  transition:
+    background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+ * 基础导航栏样式（白画布 + hairline 底边）
+ * 适用: 所有模式，所有设备
+ * ============================================ */
+#navbar>div {
+    background-color: var(--card-bg);
+    border: 1px solid transparent;
+    border-bottom-color: var(--sb-hairline);
+    border-radius: 0;
+    @apply navbar-surface-transition;
+}
+
+/* 滚动后：保持 1px hairline + 极轻阴影，不引入大气渐变 */
+#navbar.navbar-sticky-shadow>div {
+    border-bottom-color: var(--sb-hairline) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+:root.dark #navbar.navbar-sticky-shadow>div {
+    border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+    #navbar>div,
+    #navbar.navbar-sticky-shadow>div {
+        transition: none !important;
+    }
+}
+
+/* ============================================
+ * 壁纸模式已关闭（backgroundWallpaper.mode = "none"）
+ * 以下为兼容兜底：即便切换到 wallaper 模式也强制回落为白画布，
+ * 避免出现与品牌不符的玻璃态导航栏。
+ * ============================================ */
+#wallpaper-wrapper~* #navbar>div,
+body:has(#wallpaper-wrapper) #navbar>div {
+    backdrop-filter: none !important;
+    background: var(--card-bg) !important;
+    border-bottom: 1px solid var(--sb-hairline) !important;
+    border-radius: 0 !important;
+}
+
+/* 下拉菜单 / 浮动面板：纯白表面 + 1px hairline（替代半透明玻璃） */
+#wallpaper-wrapper~* .dropdown-content,
+#wallpaper-wrapper~* .float-panel,
+body:has(#wallpaper-wrapper) .dropdown-content,
+body:has(#wallpaper-wrapper) .float-panel,
+body.wallpaper-transparent .dropdown-content,
+body.wallpaper-transparent .float-panel {
+    background: var(--sb-canvas) !important;
+    box-shadow: var(--shadow-md) !important;
+    border: 1px solid var(--sb-hairline) !important;
+}
+
+:root.dark #wallpaper-wrapper~* .dropdown-content,
+:root.dark #wallpaper-wrapper~* .float-panel,
+:root.dark body:has(#wallpaper-wrapper) .dropdown-content,
+:root.dark body:has(#wallpaper-wrapper) .float-panel,
+:root.dark body.wallpaper-transparent .dropdown-content,
+:root.dark body.wallpaper-transparent .float-panel {
+    background: var(--sb-canvas-night-soft) !important;
+    box-shadow: var(--shadow-md) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}

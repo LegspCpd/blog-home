@@ -1,0 +1,48 @@
+---
+/**
+ * Supabase-style page header for interior pages.
+ *   - Centered display-tier title, muted subtitle
+ *   - Optional right-aligned action slot
+ */
+interface Props {
+	title: string;
+	subtitle?: string;
+	eyebrow?: string;
+}
+
+const { title, subtitle, eyebrow } = Astro.props;
+---
+
+<header class="sb-page-head">
+  {
+    eyebrow && (
+      <div class="sb-pill sb-pill--soft" style="margin-bottom:16px;">
+        {eyebrow}
+      </div>
+    )
+  }
+  <h1 class="sb-display-xl">{title}</h1>
+  {subtitle && <p class="sb-body-lg sb-page-head__sub">{subtitle}</p>}
+  <slot />
+</header>
+
+<style>
+  .sb-page-head {
+    padding-block: 56px 40px;
+    border-bottom: 1px solid var(--sb-hairline-cool);
+    margin-bottom: 40px;
+  }
+
+  .sb-page-head__sub {
+    color: var(--sb-ink-mute);
+    margin-top: 16px;
+    max-width: 640px;
+  }
+
+  @media (max-width: 767px) {
+    .sb-page-head {
+      padding-block: 32px 28px;
+      margin-bottom: 28px;
+    }
+  }
+</style>
