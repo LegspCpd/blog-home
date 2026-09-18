@@ -48,3 +48,6 @@ export { sidebarLayoutConfig } from "./sidebarConfig"; // 侧边栏布局配置
 // 核心配置
 export { siteConfig } from "./siteConfig"; // 站点基础配置
 export { sponsorConfig } from "./sponsorConfig"; // 赞助配置
+// 远程合并引入的页面级配置（projects/privacy/posts 索引页会从 @/config 引用）
+export { pagesConfig } from "./pagesConfig"; // 页面配置
+export type { PagesConfig } from "./pagesConfig";
