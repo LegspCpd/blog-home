@@ -62,7 +62,7 @@ const pageNumbers = generatePageNumbers(currentPage, totalPages);
 
 {totalPages > 1 && (
   <div class="responsive-pagination flex justify-center items-center mt-8" data-pagination-section={sectionId}>
-    <!-- 移动端简化版分页 -->
+    {/* 移动端简化版分页 */}
     <div class="mobile-pagination items-center gap-3">
       <button
         type="button"
@@ -75,7 +75,7 @@ const pageNumbers = generatePageNumbers(currentPage, totalPages);
         <Icon name="material-symbols:chevron-left-rounded" class="text-[1.75rem]" />
       </button>
 
-      <!-- 移动端页码信息 -->
+      {/* 移动端页码信息 */}
       <div class="bg-(--card-bg) flex items-center rounded-lg px-4 h-11 gap-1.5">
         <span class="mobile-current-page text-base font-bold text-(--primary)">{currentPage}</span>
         <span class="text-sm text-neutral-500 dark:text-neutral-500">/</span>
@@ -94,7 +94,7 @@ const pageNumbers = generatePageNumbers(currentPage, totalPages);
       </button>
     </div>
 
-    <!-- 桌面端完整版分页 -->
+    {/* 桌面端完整版分页 */}
     <div class="desktop-pagination items-center gap-3">
       <button
         type="button"

@@ -33,6 +33,10 @@ yarn.lock
 .idea
 *.iml
 .claude
+.workbuddy/
+
+# logs
+*.log
 
 # docs
 Firefly-docs/

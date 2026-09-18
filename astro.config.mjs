@@ -1,3 +1,4 @@
+import { unified } from "@astrojs/markdown-remark";
 import sitemap from "@astrojs/sitemap";
 import svelte from "@astrojs/svelte";
 import tailwindcss from "@tailwindcss/vite";
@@ -113,12 +114,10 @@ export default defineConfig({
       layout: "constrained",
 	},
 
-  experimental: {
-      // Rust 编译器以提升构建性能（实验性），部分平台可能会导致构建失败，可以根据需要启用或禁用
-      rustCompiler: false,
-      // 队列渲染以优化性能（实验性）
-      queuedRendering: { enabled: true },
-	},
+  // 空白处理：Astro 7 把 compressHTML 的默认值从 true 改成了 'jsx'（按 JSX 规则剥离
+  // 内联元素之间的空白）。本主题大量使用行内元素排版，这里显式保留 Astro 6 的
+  // HTML 感知压缩行为，避免文字与图标之间的空格丢失。
+  compressHTML: true,
 
   integrations: [
       swup({
@@ -320,58 +319,66 @@ export default defineConfig({
 	],
 
   markdown: {
-      remarkPlugins: [
-          remarkMath,
-          remarkReadingTime,
-          remarkImageGrid,
-          remarkExcerpt,
-          remarkDirective,
-          remarkSectionize,
-          parseDirectiveNode,
-          remarkMermaid,
-      ],
-      rehypePlugins: [
-          [rehypeKatex, { katex }],
-          [rehypeCallouts, { theme: siteConfig.rehypeCallouts.theme }],
-          rehypeSlug,
-          rehypeMermaid,
-          rehypeFigure,
-          rehypeHeadingLevel,
-          rehypeImageAlt,
-          [rehypeExternalLinks, { siteUrl: siteConfig.site_url }],
-          [rehypeEmailProtection, { method: "base64" }], // 邮箱保护插件，支持 'base64' 或 'rot13'
-          [
-              rehypeComponents,
-              {
-                  components: {
-                      github: GithubCardComponent,
-                  },
-              },
+      // Astro 7 起，Markdown/MDX 默认交给 Rust 版 Sätteri 处理器渲染，它**不会**执行
+      // remark / rehype 插件。本项目重度依赖 unified 生态（KaTeX 数学公式、Mermaid、
+      // callouts、directive、figure、外链处理、邮箱保护、GitHub 卡片、阅读时长…），
+      // 因此显式切回 unified() 管线，保证现有 Markdown 输出与 src/config 配置完全不变。
+      // 插件列表按 Astro 7 的新写法直接传给 unified()：
+      // 顶层 markdown.remarkPlugins / markdown.rehypePlugins 已废弃。
+      processor: unified({
+          remarkPlugins: [
+              remarkMath,
+              remarkReadingTime,
+              remarkImageGrid,
+              remarkExcerpt,
+              remarkDirective,
+              remarkSectionize,
+              parseDirectiveNode,
+              remarkMermaid,
           ],
-          [
-              rehypeAutolinkHeadings,
-              {
-                  behavior: "append",
-                  properties: {
-                      className: ["anchor"],
-                  },
-                  content: {
-                      type: "element",
-                      tagName: "span",
-                      properties: {
-                          className: ["anchor-icon"],
-                          "data-pagefind-ignore": true,
+          rehypePlugins: [
+              [rehypeKatex, { katex }],
+              [rehypeCallouts, { theme: siteConfig.rehypeCallouts.theme }],
+              rehypeSlug,
+              rehypeMermaid,
+              rehypeFigure,
+              rehypeHeadingLevel,
+              rehypeImageAlt,
+              [rehypeExternalLinks, { siteUrl: siteConfig.site_url }],
+              [rehypeEmailProtection, { method: "base64" }], // 邮箱保护插件，支持 'base64' 或 'rot13'
+              [
+                  rehypeComponents,
+                  {
+                      components: {
+                          github: GithubCardComponent,
                       },
-                      children: [
-                          {
-                              type: "text",
-                              value: "#",
-                          },
-                      ],
                   },
-              },
+              ],
+              [
+                  rehypeAutolinkHeadings,
+                  {
+                      behavior: "append",
+                      properties: {
+                          className: ["anchor"],
+                      },
+                      content: {
+                          type: "element",
+                          tagName: "span",
+                          properties: {
+                              className: ["anchor-icon"],
+                              "data-pagefind-ignore": true,
+                          },
+                          children: [
+                              {
+                                  type: "text",
+                                  value: "#",
+                              },
+                          ],
+                      },
+                  },
+              ],
           ],
-      ],
+      }),
 	},
 
   vite: {
@@ -387,13 +394,12 @@ export default defineConfig({
           },
       },
       build: {
-          minify: "esbuild",
-          esbuildOptions: {
-              minify: true,
-              // 移除 console.log 和 debugger
-              drop: ["console", "debugger"],
-          },
-          rollupOptions: {
+          // Vite 8 起 JS 压缩默认走 Oxc（Rolldown 工具链），不再需要显式指定 esbuild
+          minify: true,
+          // 说明：原配置里的 build.esbuildOptions 并不是合法的 Vite 选项（Vite 只有
+          // 顶层 esbuild 和 optimizeDeps.esbuildOptions），其中的 drop 实际从未生效。
+          // Vite 8 已移除 esbuild 压缩器，这里不再保留该无效配置。
+          rolldownOptions: {
               onwarn(warning, warn) {
                   // temporarily suppress this warning
                   if (
@@ -407,6 +413,9 @@ export default defineConfig({
           },
           // CSS 优化
           cssCodeSplit: true,
+          // 保留 esbuild 压缩 CSS：Vite 8 默认换成 Lightning CSS，输出与本主题现有
+          // 样式存在细微差异。esbuild 仍可用（已废弃但受支持），确保 Supabase 主题
+          // 的 CSS 产物与升级前完全一致。
           cssMinify: "esbuild",
           // 提高内联资源阈值，减少小文件请求
           assetsInlineLimit: 8192,
