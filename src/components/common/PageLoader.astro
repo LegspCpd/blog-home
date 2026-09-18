@@ -1,0 +1,127 @@
+---
+/**
+ * PageLoader — 页面 / 路由加载指示器
+ *
+ * 形状：微软账号登录那种「平滑扫过的圆环」（底圈细线 + 主色圆弧，
+ *       圆弧一边转一边伸缩），不是老式那种粗条进度。
+ *
+ * 挂载位置：Layout.astro 的 <body> 里、<slot /> 之外 ——
+ *   1) 不属于 #swup-container，路由切换时不会被替换，动画不会中断；
+ *   2) 每个页面都存在，首屏和后续跳转都能用同一个节点。
+ *
+ * 交互契约：pointer-events: none —— 遮罩只做视觉提示，绝不拦截点击。
+ * 配置：src/config/loadingConfig.ts 的 pageLoader
+ */
+import { loadingConfig } from "@/config/loadingConfig";
+
+const cfg = loadingConfig.pageLoader;
+
+const loaderStyle = [
+	`--su-loader-opacity: ${cfg.overlayOpacity}`,
+	`--su-loader-blur: ${cfg.overlayBlurPx}px`,
+	`--su-loader-size: ${cfg.size}px`,
+	`--su-loader-stroke: ${cfg.strokeWidth}`,
+	`--su-loader-color: ${cfg.color}`,
+].join("; ");
+---
+
+{
+  cfg.enable && (
+    <div
+      id="su-page-loader"
+      role="status"
+      aria-live="polite"
+      aria-hidden="true"
+      aria-label={cfg.label || "加载中"}
+      style={loaderStyle}
+    >
+      <svg class="su-loader-ring" viewBox="0 0 50 50" aria-hidden="true" focusable="false">
+        <circle class="su-loader-track" cx="25" cy="25" r="20" />
+        <circle class="su-loader-arc" cx="25" cy="25" r="20" />
+      </svg>
+      {cfg.label && <p class="su-loader-label">{cfg.label}</p>}
+    </div>
+  )
+}
+
+<script>
+	import { loadingConfig } from "@/config/loadingConfig";
+
+	const cfg = loadingConfig.pageLoader;
+
+	if (cfg.enable) {
+		const el = document.getElementById("su-page-loader");
+
+		if (el) {
+			let shownAt = 0;
+			let delayTimer = 0;
+			let hideTimer = 0;
+
+			const setActive = (active: boolean) => {
+				el.classList.toggle("is-active", active);
+				el.setAttribute("aria-hidden", active ? "false" : "true");
+			};
+
+			const hide = () => {
+				clearTimeout(delayTimer);
+				clearTimeout(hideTimer);
+
+				// 已经显示过 → 至少停留 minVisibleMs，避免「闪一下就没了」
+				const elapsed = shownAt ? Date.now() - shownAt : 0;
+				const remaining = shownAt ? Math.max(0, cfg.minVisibleMs - elapsed) : 0;
+				shownAt = 0;
+
+				if (remaining > 0) {
+					hideTimer = window.setTimeout(() => setActive(false), remaining);
+				} else {
+					setActive(false);
+				}
+			};
+
+			/** 延迟 delayMs 后才出现；期间如果已经 hide() 掉，就永远不会出现 */
+			const showAfter = (delayMs: number) => {
+				clearTimeout(delayTimer);
+				clearTimeout(hideTimer);
+
+				delayTimer = window.setTimeout(() => {
+					if (el.classList.contains("is-active")) return;
+
+					shownAt = Date.now();
+					setActive(true);
+
+					// 安全兜底：任何异常情况下遮罩都不会一直挂着
+					hideTimer = window.setTimeout(hide, cfg.maxVisibleMs);
+				}, delayMs);
+			};
+
+			// ---------- 首屏整页加载 ----------
+			// 只在「文档还没解析完」时才算加载中：DOMContentLoaded 一到位就收起。
+			// 不用 window.load —— 它要等所有第三方资源（广告、统计）加载完，
+			// 那些慢脚本会把遮罩挂在页面上好几秒，反而拖慢体感。
+			if (cfg.showOnFirstLoad && document.readyState === "loading") {
+				showAfter(cfg.initialDelayMs);
+				document.addEventListener("DOMContentLoaded", hide, { once: true });
+				window.addEventListener("load", hide, { once: true });
+			}
+
+			// ---------- 站内 SPA 跳转 ----------
+			const bindSwup = () => {
+				const swup = (window as unknown as { swup?: { hooks?: { on: (e: string, cb: () => void) => void } } })
+					.swup;
+				if (!swup?.hooks) return;
+
+				swup.hooks.on("visit:start", () => showAfter(cfg.transitionDelayMs));
+				swup.hooks.on("visit:end", hide);
+			};
+
+			if ((window as unknown as { swup?: unknown }).swup) {
+				bindSwup();
+			} else {
+				document.addEventListener("swup:enable", bindSwup, { once: true });
+			}
+
+			// Astro 的页面加载事件（swup 换页后也会触发）：兜底收起
+			document.addEventListener("astro:page-load", hide);
+		}
+	}
+</script>

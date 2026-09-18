@@ -1,0 +1,27 @@
+[package]
+name = "end-cli"
+version = "0.2.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+end-io = { path = "../end_io" }
+end-model = { path = "../end_model" }
+end-opt = { path = "../end_opt" }
+end-report = { path = "../end_report" }
+generativity = { workspace = true }
+toml = { workspace = true }
+
+[dev-dependencies]
+assert_cmd = "2"
+tempfile = "3"
+
+[lints.rust]
+unsafe_code = "warn"
+
+[lints.clippy]
+indexing_slicing = "warn"
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"

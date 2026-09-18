@@ -1,0 +1,39 @@
+---
+/**
+ * 侧栏数据桥：把导航数据从 Astro 传给 Svelte 组件
+ */
+import AppSidebarNav from "@components/svelte/AppSidebar.svelte";
+import { defaultNavItems, resolveIcon, searchNavItem } from "@/config/sidebarNav";
+import { getSiteAvatar } from "@utils/site-avatar";
+
+interface Props {
+	items?: Array<{ title: string; href: string; icon: string }>;
+}
+
+const { items = defaultNavItems } = Astro.props;
+
+/** 品牌头像：走统一解析（src 相对路径也能得到可用 URL） */
+const brandAvatar = (await getSiteAvatar()).src;
+
+const navItems = items.map((item) => ({
+	title: item.title,
+	href: item.href,
+	icon: resolveIcon(item.icon),
+}));
+
+const searchItem = {
+	title: searchNavItem.title,
+	href: searchNavItem.href,
+	icon: resolveIcon(searchNavItem.icon),
+};
+
+/**
+ * 折叠状态持久化：shadcn 的 Sidebar.Provider 只负责「写」cookie，
+ * 初始化时需要由使用方读取。这里在 SSR 阶段读取，
+ * 保证首屏就是用户上次选择的状态（不会先展开再收起）。
+ */
+const sidebarCookie = Astro.cookies.get("sidebar_state");
+const defaultOpen = sidebarCookie ? sidebarCookie.value !== "false" : true;
+---
+
+<AppSidebarNav {navItems} {searchItem} {defaultOpen} {brandAvatar} client:load />

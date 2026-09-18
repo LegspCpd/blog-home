@@ -1,0 +1,27 @@
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("Catalog load failed")]
+    Catalog(#[source] end_io::Error),
+
+    #[error("Aic parse failed")]
+    Aic(#[source] end_io::Error),
+
+    #[error("Optimization failed")]
+    Optimize(#[source] end_opt::Error),
+
+    #[error("Missing logistics node {node:?} for item {item:?}")]
+    MissingLogisticsNode { item: u32, node: u32 },
+
+    #[error("Unknown lang `{value}` (expected `zh` or `en`)")]
+    UnknownLang { value: Box<str> },
+
+    #[error("Null pointer for argument `{name}`")]
+    NullPointer { name: &'static str },
+
+    #[error("Argument `{name}` is not valid UTF-8")]
+    InvalidUtf8 { name: &'static str },
+}
+
+pub type Result<T> = std::result::Result<T, Error>;

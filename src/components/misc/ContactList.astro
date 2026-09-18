@@ -1,0 +1,184 @@
+---
+/**
+ * 联系方式列表（可复用、可无限扩展）
+ *
+ * 设计要点：
+ * - 纵向列表 + 细分隔线，项数与内容长度都不写死，加多少条都自然容纳
+ * - 每项固定「图标 + 名称 + 链接」三段式，名称永远显示（便于识别）
+ * - 全部使用 --su-* 令牌，符合 DESIGN-supabase.md（细边框、克制、无阴影）
+ *
+ * 用法：
+ *   <ContactList links={profileConfig.links} title="联系" />
+ */
+import { Icon } from "astro-icon/components";
+
+interface LinkItem {
+	name: string;
+	icon?: string;
+	url: string;
+	/** 兼容旧配置字段；本布局下名称始终显示，该字段只影响是否额外显示地址 */
+	showName?: boolean;
+}
+
+interface Props {
+	links?: LinkItem[];
+	title?: string;
+	/** 是否显示地址行（默认显示） */
+	showUrl?: boolean;
+}
+
+const { links = [], title = "联系", showUrl = true } = Astro.props;
+
+const isExternal = (href: string) => /^https?:\/\//.test(href);
+
+/** 把 mailto:/https:// 前缀与结尾斜杠去掉，让地址更短更好读 */
+const prettyUrl = (href: string) =>
+	href
+		.replace(/^mailto:/i, "")
+		.replace(/^https?:\/\//i, "")
+		.replace(/\/+$/, "");
+---
+
+{
+	links.length > 0 && (
+		<section class="su-contact">
+			<h2 class="su-contact-title">{title}</h2>
+			<ul class="su-contact-list">
+				{links.map((link) => (
+					<li>
+						<a
+							class="su-contact-item"
+							href={link.url}
+							target={isExternal(link.url) ? "_blank" : undefined}
+							rel={isExternal(link.url) ? "noopener noreferrer" : undefined}
+						>
+							<span class="su-contact-icon">
+								<Icon
+									name={link.icon || "material-symbols:link"}
+									width="18"
+									height="18"
+								/>
+							</span>
+							<span class="su-contact-body">
+								<span class="su-contact-name">{link.name}</span>
+								{showUrl && (
+									<span class="su-contact-url">{prettyUrl(link.url)}</span>
+								)}
+							</span>
+							{isExternal(link.url) && (
+								<Icon
+									name="material-symbols:arrow-outward"
+									width="14"
+									height="14"
+									class="su-contact-arrow"
+								/>
+							)}
+						</a>
+					</li>
+				))}
+			</ul>
+		</section>
+	)
+}
+
+<style>
+	.su-contact {
+		margin-top: 56px;
+	}
+
+	.su-contact-title {
+		margin: 0 0 12px;
+		font-size: 13px;
+		font-weight: 500;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--su-muted-foreground);
+	}
+
+	.su-contact-list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		border-top: 1px solid var(--su-border);
+	}
+
+	.su-contact-list > li + li {
+		border-top: 1px solid var(--su-border);
+	}
+
+	.su-contact-item {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		padding: 14px 12px;
+		margin-inline: -12px;
+		border-radius: 6px;
+		text-decoration: none;
+		transition: background-color 0.15s ease;
+	}
+
+	.su-contact-item:hover {
+		background-color: var(--su-accent);
+	}
+
+	.su-contact-icon {
+		display: flex;
+		flex: none;
+		align-items: center;
+		justify-content: center;
+		width: 36px;
+		height: 36px;
+		border: 1px solid var(--su-border);
+		border-radius: 8px;
+		color: var(--su-muted-foreground);
+		transition:
+			border-color 0.15s ease,
+			color 0.15s ease;
+	}
+
+	.su-contact-item:hover .su-contact-icon {
+		border-color: var(--su-muted-foreground);
+		color: var(--su-foreground);
+	}
+
+	.su-contact-body {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+	}
+
+	.su-contact-name {
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 1.4;
+		color: var(--su-foreground);
+		transition: color 0.15s ease;
+	}
+
+	.su-contact-item:hover .su-contact-name {
+		color: var(--su-primary);
+	}
+
+	.su-contact-url {
+		overflow: hidden;
+		font-family: var(--font-mono-supabase);
+		font-size: 13px;
+		line-height: 1.5;
+		color: var(--su-muted-foreground);
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.su-contact-arrow {
+		flex: none;
+		margin-left: auto;
+		color: var(--su-ink-faint);
+		opacity: 0;
+		transition: opacity 0.15s ease;
+	}
+
+	.su-contact-item:hover .su-contact-arrow {
+		opacity: 1;
+	}
+</style>

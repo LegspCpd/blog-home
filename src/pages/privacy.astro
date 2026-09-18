@@ -1,0 +1,73 @@
+---
+import { getEntry, render } from "astro:content";
+import Markdown from "@components/common/Markdown.astro";
+import SupabaseLayout from "@layouts/SupabaseLayout.astro";
+import { pagesConfig } from "@/config";
+import { siteConfig } from "@/config/siteConfig";
+
+const privacyPost = await getEntry("spec", "privacy");
+
+if (!privacyPost) {
+	throw new Error("privacy page content not found");
+}
+
+const { Content } = await render(privacyPost);
+
+// 标题与描述来自 src/config/pagesConfig.ts 的 privacy 段
+const { title: pageTitle, description } = pagesConfig.privacy;
+---
+
+<SupabaseLayout title={pageTitle} description={description}>
+  <div class="su-prose-page">
+    <header class="su-page-head">
+      <p class="su-kicker">法律条款</p>
+      <h1 class="su-title">{pageTitle}</h1>
+      <p class="su-page-desc">{description}</p>
+      <p class="su-page-meta">
+        <span class="su-num">{siteConfig.title}</span>
+        <span class="su-dot">·</span>
+        <a class="su-link" href="/about/">返回关于我</a>
+      </p>
+    </header>
+
+    <div class="su-prose-body">
+      <Markdown class="markdown-content">
+        <Content />
+      </Markdown>
+    </div>
+  </div>
+</SupabaseLayout>
+
+<style>
+  .su-prose-page {
+    max-width: 820px;
+    margin-inline: auto;
+  }
+
+  .su-page-head {
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--su-border);
+  }
+
+  .su-title {
+    margin: 8px 0 12px;
+  }
+
+  .su-page-desc {
+    margin: 0 0 16px;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--su-muted-foreground);
+  }
+
+  .su-page-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 13px;
+    color: var(--su-muted-foreground);
+  }
+</style>

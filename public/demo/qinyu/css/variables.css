@@ -1,0 +1,64 @@
+:root {
+  /* backgrounds */
+  --c-bg:    #06060b;
+  --c-bg2:   #0c0c16;
+  --c-bg3:   #131320;
+  --c-bg4:   #1a1a28;
+
+  /* accents */
+  --c-red:   #e03030;
+  --c-red2:  #b01818;
+  --c-red-a: rgba(224,48,48,0.12);
+  --c-amber: #e8a020;
+  --c-amber2:#a06010;
+  --c-amber-a: rgba(232,160,32,0.12);
+  --c-blue:  #4ab0f0;
+
+  /* text */
+  --c-text:  #eae5d8;
+  --c-dim:   #9a9488;
+  --c-faint: #4a4840;
+
+  /* borders */
+  --c-line:  rgba(255,255,255,0.08);
+  --c-line2: rgba(255,255,255,0.14);
+
+  /* nav */
+  --nav-bg: rgba(6,6,11,0.94);
+
+  /* fonts */
+  --f-serif: 'Noto Serif SC', 'Songti SC', serif;
+  --f-mono:  'JetBrains Mono', 'Courier New', monospace;
+  --f-sans:  'Noto Sans SC', sans-serif;
+
+  /* font-size multiplier */
+  --fs-mul: 1;
+
+  /* spacing */
+  --gap: 2px;
+  --r:   0px;
+
+  /* transitions */
+  --theme-t: background-color 0.45s ease, color 0.45s ease, border-color 0.45s ease;
+}
+
+/* ── LIGHT MODE ── */
+.light {
+  --c-bg:    #f4f1eb;
+  --c-bg2:   #ece8e0;
+  --c-bg3:   #e4dfd5;
+  --c-bg4:   #d8d2c8;
+  --c-red:   #c01818;
+  --c-red2:  #8a0f0f;
+  --c-red-a: rgba(192,24,24,0.08);
+  --c-amber: #b07010;
+  --c-amber2:#7a4a00;
+  --c-amber-a: rgba(176,112,16,0.08);
+  --c-blue:  #1878c0;
+  --c-text:  #18160f;
+  --c-dim:   #504a40;
+  --c-faint: #9a9488;
+  --c-line:  rgba(0,0,0,0.08);
+  --c-line2: rgba(0,0,0,0.15);
+  --nav-bg:  rgba(244,241,235,0.94);
+}
