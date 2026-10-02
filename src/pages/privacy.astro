@@ -1,8 +1,7 @@
 ---
 import { getEntry, render } from "astro:content";
 import Markdown from "@components/common/Markdown.astro";
-import SbPageHeader from "@/components/layout/SbPageHeader.astro";
-import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
+import SupabaseLayout from "@layouts/SupabaseLayout.astro";
 import { pagesConfig } from "@/config";
 import { siteConfig } from "@/config/siteConfig";
 
@@ -19,19 +18,18 @@ const { title: pageTitle, description } = pagesConfig.privacy;
 ---
 
 <SupabaseLayout title={pageTitle} description={description}>
-  <SbPageHeader
-    eyebrow="法律条款"
-    title={pageTitle}
-    subtitle={description}
-  >
-    <p class="su-page-meta">
-      <span class="su-text-mute su-mono">{siteConfig.title}</span>
-      <span class="su-text-mute">·</span>
-      <a class="su-link" href="/about/">返回关于我</a>
-    </p>
-  </SbPageHeader>
-
   <div class="su-prose-page">
+    <header class="su-page-head">
+      <p class="su-kicker">法律条款</p>
+      <h1 class="su-title">{pageTitle}</h1>
+      <p class="su-page-desc">{description}</p>
+      <p class="su-page-meta">
+        <span class="su-num">{siteConfig.title}</span>
+        <span class="su-dot">·</span>
+        <a class="su-link" href="/about/">返回关于我</a>
+      </p>
+    </header>
+
     <div class="su-prose-body">
       <Markdown class="markdown-content">
         <Content />
@@ -46,10 +44,21 @@ const { title: pageTitle, description } = pagesConfig.privacy;
     margin-inline: auto;
   }
 
-  .su-prose-body {
+  .su-page-head {
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--su-border);
+  }
+
+  .su-title {
+    margin: 8px 0 12px;
+  }
+
+  .su-page-desc {
+    margin: 0 0 16px;
     font-size: 16px;
-    line-height: 1.8;
-    color: var(--su-ink);
+    line-height: 1.7;
+    color: var(--su-muted-foreground);
   }
 
   .su-page-meta {
@@ -57,8 +66,8 @@ const { title: pageTitle, description } = pagesConfig.privacy;
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-    margin-top: 16px;
+    margin: 0;
     font-size: 13px;
-    color: var(--su-ink-mute);
+    color: var(--su-muted-foreground);
   }
 </style>

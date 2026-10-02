@@ -1,6 +1,5 @@
 ---
-import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
-import SbPageHeader from "@/components/layout/SbPageHeader.astro";
+import SupabaseLayout from "@layouts/SupabaseLayout.astro";
 import { pagesConfig } from "@/config";
 import { getSortedPosts } from "@/utils/content-utils";
 import { formatDateToYYYYMMDD } from "@/utils/date-utils";
@@ -22,17 +21,18 @@ const yearGroups = [...years.entries()].sort((a, b) => b[0] - a[0]);
 ---
 
 <SupabaseLayout title={postList.title} description={`共 ${posts.length} 篇文章`}>
-  <div class="su-prose-page">
-    <SbPageHeader
-      eyebrow={postList.kicker}
-      title={postList.title}
-      subtitle={`共 ${posts.length} 篇文章`}
-    >
+  <div class="su-list-page">
+    <header class="su-page-head">
+      <p class="su-kicker">{postList.kicker}</p>
+      <h1 class="su-title">{postList.title}</h1>
+      <p class="su-page-desc">
+        共 <span class="su-num">{posts.length}</span> 篇文章
+      </p>
       <div class="su-page-tabs">
-        <a class="su-pill su-pill--outline" href="/archive/">按年份归档</a>
-        <a class="su-pill su-pill--outline" href="/rss/">RSS 订阅</a>
+        <a class="su-pill" href="/archive/">按年份归档</a>
+        <a class="su-pill" href="/rss/">RSS 订阅</a>
       </div>
-    </SbPageHeader>
+    </header>
 
     {
       yearGroups.map(([year, entries]) => (
@@ -60,16 +60,33 @@ const yearGroups = [...years.entries()].sort((a, b) => b[0] - a[0]);
 </SupabaseLayout>
 
 <style>
-  .su-prose-page {
+  .su-list-page {
     max-width: 860px;
     margin-inline: auto;
+  }
+
+  .su-page-head {
+    margin-bottom: 48px;
+  }
+
+  .su-title {
+    margin: 8px 0 12px;
+  }
+
+  .su-page-desc {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 20px;
+    font-size: 14px;
+    color: var(--su-muted-foreground);
   }
 
   .su-page-tabs {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 24px;
   }
 
   .su-year + .su-year {
