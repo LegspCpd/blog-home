@@ -247,72 +247,104 @@
 
 /* --------------------------------------------------------------------------
    6. 文章正文（.custom-md 由 Markdown.astro 输出）
+   --------------------------------------------------------------------------
+   排版取向：
+   - 中文正文行高 1.85（1.7 在中文下偏挤）
+   - 段落限宽 68ch：行太长会让眼睛串行
+   - 标题上下留白给足，让层级一眼可辨
+   - 纯色链接在正文里和普通文字难区分，默认给下划线
+
+   .not-prose 是 MDX 里的「退出正文排版」开关（如 friends.mdx 的卡片）。
+   所有正文规则都带 :not(.not-prose *)，否则标题/段落的大外边距会渗进去
+   把 flex 行撑高。该条件在 .not-prose 之外永远为真 → 对文章正文零影响。
    -------------------------------------------------------------------------- */
 .su-main .custom-md {
 	font-size: 16px;
-	line-height: 1.7;
+	line-height: 1.85;
 	color: var(--su-foreground);
+	/* 中文排版：标点挤压 + 允许西文断词 */
+	text-spacing-trim: space-first;
+	overflow-wrap: break-word;
 }
 
 .su-main .custom-md > *:first-child {
 	margin-top: 0;
 }
 
-/*
-	. not-prose 是 MDX 里的「退出正文排版」开关（如 friends.mdx 的卡片）。
-	所有正文规则都带 `:not(.not-prose *)`，否则标题/段落的大外边距会渗进去
-	把 flex 行撑高，导致行内的头像被迫垂直居中而看起来「下坠」。
-	该条件在 .not-prose 之外永远为真 → 对文章正文零影响。
-*/
 .su-main .custom-md p:not(.not-prose *) {
-	margin: 16px 0;
+	max-width: 68ch;
+	margin: 1.15em 0;
 	font-size: 16px;
-	line-height: 1.7;
+	line-height: 1.85;
 	color: var(--su-foreground);
 }
 
+/* ---- 标题 ---- */
 .su-main .custom-md :is(h1, h2, h3, h4, h5, h6):not(.not-prose *) {
 	position: relative;
 	color: var(--su-foreground);
-	font-weight: 500;
-	scroll-margin-top: 96px;
+	font-weight: 650;
+	letter-spacing: -0.2px;
+	/* 锚点跳转时不要被顶栏遮住 */
+	scroll-margin-top: calc(var(--su-header-height, 60px) + 24px);
+	/* 标题给足上下留白 */
+	margin-top: 2.2em;
 }
 
 .su-main .custom-md h1:not(.not-prose *) {
-	margin: 48px 0 16px;
-	font-size: 36px;
-	line-height: 1.15;
-	letter-spacing: -0.72px;
+	margin: 0 0 0.5em;
+	font-size: 32px;
+	line-height: 1.2;
+	letter-spacing: -0.8px;
 }
 
 .su-main .custom-md h2:not(.not-prose *) {
-	margin: 48px 0 16px;
-	font-size: 28px;
-	line-height: 1.2;
-	letter-spacing: -0.42px;
+	margin: 2em 0 0.6em;
+	font-size: 25px;
+	line-height: 1.3;
+	letter-spacing: -0.6px;
+}
+
+/* h2 左侧的品牌色条：给主要章节一个视觉锚点 */
+.su-main .custom-md h2:not(.not-prose *)::before {
+	content: "";
+	position: absolute;
+	left: -16px;
+	top: 0.18em;
+	bottom: 0.18em;
+	width: 3px;
+	border-radius: var(--su-radius-full);
+	background: linear-gradient(
+		180deg,
+		var(--su-primary),
+		var(--su-primary-deep)
+	);
 }
 
 .su-main .custom-md h3:not(.not-prose *) {
-	margin: 32px 0 12px;
-	font-size: 22px;
-	line-height: 1.2;
+	margin: 1.7em 0 0.5em;
+	font-size: 19px;
+	line-height: 1.4;
+	letter-spacing: -0.2px;
 }
 
 .su-main .custom-md h4:not(.not-prose *) {
-	margin: 32px 0 8px;
-	font-size: 18px;
-	line-height: 1.4;
+	margin: 1.5em 0 0.4em;
+	font-size: 17px;
+	line-height: 1.45;
 }
 
 .su-main .custom-md :is(h5, h6):not(.not-prose *) {
-	margin: 24px 0 8px;
-	font-size: 16px;
+	margin: 1.3em 0 0.35em;
+	font-size: 15px;
 	line-height: 1.5;
+	font-weight: 650;
 	color: var(--su-muted-foreground);
 }
 
+/* ---- 行内元素 ---- */
 .su-main .custom-md strong:not(.not-prose *) {
-	font-weight: 500;
+	font-weight: 650;
 	color: var(--su-foreground);
 }
 
@@ -320,32 +352,39 @@
 	font-style: italic;
 }
 
-/* 正文链接：默认取前景色 + 细下划线，hover 才点出绿色（克制使用强调色） */
+.su-main .custom-md del:not(.not-prose *) {
+	color: var(--su-ink-faint);
+}
+
+/* 链接：默认带下划线，否则正文里和普通文字分不开 */
 .su-main .custom-md a:not(.no-styling):not(.not-prose *) {
-	color: var(--su-foreground);
+	color: var(--su-accent-text);
 	text-decoration: underline;
-	text-decoration-color: var(--su-border);
-	text-decoration-thickness: 1px;
+	text-decoration-color: color-mix(
+		in srgb,
+		var(--su-accent-text) 35%,
+		transparent
+	);
 	text-underline-offset: 3px;
-	background: none;
+	text-decoration-thickness: 1px;
 	transition:
 		color 0.15s ease,
-		text-decoration-color 0.15s ease;
+		text-decoration-color 0.15s ease,
+		background-color 0.15s ease;
 }
 
-.su-main .custom-md a:not(.no-styling):hover,
-.su-main .custom-md a:not(.no-styling):active {
-	color: var(--su-accent-text);
-	text-decoration-color: var(--su-accent-text);
-	background: none;
+.su-main .custom-md a:not(.no-styling):hover:not(.not-prose *) {
+	color: var(--su-primary-deep);
+	text-decoration-color: var(--su-primary-deep);
+	background-color: var(--su-primary-soft);
 }
 
-/* 标题锚点 */
+/* ---- 标题锚点 ---- */
 .su-main .custom-md :is(h1, h2, h3, h4, h5, h6) .anchor {
-	margin-left: 8px;
-	opacity: 0;
+	color: var(--su-ink-faint);
 	text-decoration: none;
-	color: var(--su-muted-foreground);
+	opacity: 0;
+	margin-left: 0.35em;
 	transition: opacity 0.15s ease;
 }
 
@@ -353,15 +392,21 @@
 	opacity: 1;
 }
 
-/* 行内代码 */
+.su-main .custom-md :is(h1, h2, h3, h4, h5, h6) .anchor:hover {
+	color: var(--su-accent-text);
+}
+
+/* ---- 行内代码 ---- */
 .su-main .custom-md :not(pre) > code:not(.not-prose *) {
-	padding: 2px 6px;
+	margin: 0 0.15em;
+	padding: 0.15em 0.4em;
 	border: 1px solid var(--su-border);
-	border-radius: 4px;
-	background-color: var(--su-muted);
-	color: var(--su-foreground);
+	border-radius: var(--su-radius-xs);
+	background-color: var(--su-canvas-soft);
 	font-family: var(--font-mono-supabase);
-	font-size: 14px;
+	font-size: 0.86em;
+	color: var(--su-foreground);
+	word-break: break-word;
 }
 
 .su-main .custom-md :not(pre) > code:not(.not-prose *)::before,
@@ -369,18 +414,17 @@
 	content: none;
 }
 
-/* 引用块：左侧 2px 细线，不倾斜 */
+/* ---- 引用块：左侧色条 + 淡底，不用引号图标 ---- */
 .su-main .custom-md blockquote:not(.not-prose *) {
 	position: relative;
-	margin: 24px 0;
-	padding: 0 0 0 16px;
+	margin: 1.6em 0;
+	padding: 1em 1.25em;
 	border: 0;
-	border-left: 2px solid var(--su-border);
-	background: none;
+	border-left: 3px solid var(--su-primary);
+	border-radius: 0 var(--su-radius-md) var(--su-radius-md) 0;
+	background-color: var(--su-canvas-soft);
 	color: var(--su-muted-foreground);
-	font-style: normal;
-	font-weight: inherit;
-	quotes: none;
+	font-size: 15.5px;
 }
 
 .su-main .custom-md blockquote::before {
@@ -388,8 +432,10 @@
 }
 
 .su-main .custom-md blockquote > p:not(.not-prose *) {
-	margin: 8px 0;
-	color: inherit;
+	margin: 0.6em 0;
+	color: var(--su-muted-foreground);
+	font-size: inherit;
+	line-height: 1.8;
 }
 
 .su-main .custom-md blockquote p::before,
@@ -397,108 +443,118 @@
 	content: none;
 }
 
-/* 列表 */
+/* ---- 列表 ---- */
 .su-main .custom-md :is(ul, ol):not(.not-prose *) {
-	margin: 16px 0;
-	padding-left: 24px;
+	margin: 1.15em 0;
+	padding-left: 1.5em;
+	max-width: 68ch;
 }
 
 .su-main .custom-md ul:not(.not-prose *) {
-	list-style: disc;
+	list-style: none;
+	padding-left: 1.3em;
+}
+
+/* 自定义圆点：比默认 disc 更干净 */
+.su-main .custom-md ul:not(.not-prose *) > li::before {
+	content: "";
+	position: absolute;
+	left: -0.95em;
+	top: 0.72em;
+	width: 5px;
+	height: 5px;
+	border-radius: var(--su-radius-full);
+	background-color: var(--su-ink-faint);
 }
 
 .su-main .custom-md ol:not(.not-prose *) {
 	list-style: decimal;
+	padding-left: 1.6em;
 }
 
 .su-main .custom-md li:not(.not-prose *) {
-	margin: 8px 0;
+	position: relative;
+	margin: 0.5em 0;
 	font-size: 16px;
-	line-height: 1.7;
+	line-height: 1.8;
+	color: var(--su-foreground);
 }
 
-.su-main .custom-md li:not(.not-prose *)::marker {
-	color: var(--su-muted-foreground);
+.su-main .custom-md li::marker {
+	color: var(--su-ink-faint);
 }
 
-/* 嵌套列表收紧间距 */
 .su-main .custom-md li > :is(ul, ol):not(.not-prose *) {
-	margin: 8px 0;
+	margin: 0.4em 0;
 }
 
-/* 图片 */
+/* 任务列表 */
+.su-main .custom-md li:has(input[type="checkbox"]) {
+	list-style: none;
+	margin-left: -1.3em;
+}
+
+.su-main .custom-md li:has(input[type="checkbox"])::before {
+	content: none;
+}
+
+/* ---- 图片 ---- */
 .su-main .custom-md img:not(.not-prose *) {
-	margin: 24px auto;
+	display: block;
+	margin: 1.8em auto;
 	border: 1px solid var(--su-border);
-	border-radius: 12px;
-}
-
-/* 已接入灯箱的图片：光标与轻微放大，明示「可点击」 */
-.su-main .custom-md img[data-fancybox="article"]:not(.not-prose *),
-.su-main #post-cover img[data-fancybox="article"] {
-	cursor: zoom-in;
-	transition:
-		border-color 0.15s ease,
-		box-shadow 0.15s ease,
-		transform 0.15s ease;
-}
-
-.su-main .custom-md img[data-fancybox="article"]:not(.not-prose *):hover,
-.su-main #post-cover img[data-fancybox="article"]:hover {
-	border-color: var(--su-hairline-strong);
-	box-shadow: var(--su-shadow-2);
-	transform: translateY(-2px);
+	border-radius: var(--su-radius-lg);
+	box-shadow: var(--su-shadow-1);
 }
 
 .su-main .custom-md figure:not(.not-prose *) {
-	margin: 24px 0;
+	margin: 1.8em 0;
 }
 
 .su-main .custom-md figcaption:not(.not-prose *) {
-	margin-top: 8px;
+	margin-top: var(--su-space-sm);
 	font-size: 13px;
-	line-height: 1.45;
+	line-height: 1.5;
 	color: var(--su-muted-foreground);
 	text-align: center;
 }
 
-.su-main .custom-md .image-grid img:not(.not-prose *) {
-	border-radius: 12px;
-}
-
-/* 表格：hairline 网格，表头浅底 */
+/* ---- 表格 ---- */
 .su-main .custom-md table:not(.not-prose *) {
 	width: 100%;
-	margin: 24px 0;
-	border: 1px solid var(--su-border);
-	border-radius: 8px;
-	border-collapse: separate;
-	border-spacing: 0;
-	overflow: hidden;
+	margin: 1.6em 0;
+	border-collapse: collapse;
 	font-size: 14px;
+	border: 1px solid var(--su-border);
+	border-radius: var(--su-radius-md);
+	overflow: hidden;
 }
 
 .su-main .custom-md thead:not(.not-prose *) {
-	background-color: var(--su-muted);
+	background-color: var(--su-canvas-soft);
 }
 
 .su-main .custom-md th:not(.not-prose *) {
 	padding: 10px 14px;
 	border-bottom: 1px solid var(--su-border);
-	color: var(--su-foreground);
-	font-weight: 500;
+	font-weight: 650;
 	text-align: left;
+	color: var(--su-foreground);
+	white-space: nowrap;
 }
 
 .su-main .custom-md td:not(.not-prose *) {
 	padding: 10px 14px;
 	border-bottom: 1px solid var(--su-border);
 	color: var(--su-foreground);
-	text-align: left;
 }
 
 .su-main .custom-md tbody tr:last-child td:not(.not-prose *) {
 	border-bottom: 0;
+}
+
+.su-main .custom-md tbody tr:not(.not-prose *):hover {
+	background-color: var(--su-canvas-soft);
 }
 
 .su-main .custom-md th:not(:last-child):not(.not-prose *),
@@ -506,44 +562,52 @@
 	border-right: 1px solid var(--su-border);
 }
 
+/* ---- 横向滚动（表格 / 长代码） ---- */
 .su-main .custom-md .horizontal-scroll-container:not(.not-prose *) {
-	margin: 24px 0;
-	border-radius: 8px;
+	margin: 1.5em 0;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
 }
 
 .su-main .custom-md .horizontal-scroll-container > table:not(.not-prose *) {
 	margin: 0;
+	min-width: max-content;
 }
 
-/* 分隔线 */
+/* ---- 分隔线 ---- */
 .su-main .custom-md hr:not(.not-prose *) {
-	margin: 48px 0;
+	margin: 2.5em 0;
 	height: 1px;
 	border: 0;
 	background-color: var(--su-border);
 }
 
-/* 折叠块 / details */
+/* ---- 折叠块 ---- */
 .su-main .custom-md details:not(.not-prose *) {
-	margin: 24px 0;
-	padding: 16px;
+	margin: 1.5em 0;
+	padding: var(--su-space-sm) var(--su-space-md);
 	border: 1px solid var(--su-border);
-	border-radius: 8px;
-	background-color: var(--su-card);
+	border-radius: var(--su-radius-md);
+	background-color: var(--su-canvas-soft);
 }
 
 .su-main .custom-md summary:not(.not-prose *) {
 	cursor: pointer;
+	font-weight: 550;
 	color: var(--su-foreground);
-	font-weight: 500;
+	list-style-position: inside;
 }
 
-/* KaTeX / Mermaid 容器可横向滚动 */
-.su-main .custom-md .katex-display-container,
-.su-main .custom-md .horizontal-scroll-container {
-	max-width: 100%;
+.su-main .custom-md summary:not(.not-prose *)::marker {
+	color: var(--su-accent-text);
+}
+
+/* ---- 公式 ---- */
+.su-main .custom-md .katex-display-container {
+	margin: 1.5em 0;
 	overflow-x: auto;
-	overscroll-behavior-x: contain;
+	overflow-y: hidden;
+	padding: var(--su-space-xs) 0;
 }
 
 /* --------------------------------------------------------------------------

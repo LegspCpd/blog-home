@@ -9,6 +9,7 @@
  *  - 按年分组，每组内按日期倒序。
  */
 import { Icon } from "astro-icon/components";
+import PostListRow from "@/components/layout/PostListRow.astro";
 import SbPageHeader from "@/components/layout/SbPageHeader.astro";
 import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
 import { getSortedPosts } from "@/utils/content-utils";
@@ -157,29 +158,18 @@ const maxPerYear = Math.max(1, ...groups.map(([, list]) => list.length));
 							</h3>
 
 							<ul class="ar-list">
-								{entries.map((post) => (
-									<li>
-										<a class="ar-row rv" href={getPostUrlBySlug(post.id)}>
-											<time
-												class="ar-row-date su-mono"
-												datetime={post.data.published.toISOString()}
-											>
-												{formatDateToYYYYMMDD(post.data.published)}
-											</time>
-
-											<span class="ar-row-body">
-												<span class="ar-row-title">
-													{post.data.title}
-												</span>
-												{post.data.tags && post.data.tags.length > 0 ? (
-													<span class="ar-row-tags">
-														{post.data.tags.slice(0, 4).map((tag) => (
-															<span class="su-pill su-pill--outline">#{tag}</span>
-														))}
-													</span>
-												) : null}
-											</span>
-										</a>
+								{entries.map((post, i) => (
+									<li class="rv">
+										<PostListRow
+											rank={i + 1}
+											title={post.data.title}
+											href={getPostUrlBySlug(post.id)}
+											date={formatDateToYYYYMMDD(post.data.published)}
+											datetime={post.data.published.toISOString()}
+											category={post.data.category}
+											desc={post.data.description}
+											tags={post.data.tags ?? []}
+										/>
 									</li>
 								))}
 							</ul>
@@ -304,63 +294,14 @@ const maxPerYear = Math.max(1, ...groups.map(([, list]) => list.length));
 		color: var(--su-ink-faint);
 	}
 
+	/* 列表行样式已抽到 <PostListRow> 组件，三页共用，避免各页不一致 */
 	.ar-list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--su-space-2xs);
 		margin: 0;
 		padding: 0;
 		list-style: none;
-	}
-
-	.ar-row {
-		display: flex;
-		align-items: baseline;
-		gap: 16px;
-		padding: 12px 4px;
-		color: inherit;
-		text-decoration: none;
-		border-radius: var(--su-radius-sm);
-		transition: background-color 0.15s ease;
-	}
-
-	.ar-row:hover {
-		background-color: var(--su-canvas-soft);
-	}
-
-	.ar-row-date {
-		flex: none;
-		width: 92px;
-		font-size: 13px;
-		color: var(--su-ink-faint);
-	}
-
-	.ar-row-body {
-		flex: 1;
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
-	}
-
-	.ar-row-title {
-		font-size: 15px;
-		font-weight: 500;
-		line-height: 1.45;
-		color: var(--su-foreground);
-		transition: color 0.15s ease;
-	}
-
-	.ar-row:hover .ar-row-title {
-		color: var(--su-primary-deep);
-	}
-
-	.ar-row-tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
-	}
-
-	.ar-row-tags .su-pill {
-		font-size: 11px;
-		padding: 2px 8px;
 	}
 
 	@media (max-width: 640px) {
