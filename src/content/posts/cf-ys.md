@@ -3,6 +3,7 @@ title: Cloudflare优选教程，让Cloudflare在国内不再是减速器
 published: 2026-04-19
 tags: [CloudFlare, CloudFlare优选, CloudFlare优选教程, 教程]
 category: CloudFlare
+description: 从原理到实操，讲解如何通过 Cloudflare SaaS 或 Worker 路由自控规则层与解析层，实现国内访问的 Cloudflare 优选。
 draft: false
 ---
 

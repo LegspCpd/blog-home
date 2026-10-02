@@ -3,6 +3,7 @@ title: 日记
 published: 1997-05-06
 tags: [日记]
 category: 日记
+description: 一篇很短的日记，记下当时的疲惫，以及一首听了很多遍的 Zeraphym - Lifeline。
 draft: false
 ---
 

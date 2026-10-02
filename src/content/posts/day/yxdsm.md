@@ -3,6 +3,7 @@ title: 有限生命里的无限当下
 published: 2026-05-06
 tags: [日常]
 category: 日常
+description: 关于「最后一次」的一段思考：多数时候它不是终点，而是提醒——别沉溺过去，也别把未来想太远。
 draft: false
 ---
 
