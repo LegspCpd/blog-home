@@ -28,30 +28,23 @@ const searchItem = {
 };
 
 /**
- * 折叠状态持久化：shadcn 的 Sidebar.Provider 只负责「写」cookie，
- * 初始化时需要由使用方读取。这里在 SSR 阶段读取，
- * 保证首屏就是用户上次选择的状态（不会先展开再收起）。
+ * 折叠状态持久化。
  *
- * 静态输出（EdgeOne / 纯静态托管）在构建期拿不到访问者 cookie：
- * 强行读会触发 Astro「预渲染页访问 request」警告，且每个页面刷一条
- * （实测 63 页 × 2 次 = 114 条），严重淹没真正的报错。
+ * 这里刻意不在 SSR 阶段读 Astro.cookies：
+ *  - 静态预渲染（EdgeOne）读不到访问者 cookie；
+ *  - 按请求渲染（Vercel）能读到，但会对每个页面产生一条
+ *    「预渲染页访问 request.headers」的警告。
+ *  两种情况都会让构建日志被无意义的警告淹没。
  *
- * 因此这里按构建目标分流：
- *  - DEPLOY_TARGET=static（EdgeOne）：跳过 cookie 读取，直接用默认值。
- *    折叠状态由客户端的 SidebarStateSync 依据 cookie 纠偏，
- *    视觉上最多差一帧，但构建日志干净。
- *  - 其它（Vercel 等按请求渲染）：照常读 cookie，保留首屏无闪烁。
+ * 替代方案（已在 Layout.astro 的 head 内联脚本中实现）：
+ *  1. 首次绘制前读 cookie，给 <html> 加 .su-sidebar-collapsed；
+ *     supabase-layout.css 立即据此给出正确的 64px 轨道与文字隐藏，无闪烁；
+ *  2. hydration 后由 SidebarStateSync 把 Svelte 状态对齐到 cookie，
+ *     再移除标记类（宽度不变，因此不产生动画）。
  *
- * 判定用 process.env 而非 import.meta.env：前者是构建脚本注入的
- * 进程环境变量，在 Astro 的 frontmatter 中可直接访问。
+ * 所以服务端一律用「展开」作为初值即可。
  */
-const isStaticTarget =
-	(process.env.DEPLOY_TARGET || "vercel").toLowerCase() === "static";
-
-const sidebarCookie = isStaticTarget
-	? undefined
-	: Astro.cookies.get("sidebar_state");
-const defaultOpen = sidebarCookie ? sidebarCookie.value !== "false" : true;
+const defaultOpen = true;
 ---
 
 <AppSidebarNav {navItems} {searchItem} {defaultOpen} {brandAvatar} client:load />

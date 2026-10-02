@@ -363,6 +363,25 @@ const connectionHintOrigins = Array.from(
         cardTransparentOpacity: backgroundWallpaper.overlay?.cardOpacity ?? 0.6,
       }}
     >
+      // ============================================================
+      // 侧栏折叠状态：首屏同步（无闪烁）
+      // ------------------------------------------------------------
+      // 静态预渲染时服务端拿不到 cookie，若等客户端再纠正，侧栏会先展开
+      // 再收起，产生可见跳动。这里在首次绘制前读 cookie 给 <html> 打标记类，
+      // supabase-layout.css 立即据此给出正确的 64px 轨道与文字隐藏；
+      // 随后由 SidebarStateSync 把 Svelte 状态对齐并移除该类（宽度不变，无动画）。
+      //
+      // 这也让 AppSidebar 不必在 SSR 阶段读 Astro.cookies —— 那会触发
+      // 「预渲染页访问 request.headers」警告，每页一条。
+      try {
+        var m = document.cookie.match(/(?:^|;\s*)sidebar_state=([^;]*)/);
+        if (m && m[1] === "false") {
+          document.documentElement.classList.add("su-sidebar-collapsed");
+        }
+      } catch (e) {
+        /* cookie 不可用时忽略，用默认展开态 */
+      }
+
       // 主题初始化 - 与setting-utils.ts保持一致
       const LIGHT_MODE = "light";
       const DARK_MODE = "dark";
