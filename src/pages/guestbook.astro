@@ -40,6 +40,23 @@ const description = i18n(I18nKey.guestbookDescription);
     </Markdown>
   </section>
 
+  <!-- 留言去向说明：避免访客以为留言是私密的 -->
+  {
+    isCommentEnabled ? (
+      <aside class="su-note" aria-label="留言说明">
+        <Icon name="material-symbols:info-outline" class="su-note-icon" />
+        <div>
+          <p class="su-body-sm">
+            留言保存在 <strong>GitHub Discussions</strong>，公开可见、可被搜索引擎索引。
+          </p>
+          <p class="su-caption su-text-mute">
+            使用 GitHub 账号登录即可留言，内容会同步显示在上方评论区。
+          </p>
+        </div>
+      </aside>
+    ) : null
+  }
+
   <!-- 评论区 -->
   {
     isCommentEnabled ? (
@@ -59,7 +76,34 @@ const description = i18n(I18nKey.guestbookDescription);
 <style>
 	.su-guestbook-intro {
 		max-width: none;
-		margin-bottom: 40px;
+		margin-bottom: 32px;
+	}
+
+	.su-note {
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+		max-width: none;
+		margin-bottom: 28px;
+		padding: 16px 18px;
+		border: 1px solid var(--su-border);
+		border-radius: var(--su-radius-lg);
+		background-color: var(--su-canvas-soft);
+	}
+
+	.su-note-icon {
+		flex: none;
+		margin-top: 1px;
+		font-size: 18px;
+		color: var(--su-primary);
+	}
+
+	.su-note p {
+		margin: 0;
+	}
+
+	.su-note p + p {
+		margin-top: 4px;
 	}
 
 	.su-guestbook-empty {
