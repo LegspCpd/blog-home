@@ -39,6 +39,9 @@ const topTags = [...tagCount.entries()]
 	.sort((a, b) => b[1] - a[1])
 	.slice(0, 12)
 	.map(([tag]) => tag);
+
+// 随机一篇用：所有非草稿文章的路径列表，注入给客户端
+const randomPool = posts.map((p) => getPostUrlBySlug(p.id));
 ---
 
 <SupabaseLayout>
@@ -65,6 +68,12 @@ const topTags = [...tagCount.entries()]
 					</a>
 				))
 			}
+			{randomPool.length > 1 ? (
+				<button type="button" class="su-btn su-btn--ghost" data-random-post>
+					<Icon name="material-symbols:casino-outline" />
+					随机一篇
+				</button>
+			) : null}
 		</div>
 
 		<!-- 统计条 -->
@@ -210,6 +219,31 @@ const topTags = [...tagCount.entries()]
 		</nav>
 	</footer>
 </SupabaseLayout>
+
+<!-- 随机一篇：候选列表随 HTML 下发，点击时在客户端挑选 -->
+<script is:inline define:vars={{ pool: randomPool }}>
+	(function () {
+		var btn = document.querySelector("[data-random-post]");
+		if (!btn || !pool || pool.length < 2) return;
+
+		// 记住上一次随机到的那篇，尽量不重复
+		var last = -1;
+
+		btn.addEventListener("click", function () {
+			var next = Math.floor(Math.random() * pool.length);
+			if (pool.length > 1 && next === last) {
+				next = (next + 1) % pool.length;
+			}
+			last = next;
+			// 用 swup 的导航方式跳转，保持页面过渡一致
+			if (window.swup && typeof window.swup.navigate === "function") {
+				window.swup.navigate(pool[next]);
+			} else {
+				location.href = pool[next];
+			}
+		});
+	})();
+</script>
 
 <style>
 	/* ---- Hero ---- */
