@@ -1,4 +1,4 @@
-﻿---
+---
 import { getEntry, render } from "astro:content";
 import Comment from "@components/comment/index.astro";
 import Markdown from "@components/common/Markdown.astro";
@@ -11,7 +11,8 @@ import {
 } from "@/config";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
-import SupabaseShell from "@/layouts/SupabaseShell.astro";
+import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
+import SbPageHeader from "@/components/layout/SbPageHeader.astro";
 
 // 检查页面是否启用
 if (!siteConfig.pages.friends) {
@@ -42,203 +43,201 @@ const description =
 	friendsPageConfig.description || i18n(I18nKey.friendsDescription);
 ---
 
-<SupabaseShell title={title} description={description}>
-  <div
-    class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32"
-  >
-    <div class="card-base z-10 px-9 py-6 relative w-full">
-      <!-- 页面标题和描述 -->
-      <div class="mb-4">
-        <div class="flex items-center gap-3 mb-3">
-          <div
-            class="h-8 w-8 rounded-lg bg-(--primary) flex items-center justify-center text-white dark:text-black/70"
+<SupabaseLayout title={title} description={description}>
+  <SbPageHeader title={title} subtitle={description} />
+
+  <div class="friends-page">
+    <!-- 标签筛选 -->
+    {items.length > 0 ? (
+      <div class="friend-filter mb-6 flex flex-wrap gap-2">
+          <button
+            data-tag="all"
+            class="su-btn su-btn--primary text-sm"
           >
-            <Icon name="material-symbols:group" class="text-[1.5rem]" />
-          </div>
-          <div class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
-            {title}
-          </div>
-        </div>
-        {
-          description && (
-            <p class="text-base text-neutral-600 dark:text-neutral-400 leading-relaxed mb-4">
-              {description}
-            </p>
-          )
-        }
-      </div>
-
-      <!-- 标签筛选 -->
-      {
-        items.length > 0 && (
-          <friend-filter class="flex flex-wrap gap-2 mb-6">
+            {i18n(I18nKey.all)}
+          </button>
+          {allTags.map((tag) => (
             <button
-              data-tag="all"
-              class="btn-regular px-3 py-1.5 rounded-lg bg-(--primary) text-white hover:bg-(--primary) transition-colors duration-200 text-sm font-medium"
+              data-tag={tag}
+              class="su-btn su-btn--outline text-sm"
             >
-              {i18n(I18nKey.all)}
+              {tag}
             </button>
-            {allTags.map((tag) => (
-              <button
-                data-tag={tag}
-                class="btn-regular px-3 py-1.5 rounded-lg bg-(--btn-regular-bg) text-(--btn-content) hover:bg-(--btn-regular-bg-hover) transition-colors duration-200 text-sm font-medium"
-              >
-                {tag}
-              </button>
-            ))}
-          </friend-filter>
-        )
+          ))}
+        </div>
+      ) : null}
+
+    <div class="friends-grid">
+      {items.map((item) => (
+          <a
+            href={item.siteurl}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-tags={item.tags?.join(",")}
+            class="friend-card su-card"
+          >
+            <div class="friend-avatar">
+              <img src={item.imgurl} alt={item.title} />
+            </div>
+            <div class="friend-info">
+              <div class="friend-header">
+                <h3 class="friend-title">{item.title}</h3>
+                <a href={item.siteurl} target="_blank" rel="noopener noreferrer" class="su-link">
+                  <Icon name="material-symbols:arrow-outward-rounded" />
+                </a>
+              </div>
+              <p class="friend-desc">{item.desc}</p>
+              <div class="friend-tags">
+                {item.tags && item.tags.length > 0
+                  ? item.tags.slice(0, 3).map((tag) => (
+                    <span class="su-pill su-pill--outline">{tag}</span>
+                  ))
+                  : null}
+              </div>
+            </div>
+          </a>
+        ))
       }
+    </div>
 
-      <div class="friends-grid my-4">
-        {
-          items.map((item) => (
-            <a
-              href={item.siteurl}
-              target="_blank"
-              rel="noopener noreferrer"
-              data-tags={item.tags?.join(",")}
-              class="friend-card group flex items-center gap-3 p-2.5 rounded-xl border border-(--line-divider) hover:border-(--primary) hover:bg-(--card-bg) transition-all duration-300 hover:shadow-lg relative overflow-hidden"
-            >
-              {/* 背景装饰 - 仅悬停显示 */}
-              <div class="absolute inset-0 bg-(--primary) opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none" />
-
-              {/* 头像 */}
-              <div class="relative w-16 h-16 shrink-0 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800 border border-black/5 dark:border-white/5 group-hover:scale-105 transition-transform duration-300">
-                <img
-                  src={item.imgurl}
-                  alt={item.title}
-                  class="w-full h-full object-cover"
-                />
-              </div>
-
-              {/* 内容 */}
-              <div class="grow min-w-0 flex flex-col justify-center gap-0.5">
-                <div class="flex items-center justify-between">
-                  <div class="font-bold text-base text-neutral-900 dark:text-neutral-100 group-hover:text-(--primary) transition-colors truncate pr-4">
-                    {item.title}
-                  </div>
-                  {/* 外部链接图标 */}
-                  <Icon
-                    name="material-symbols:arrow-outward-rounded"
-                    class="text-(--primary) text-lg opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300"
-                  />
-                </div>
-
-                <div
-                  class="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-1"
-                  title={item.desc}
-                >
-                  {item.desc}
-                </div>
-
-                {/* 标签 */}
-                <div class="flex flex-wrap gap-1 mt-1">
-                  {item.tags && item.tags.length > 0
-                    ? item.tags
-                        .slice(0, 3)
-                        .map((tag) => (
-                          <span class="text-[0.65rem] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 transition-colors duration-300">
-                            {tag}
-                          </span>
-                        ))
-                    : null}
-                </div>
-              </div>
-            </a>
-          ))
-        }
+    {friendsPageConfig.showCustomContent !== false ? (
+      <div class="mt-6 su-prose-page">
+        <Markdown class="">
+          <Content />
+        </Markdown>
       </div>
-    </div>
+    ) : null}
+
+    <!-- 评论区 -->
+    {isCommentEnabled ? (
+      <div class="mt-6">
+        <Comment post={friendsPost} customPath="/friends/" />
+      </div>
+    ) : null}
   </div>
+</SupabaseLayout>
 
-  {friendsPageConfig.showCustomContent !== false && (
-    <div class="mt-4 card-base z-10 px-9 py-6 relative w-full">
-      <Markdown class="">
-        <Content />
-      </Markdown>
-    </div>
-  )}
+<script is:inline>
+if (!customElements.get("friend-filter")) {
+  class FriendFilter extends HTMLElement {
+    constructor() { super(); }
+    connectedCallback() { this.addEventListener("click", this.handleClick); }
+    disconnectedCallback() { this.removeEventListener("click", this.handleClick); }
 
-  <!-- 评论区 -->
-  {isCommentEnabled && (
-    <div class="mt-4">
-      <Comment post={friendsPost} customPath="/friends/" />
-    </div>
-  )}
+    handleClick(e) {
+      const button = e.target.closest("button");
+      if (!button) return;
+      const selectedTag = button.dataset.tag;
+      const filters = this.querySelectorAll("button");
+      const container = this.closest(".friends-page");
+      if (!container) return;
+      const cards = container.querySelectorAll(".friend-card");
 
-  <script slot="head" is:inline>
-    if (!customElements.get("friend-filter")) {
-      class FriendFilter extends HTMLElement {
-        constructor() {
-          super();
+      filters.forEach((f) => {
+        f.classList.remove("su-btn--primary");
+        f.classList.add("su-btn--outline");
+        if (f === button) {
+          f.classList.remove("su-btn--outline");
+          f.classList.add("su-btn--primary");
         }
+      });
 
-        connectedCallback() {
-          this.addEventListener("click", this.handleClick);
+      cards.forEach((card) => {
+        const tags = (card.dataset.tags || "").split(",");
+        if (selectedTag === "all" || (selectedTag && tags.includes(selectedTag))) {
+          card.style.display = "";
+        } else {
+          card.style.display = "none";
         }
-
-        disconnectedCallback() {
-          this.removeEventListener("click", this.handleClick);
-        }
-
-        handleClick(e) {
-          const target = e.target;
-          const button = target.closest("button");
-          if (!button) return;
-
-          const selectedTag = button.dataset.tag;
-          const filters = this.querySelectorAll("button");
-          const container = this.closest(".card-base");
-          if (!container) return;
-
-          const cards = container.querySelectorAll(".friend-card");
-
-          filters.forEach((f) => {
-            f.classList.remove("bg-(--primary)", "text-white");
-            f.classList.remove("hover:bg-(--primary)");
-            f.classList.add(
-              "bg-(--btn-regular-bg)",
-              "text-(--btn-content)"
-            );
-            f.classList.add("hover:bg-(--btn-regular-bg-hover)");
-
-            if (f === button) {
-              f.classList.remove(
-                "bg-(--btn-regular-bg)",
-                "text-(--btn-content)"
-              );
-              f.classList.remove("hover:bg-(--btn-regular-bg-hover)");
-              f.classList.add("bg-(--primary)", "text-white");
-              f.classList.add("hover:bg-(--primary)");
-            }
-          });
-
-          cards.forEach((card) => {
-            const cardEl = card;
-            const tags = (cardEl.dataset.tags || "").split(",");
-            if (
-              selectedTag === "all" ||
-              (selectedTag && tags.includes(selectedTag))
-            ) {
-              cardEl.style.display = "";
-              cardEl.classList.add("animate-fade-in-up");
-            } else {
-              cardEl.style.display = "none";
-              cardEl.classList.remove("animate-fade-in-up");
-            }
-          });
-        }
-      }
-      customElements.define("friend-filter", FriendFilter);
+      });
     }
-  </script>
+  }
+  customElements.define("friend-filter", FriendFilter);
+}
+</script>
 
-  <style is:global>
-    .friends-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 0.75rem;
+<style>
+  .friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .friend-card {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .friend-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--su-canvas-soft);
+  }
+
+  .friend-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .friend-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .friend-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .friend-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--su-foreground);
+    truncate: true;
+  }
+
+  .friend-desc {
+    font-size: 0.875rem;
+    color: var(--su-muted-foreground);
+    line-clamp: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .friend-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .friend-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  @media (max-width: 640px) {
+    .friend-card {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
     }
-  </style>
-</SupabaseShell>
+    .friend-header {
+      justify-content: center;
+    }
+  }
+</style>

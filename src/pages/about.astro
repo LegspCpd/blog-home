@@ -1,10 +1,10 @@
 ---
-
 import { getEntry, render } from "astro:content";
 import Markdown from "@components/common/Markdown.astro";
 import I18nKey from "@/i18n/i18nKey";
-import { i18n } from "@/i18n/translation";
-import SupabaseShell from "@/layouts/SupabaseShell.astro";
+import { i18n } from "@i18n/translation";
+import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
+import SbPageHeader from "@/components/layout/SbPageHeader.astro";
 
 const aboutPost = await getEntry("spec", "about");
 
@@ -14,10 +14,12 @@ if (!aboutPost) {
 
 const { Content } = await render(aboutPost);
 ---
-<SupabaseShell title={i18n(I18nKey.about)} description={i18n(I18nKey.about)}>
-    <div class="sb-prose-page sb-animate">
-        <Markdown class="markdown-content">
-            <Content />
-        </Markdown>
-    </div>
-</SupabaseShell>
+
+<SupabaseLayout title={i18n(I18nKey.about)} description={i18n(I18nKey.about)}>
+  <SbPageHeader title={i18n(I18nKey.about)} />
+  <div class="su-prose-page su-animate">
+    <Markdown class="markdown-content">
+      <Content />
+    </Markdown>
+  </div>
+</SupabaseLayout>
