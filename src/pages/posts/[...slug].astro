@@ -394,6 +394,24 @@ const isLongRead = (remarkPluginFrontmatter.minutes ?? 0) >= 5;
     {hasToc && <SbToc headings={headings} />}
   </div>
 
+  <!-- 窄屏目录入口：仅 <1024px 显示，唤起底部抽屉 -->
+  {
+    hasToc ? (
+      <button
+        type="button"
+        class="toc-fab"
+        data-fab
+        data-fab-order="3"
+        data-fab-icon-only
+        data-toc-open
+        aria-label="打开目录"
+        title="目录"
+      >
+        <Icon name="material-symbols:format-list-bulleted" />
+      </button>
+    ) : null
+  }
+
   <!-- Prev / Next -->
   <div class="su-article-foot">
     <nav class="sb-prevnext" aria-label="文章导航">
@@ -762,9 +780,8 @@ const isLongRead = (remarkPluginFrontmatter.minutes ?? 0) >= 5;
     .sb-post-layout {
       grid-template-columns: minmax(0, 1fr);
     }
-    .sb-toc-rail {
-      display: none;
-    }
+    /* .sb-toc-rail 的隐藏已移到 SbToc 组件内部，
+       那里同时把窄屏目录做成了底部抽屉 */
   }
 
   @media (max-width: 1023px) {
@@ -847,6 +864,17 @@ const isLongRead = (remarkPluginFrontmatter.minutes ?? 0) >= 5;
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+  }
+
+  /* 窄屏目录入口：桌面端有右侧目录栏，不需要这个按钮 */
+  .toc-fab {
+    display: none;
+  }
+
+  @media (max-width: 1023px) {
+    .toc-fab {
+      display: inline-flex;
+    }
   }
 </style>
 
