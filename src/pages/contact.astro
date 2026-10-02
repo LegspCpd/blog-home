@@ -1,0 +1,272 @@
+---
+/**
+ * contact.astro —— 联系方式
+ *
+ * 聚合 profileConfig.links，每条支持一键复制（对邮箱和链接都实用）。
+ */
+import { Icon } from "astro-icon/components";
+import SbPageHeader from "@/components/layout/SbPageHeader.astro";
+import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
+import { profileConfig, siteConfig } from "@/config";
+import { url } from "@/utils/url-utils";
+
+const links = profileConfig.links ?? [];
+const isExternal = (href: string) => /^(https?:|mailto:)/.test(href);
+---
+
+<SupabaseLayout
+	title="联系我"
+	description="通过 GitHub、Discord 或邮箱联系我。"
+>
+	<SbPageHeader
+		eyebrow="Contact"
+		title="联系我"
+		subtitle="有想法、发现 bug、或者单纯想打个招呼，都欢迎。"
+	/>
+
+	<ul class="ct-list">
+		{
+			links.map((link, i) => {
+				const href = isExternal(link.url) ? link.url : url(link.url);
+				// mailto: 复制时只取邮箱地址本身
+				const copyValue = link.url.startsWith("mailto:")
+					? link.url.replace(/^mailto:/, "")
+					: href;
+				return (
+					<li
+						class="ct-item rv"
+						style={i < 5 ? `--rv-d:${i * 70}ms` : undefined}
+					>
+						<span class="ct-icon" aria-hidden="true">
+							<Icon name={link.icon} />
+						</span>
+
+						<span class="ct-body">
+							<span class="ct-name">{link.name}</span>
+							<span class="ct-value">{copyValue}</span>
+						</span>
+
+						<span class="ct-actions">
+							<a
+								class="su-btn su-btn--outline su-btn--sm"
+								href={href}
+								target={/^https?:/.test(href) ? "_blank" : undefined}
+								rel={
+									/^https?:/.test(href)
+										? "noopener noreferrer"
+										: undefined
+								}
+							>
+								打开
+								<Icon name="material-symbols:arrow-outward" />
+							</a>
+
+							<button
+								type="button"
+								class="su-btn su-btn--ghost su-btn--sm"
+								data-ct-copy={copyValue}
+								data-ct-ok="已复制"
+								data-ct-fail="复制失败"
+								aria-label={`复制 ${link.name}`}
+							>
+								<Icon name="material-symbols:content-copy" />
+							</button>
+						</span>
+					</li>
+				);
+			})
+		}
+	</ul>
+
+	<!-- 直接留言 -->
+	<div class="ct-guestbook">
+		<span class="ct-guestbook-icon" aria-hidden="true">
+			<Icon name="material-symbols:chat-bubble-outline" />
+		</span>
+		<div>
+			<h2 class="su-heading-md">更想留言？</h2>
+			<p class="su-body-sm su-text-mute">
+				去<a href={url("/guestbook/")} class="su-link">留言板</a>
+				说一声，那边不需要邮件客户端。
+			</p>
+		</div>
+	</div>
+
+	<p class="ct-foot su-caption su-text-faint">
+		{siteConfig.title} · {siteConfig.site_url}
+	</p>
+</SupabaseLayout>
+
+<script is:inline>
+	// 一键复制联系方式。
+	document.addEventListener("click", function (e) {
+		var btn = e.target.closest("[data-ct-copy]");
+		if (!btn) return;
+
+		var text = btn.getAttribute("data-ct-copy") || "";
+		var okText = btn.getAttribute("data-ct-ok") || "已复制";
+		var failText = btn.getAttribute("data-ct-fail") || "复制失败";
+
+		var done = function (msg, ok) {
+			btn.setAttribute("aria-label", msg);
+			btn.classList.toggle("is-ok", ok);
+			setTimeout(function () {
+				btn.removeAttribute("aria-label");
+				btn.classList.remove("is-ok");
+			}, 2000);
+		};
+
+		if (navigator.clipboard && window.isSecureContext) {
+			navigator.clipboard.writeText(text).then(
+				function () {
+					done(okText, true);
+				},
+				function () {
+					done(failText, false);
+				},
+			);
+			return;
+		}
+
+		// 非安全上下文（http）退回 execCommand
+		try {
+			var ta = document.createElement("textarea");
+			ta.value = text;
+			ta.setAttribute("readonly", "");
+			ta.style.position = "fixed";
+			ta.style.top = "-1000px";
+			document.body.appendChild(ta);
+			ta.select();
+			var ok = document.execCommand("copy");
+			document.body.removeChild(ta);
+			done(ok ? okText : failText, ok);
+		} catch (err) {
+			done(failText, false);
+		}
+	});
+</script>
+
+<style>
+	/* ---- 联系条目 ---- */
+	.ct-list {
+		margin: 0 0 32px;
+		padding: 0;
+		list-style: none;
+		border-top: 1px solid var(--su-border);
+	}
+
+	.ct-item {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		padding: 14px 4px;
+		border-bottom: 1px solid var(--su-border);
+	}
+
+	.ct-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: none;
+		width: 36px;
+		height: 36px;
+		border: 1px solid var(--su-border);
+		border-radius: var(--su-radius-sm);
+		background-color: var(--su-canvas-soft);
+		font-size: 18px;
+		color: var(--su-muted-foreground);
+	}
+
+	.ct-body {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.ct-name {
+		font-size: 14px;
+		font-weight: 500;
+		color: var(--su-foreground);
+	}
+
+	/* 值可能很长（邮箱、链接），限制一行并省略 */
+	.ct-value {
+		font-family: var(--font-mono-supabase);
+		font-size: 12px;
+		color: var(--su-muted-foreground);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.ct-actions {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		flex: none;
+	}
+
+	/* 复制成功的短暂反馈 */
+	[data-ct-copy].is-ok {
+		color: var(--su-primary);
+		border-color: var(--su-primary);
+	}
+
+	/* ---- 留言板引导 ---- */
+	.ct-guestbook {
+		display: flex;
+		align-items: flex-start;
+		gap: 14px;
+		padding: 18px 20px;
+		margin-bottom: 32px;
+		border: 1px solid var(--su-border);
+		border-radius: var(--su-radius-lg);
+		background-color: var(--su-canvas-soft);
+	}
+
+	.ct-guestbook-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: none;
+		width: 40px;
+		height: 40px;
+		border: 1px solid var(--su-border);
+		border-radius: var(--su-radius-full);
+		background-color: var(--su-card);
+		font-size: 19px;
+		color: var(--su-muted-foreground);
+	}
+
+	.ct-guestbook h2 {
+		margin: 0 0 4px;
+	}
+
+	.ct-foot {
+		text-align: center;
+	}
+
+	/* ---- 移动端：按钮换行，避免拥挤 ---- */
+	@media (max-width: 640px) {
+		.ct-item {
+			flex-wrap: wrap;
+			gap: 10px 12px;
+		}
+
+		.ct-body {
+			flex-basis: calc(100% - 48px);
+		}
+
+		.ct-actions {
+			width: 100%;
+			padding-left: 48px;
+		}
+
+		/* 手机上「打开」按钮给足点击面积 */
+		.ct-actions .su-btn--sm {
+			min-height: 32px;
+		}
+	}
+</style>
