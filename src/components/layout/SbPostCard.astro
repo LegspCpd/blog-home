@@ -1,9 +1,9 @@
 ---
 /**
- * SbPostCard.astro
- * ---------------------------------------------------------------------------
- * 文章卡片：用于相关文章、精选文章等场景。
- * 已迁移到 su-* 令牌体系，不再依赖 supabase.css（--sb-*）。
+ * SbPostCard.astro —— 文章卡片
+ *
+ * 用于首页最新文章、相关文章等场景。
+ * 相比早期版本：常态带极淡投影，标题字重更高，元信息与摘要的层次更分明。
  */
 import type { CollectionEntry } from "astro:content";
 import { render } from "astro:content";
@@ -40,160 +40,209 @@ const {
 const { remarkPluginFrontmatter } = await render(entry);
 const descriptionText = description || remarkPluginFrontmatter.excerpt || "";
 const visibleTags = (tags || []).slice(0, 3);
+const minutes = remarkPluginFrontmatter.minutes ?? 0;
 ---
 
-<article class="su-card su-card--hover su-post-card" style={style}>
-	<a href={url} class="su-post-card-link">
-		<!-- 元信息行 -->
-		<div class="su-post-card-meta">
-			<time datetime={published.toISOString()} class="su-mono">
-				{formatDateToYYYYMMDD(published)}
-			</time>
-			{
-				category ? (
-					<>
-						<span class="su-post-card-sep" aria-hidden="true">
-							/
-						</span>
-						<span>{category}</span>
-					</>
-				) : null
-			}
-			{
-				password ? (
-					<span class="su-post-card-lock">
-						<Icon name="material-symbols:lock-outline" />
-					</span>
-				) : null
-			}
-			{
-				pinned ? (
-					<span class="su-pill su-pill--green su-post-card-pinned">
+<article class="su-card su-card--hover pc" style={style}>
+	<a href={url} class="pc-link">
+		<!-- 顶栏：置顶/分类 + 日期 -->
+		<div class="pc-top">
+			<span class="pc-meta">
+				<time datetime={published.toISOString()} class="su-mono">
+					{formatDateToYYYYMMDD(published)}
+				</time>
+				{
+					category ? (
+						<>
+							<span class="pc-dot" aria-hidden="true" />
+							<span class="pc-cat">{category}</span>
+						</>
+					) : null
+				}
+			</span>
+
+			<span class="pc-badges">
+				{password ? (
+					<Icon
+						name="material-symbols:lock-outline"
+						class="pc-lock"
+						title="需要密码"
+					/>
+				) : null}
+				{pinned ? (
+					<span class="su-pill su-pill--green pc-pin">
 						<Icon name="material-symbols:push-pin" />
 						置顶
 					</span>
-				) : null
-			}
+				) : null}
+			</span>
 		</div>
 
-		<h2 class="su-post-card-title">{title}</h2>
+		<h2 class="pc-title">{title}</h2>
 
-		{descriptionText ? <p class="su-post-card-desc">{descriptionText}</p> : null}
+		{descriptionText ? <p class="pc-desc">{descriptionText}</p> : null}
 
-		{
-			visibleTags.length > 0 ? (
-				<div class="su-post-card-tags">
-					{visibleTags.map((tag) => (
-						<span class="su-pill su-pill--outline">#{tag.trim()}</span>
-					))}
-				</div>
-			) : null
-		}
+		<!-- 底栏：标签 + 阅读时长 -->
+		<div class="pc-foot">
+			{
+				visibleTags.length > 0 ? (
+					<span class="pc-tags">
+						{visibleTags.map((tag) => (
+							<span class="su-pill su-pill--outline">#{tag.trim()}</span>
+						))}
+					</span>
+				) : (
+					<span />
+				)
+			}
 
-		<span class="su-post-card-more">
-			阅读全文
-			<Icon name="material-symbols:arrow-right-alt" />
-		</span>
+			<span class="pc-read">
+				{minutes > 0 ? `${minutes} 分钟` : "阅读"}
+				<Icon name="material-symbols:arrow-right-alt" />
+			</span>
+		</div>
 	</a>
 </article>
 
 <style>
-	.su-post-card {
+	.pc {
 		display: flex;
 		height: 100%;
 	}
 
-	.su-post-card-link {
+	.pc-link {
 		display: flex;
 		flex-direction: column;
 		width: 100%;
-		gap: 12px;
-		padding: 22px;
+		gap: var(--su-space-sm);
+		padding: var(--su-space-lg);
 		color: inherit;
 		text-decoration: none;
 	}
 
-	/* ---- 元信息 ---- */
-	.su-post-card-meta {
+	/* ---- 顶栏 ---- */
+	.pc-top {
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		font-size: 12px;
-		color: var(--su-ink-faint);
-		min-height: 20px;
+		justify-content: space-between;
+		gap: var(--su-space-sm);
+		min-height: 22px;
 	}
 
-	.su-post-card-meta .su-mono {
+	.pc-meta {
+		display: flex;
+		align-items: center;
+		gap: 7px;
 		font-size: 12px;
 		color: var(--su-muted-foreground);
 	}
 
-	.su-post-card-sep {
-		color: var(--su-ink-faint);
+	.pc-meta .su-mono {
+		font-size: 12px;
+		color: var(--su-muted-foreground);
 	}
 
-	.su-post-card-lock {
-		display: inline-flex;
+	.pc-dot {
+		width: 3px;
+		height: 3px;
+		border-radius: var(--su-radius-full);
+		background-color: var(--su-ink-faint);
+	}
+
+	/* 分类：品牌色的轻量承载 */
+	.pc-cat {
+		font-weight: 550;
+		color: var(--su-accent-text);
+	}
+
+	.pc-badges {
+		display: flex;
 		align-items: center;
-		font-size: 14px;
+		gap: 6px;
+		flex: none;
+	}
+
+	.pc-lock {
+		font-size: 15px;
 		color: var(--su-ink-faint);
 	}
 
-	.su-post-card-pinned {
-		margin-left: auto;
+	.pc-pin {
 		font-family: var(--font-supabase);
 	}
 
 	/* ---- 标题 ---- */
-	.su-post-card-title {
+	.pc-title {
 		margin: 0;
 		font-size: 19px;
-		font-weight: 600;
-		line-height: 1.35;
-		letter-spacing: -0.2px;
+		font-weight: 650;
+		line-height: 1.38;
+		letter-spacing: -0.3px;
 		color: var(--su-foreground);
-		transition: color 0.15s ease;
+		transition: color 0.16s ease;
 	}
 
-	.su-post-card:hover .su-post-card-title {
-		color: var(--su-primary-deep);
+	.pc:hover .pc-title {
+		color: var(--su-accent-text);
 	}
 
 	/* ---- 摘要 ---- */
-	.su-post-card-desc {
+	.pc-desc {
 		margin: 0;
 		font-size: 14px;
-		line-height: 1.6;
+		line-height: 1.65;
 		color: var(--su-muted-foreground);
 		display: -webkit-box;
-		-webkit-line-clamp: 3;
-		line-clamp: 3;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
 		flex-grow: 1;
 	}
 
-	/* ---- 标签 ---- */
-	.su-post-card-tags {
+	/* ---- 底栏 ---- */
+	.pc-foot {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--su-space-sm);
+		padding-top: var(--su-space-xs);
+		margin-top: auto;
+	}
+
+	.pc-tags {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 6px;
+		gap: 5px;
 	}
 
-	/* ---- 阅读更多 ---- */
-	.su-post-card-more {
+	.pc-tags .su-pill {
+		font-size: 11px;
+		padding: 2px 8px;
+	}
+
+	/* 阅读提示：默认低调，悬停才显形 */
+	.pc-read {
 		display: inline-flex;
 		align-items: center;
-		gap: 4px;
-		margin-top: auto;
-		padding-top: 6px;
-		font-size: 13px;
-		font-weight: 500;
-		color: var(--su-foreground);
-		transition: color 0.15s ease;
+		gap: 2px;
+		flex: none;
+		font-size: 12.5px;
+		font-weight: 550;
+		color: var(--su-ink-faint);
+		transition: color 0.16s ease;
 	}
 
-	.su-post-card:hover .su-post-card-more {
-		color: var(--su-primary-deep);
+	.pc-read :global(svg) {
+		font-size: 16px;
+		transition: transform 0.16s ease;
+	}
+
+	.pc:hover .pc-read {
+		color: var(--su-accent-text);
+	}
+
+	.pc:hover .pc-read :global(svg) {
+		transform: translateX(2px);
 	}
 </style>
