@@ -172,17 +172,6 @@ body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
 		border-bottom: 1px solid var(--su-border);
 	}
 
-	.su-mobile-bar-brand {
-		font-size: 15px;
-		font-weight: 600;
-		letter-spacing: -0.2px;
-		color: var(--su-foreground);
-		text-decoration: none;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
 	.su-mobile-bar-nav {
 		display: flex;
 		align-items: center;
@@ -235,17 +224,30 @@ body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
 		color: var(--su-foreground);
 	}
 
-	/* 按钮占位：顶栏品牌左侧留出 36+8px，避免文字压在按钮下。
-	   超窄屏隐藏品牌名，把空间让给导航链接（导航更重要）。 */
+	/* 按钮占位：抽屉按钮固定在顶栏左侧 16px 处（宽 36px），
+	   品牌名左侧留出 44px 避免文字压在按钮下面。 */
 	.su-mobile-bar-brand {
+		font-size: 15px;
+		font-weight: 600;
+		letter-spacing: -0.2px;
+		color: var(--su-foreground);
+		text-decoration: none;
 		padding-left: 44px;
 		flex: none;
 		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
-	@media (max-width: 480px) {
+	/* 超窄屏：隐藏品牌名，把横向空间让给导航链接（导航更重要）。
+	   品牌名消失后，原本由它承担的按钮占位改由顶栏自身左内边距承担，
+	   否则抽屉按钮下方会留出一段无意义空白。 */
+	@media (max-width: 520px) {
 		.su-mobile-bar-brand {
 			display: none;
+		}
+		.su-mobile-bar {
+			padding-left: 60px; /* 16(按钮左距) + 36(按钮宽) + 8(间距) */
 		}
 	}
 }
