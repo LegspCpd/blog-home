@@ -15,6 +15,8 @@ import { backgroundAtmosphere } from "@/config/backgroundAtmosphere";
 import { defaultNavItems as navDefaults } from "@/config/sidebarNav";
 import type { SidebarNavItem } from "@/config/sidebarNav";
 import { getAmbientBackgroundStyle } from "@/utils/ambient-background";
+import { siteConfig } from "@/config/siteConfig";
+import { url } from "@/utils/url-utils";
 // 顺序要紧：令牌层必须在所有消费方之前，否则首帧 var() 解析不到会闪一下。
 import "../styles/supabase-tokens.css";
 // 组件层：可复用的 su-* 工具类（排版层级/卡片/按钮/标签/动效等）。
@@ -65,6 +67,16 @@ const ambientStyle = getAmbientBackgroundStyle();
        1) 路由切换时不被替换 → 折叠状态天然保持，且不会重新 hydration；
        2) 页面切换只需替换主内容，速度接近瞬时。 -->
   <AppSidebar items={navItems} />
+
+  <!-- 移动端顶栏：侧栏在窄屏收成抽屉，这里补一条 sticky 顶栏，
+       承载站点名 + 抽屉触发按钮 + 主题切换。
+       放在 #swup-container 之外，跨页保持同一实例，不会重复挂载。 -->
+  <div class="su-mobile-bar" aria-hidden="false">
+    <a href={url("/")} class="su-mobile-bar-brand">{siteConfig.title}</a>
+    <div class="su-mobile-bar-actions">
+      <slot name="mobile-actions" />
+    </div>
+  </div>
 
   <!-- 右侧主内容区：宽度偏移由 supabase-layout.css 控制 -->
   <main

@@ -137,11 +137,90 @@ body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
 	padding-inline-start: calc(64px + 40px);
 }
 
-/* 移动端为抽屉式侧栏，不占据横向空间 */
+/* ==========================================================================
+   移动端顶栏
+   --------------------------------------------------------------------------
+   窄屏下侧栏收进抽屉，需要一条常驻顶栏承载品牌与操作入口。
+   桌面端完全隐藏，避免与侧栏重复。
+   ========================================================================== */
+.su-mobile-bar {
+	display: none;
+}
+
+/* 抽屉触发按钮默认隐藏（桌面端用侧栏本体导航），仅窄屏启用 */
+.su-mobile-trigger {
+	display: none;
+}
+
+@media (max-width: 767px) {
+	.su-mobile-bar {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 45;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		height: var(--su-header-height);
+		padding-inline: 16px;
+		/* 半透明 + 模糊：滚动时内容若在下方仍能透出层次感 */
+		background-color: color-mix(in srgb, var(--su-background) 88%, transparent);
+		backdrop-filter: saturate(180%) blur(12px);
+		-webkit-backdrop-filter: saturate(180%) blur(12px);
+		border-bottom: 1px solid var(--su-border);
+	}
+
+	.su-mobile-bar-brand {
+		font-size: 15px;
+		font-weight: 600;
+		letter-spacing: -0.2px;
+		color: var(--su-foreground);
+		text-decoration: none;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.su-mobile-bar-actions {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		flex: none;
+		order: 2;
+	}
+
+	/* 抽屉触发按钮由 AppSidebar（Provider 内）渲染，固定到顶栏左侧。
+	   它必须留在 Provider 里才能拿到侧栏上下文，所以用 fixed 归位，
+	   而不是把它搬进顶栏 —— 后者会破坏 shadcn 的 context 依赖。 */
+	.su-mobile-trigger {
+		position: fixed;
+		top: 12px;
+		left: 16px;
+		z-index: 46;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 36px;
+		height: 36px;
+		border: 1px solid var(--su-border);
+		border-radius: var(--su-radius-sm);
+		background-color: var(--su-card);
+		color: var(--su-foreground);
+	}
+
+	/* 按钮占位：顶栏品牌左侧留出 36+8px，避免文字压在按钮下 */
+	.su-mobile-bar-brand {
+		padding-left: 44px;
+	}
+}
+
+/* 移动端为抽屉式侧栏，不占据横向空间；顶栏占 60px，顶部让出同等高度 */
 @media (max-width: 767px) {
 	.su-main,
 	body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
-		padding: 72px 16px 40px;
+		padding: calc(var(--su-header-height) + 16px) 16px 40px;
 	}
 }
 
@@ -198,17 +277,8 @@ body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
 	max-width: none;
 }
 
-/* ==========================================================================
-   移动端抽屉触发按钮
-   ========================================================================== */
-.su-mobile-trigger {
-	position: fixed;
-	top: 12px;
-	inset-inline-start: 12px;
-	z-index: 40;
-	display: block;
-}
-
+/* 移动端抽屉触发按钮与顶栏的样式，统一在上面「移动端顶栏」一节定义，
+   此处不再重复，避免两处规则互相覆盖。 */
 @media (min-width: 768px) {
 	.su-mobile-trigger {
 		display: none;

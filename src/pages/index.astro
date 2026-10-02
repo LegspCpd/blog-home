@@ -1,0 +1,396 @@
+---
+import type { GetStaticPaths } from "astro";
+import { Icon } from "astro-icon/components";
+import SbPostCard from "@/components/layout/SbPostCard.astro";
+import { getSortedPosts } from "@/utils/content-utils";
+import { getPostUrlBySlug, url } from "@/utils/url-utils";
+import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
+import { pagesConfig, siteConfig } from "@/config";
+import { profileConfig } from "@/config/profileConfig";
+
+// 本页由 [...page].astro 的第 1 页渲染（首页），这里只负责兜底数据。
+export const getStaticPaths = (async () => {
+	return [
+		{
+			params: {},
+			props: {},
+		},
+	];
+}) satisfies GetStaticPaths;
+
+const posts = await getSortedPosts();
+const latest = posts.slice(0, 6);
+
+const home = pagesConfig.home;
+const socialLinks = profileConfig.links ?? [];
+const isExternal = (href: string) => /^(https?:|mailto:)/.test(href);
+
+const totalPosts = posts.length;
+const lastUpdated = posts[0]?.data.updated ?? posts[0]?.data.published;
+
+// 标签云：取出现频次最高的若干个
+const tagCount = new Map<string, number>();
+for (const post of posts) {
+	for (const tag of post.data.tags ?? []) {
+		tagCount.set(tag, (tagCount.get(tag) ?? 0) + 1);
+	}
+}
+const topTags = [...tagCount.entries()]
+	.sort((a, b) => b[1] - a[1])
+	.slice(0, 12)
+	.map(([tag]) => tag);
+---
+
+<SupabaseLayout>
+	<!-- ============ Hero ============ -->
+	<header class="home-hero su-animate">
+		<p class="su-kicker">{siteConfig.title}</p>
+		<h1 class="su-display-xl home-hero-title">{profileConfig.bio}</h1>
+		<p class="su-body-lg su-text-mute home-hero-lead">
+			{siteConfig.description}
+		</p>
+
+		<div class="home-hero-actions">
+			{
+				home.actions.map((action, index) => (
+					<a
+						class:list={[
+							"su-btn",
+							index === 0 ? "su-btn--primary" : "su-btn--outline",
+						]}
+						href={isExternal(action.href) ? action.href : url(action.href)}
+					>
+						{action.label}
+						{action.icon ? <Icon name={action.icon} /> : null}
+					</a>
+				))
+			}
+		</div>
+
+		<!-- 统计条 -->
+		<dl class="home-stats">
+			<div>
+				<dt>文章</dt>
+				<dd class="su-mono">{totalPosts}</dd>
+			</div>
+			<div>
+				<dt>标签</dt>
+				<dd class="su-mono">{tagCount.size}</dd>
+			</div>
+			{
+				lastUpdated ? (
+					<div>
+						<dt>最近更新</dt>
+						<dd class="su-mono">
+							{lastUpdated.toISOString().slice(0, 10)}
+						</dd>
+					</div>
+				) : null
+			}
+		</dl>
+	</header>
+
+	<!-- ============ 最新文章 ============ -->
+	<section class="home-latest" aria-labelledby="home-latest-title">
+		<div class="home-section-head">
+			<h2 id="home-latest-title" class="su-heading-lg">最新文章</h2>
+			<a href={url("/posts/")} class="su-link">
+				全部文章
+				<Icon name="material-symbols:arrow-right-alt" />
+			</a>
+		</div>
+
+		<ul class="home-post-grid">
+			{
+				latest.map((post) => (
+					<li>
+						<SbPostCard
+							entry={post}
+							title={post.data.title}
+							url={getPostUrlBySlug(post.id)}
+							published={post.data.published}
+							updated={post.data.updated}
+							tags={post.data.tags ?? []}
+							category={post.data.category}
+							description={post.data.description ?? ""}
+							pinned={post.data.pinned}
+							password={!!post.data.password}
+						/>
+					</li>
+				))
+			}
+		</ul>
+	</section>
+
+	<!-- ============ 这个站点在做什么 ============ -->
+	<section class="home-about" aria-labelledby="home-about-title">
+		<h2 id="home-about-title" class="su-heading-lg">{home.highlightsTitle}</h2>
+		<p class="su-body-md su-text-mute">{home.highlightsDescription}</p>
+
+		<ul class="home-highlights">
+			{
+				home.highlights.map((item) => (
+					<li class="su-card su-card--pad">
+						<span class="home-highlight-icon">
+							<Icon name={item.icon} />
+						</span>
+						<h3 class="su-heading-md">{item.title}</h3>
+						<p class="su-body-sm su-text-mute">{item.text}</p>
+					</li>
+				))
+			}
+		</ul>
+	</section>
+
+	<!-- ============ 标签 ============ -->
+	{
+		topTags.length > 0 ? (
+			<section class="home-tags" aria-labelledby="home-tags-title">
+				<h2 id="home-tags-title" class="su-heading-lg">
+					常读的标签
+				</h2>
+				<div class="home-tag-cloud">
+					{topTags.map((tag) => (
+						<a href={url(`/archive/?tag=${encodeURIComponent(tag)}`)} class="su-pill su-pill--outline">
+							#{tag}
+						</a>
+					))}
+				</div>
+			</section>
+		) : null
+	}
+
+	<!-- ============ 社交 + 页脚链接 ============ -->
+	<footer class="home-foot">
+		{
+			socialLinks.length > 0 ? (
+				<nav class="home-social" aria-label={home.socialTitle}>
+					<span class="su-caption su-text-faint">{home.socialTitle}</span>
+					<ul>
+						{socialLinks.map((link) => (
+							<li>
+								<a
+									class="su-pill su-pill--outline"
+									href={isExternal(link.url) ? link.url : url(link.url)}
+									target={/^https?:/.test(link.url) ? "_blank" : undefined}
+									rel={
+										/^https?:/.test(link.url)
+											? "noopener noreferrer"
+											: undefined
+									}
+								>
+									{link.icon ? <Icon name={link.icon} /> : null}
+									{link.name}
+								</a>
+							</li>
+						))}
+					</ul>
+				</nav>
+			) : null
+		}
+
+		<nav class="home-legal" aria-label="站点信息">
+			{
+				home.footerLinks.map((link, index) => (
+					<>
+						{index > 0 ? <span class="su-dot">·</span> : null}
+						<a
+							href={isExternal(link.href) ? link.href : url(link.href)}
+						>
+							{link.label}
+						</a>
+					</>
+				))
+			}
+		</nav>
+	</footer>
+</SupabaseLayout>
+
+<style>
+	/* ---- Hero ---- */
+	.home-hero {
+		padding-block: 16px 48px;
+	}
+
+	.home-hero-title {
+		margin: 14px 0 0;
+		max-width: 20ch;
+		/* 中文长句在 display 档位下需要更紧的字距 */
+		letter-spacing: -1px;
+	}
+
+	.home-hero-lead {
+		max-width: 54ch;
+		margin-top: 18px;
+	}
+
+	.home-hero-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		margin-top: 28px;
+	}
+
+	/* 统计条：三等分，用发丝线分隔 */
+	.home-stats {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 32px;
+		margin: 36px 0 0;
+		padding-top: 24px;
+		border-top: 1px solid var(--su-border);
+	}
+
+	.home-stats dt {
+		font-size: 12px;
+		color: var(--su-muted-foreground);
+		margin-bottom: 4px;
+	}
+
+	.home-stats dd {
+		margin: 0;
+		font-size: 18px;
+		font-weight: 500;
+		color: var(--su-foreground);
+	}
+
+	/* ---- 区块通用 ---- */
+	.home-latest,
+	.home-about,
+	.home-tags,
+	.home-foot {
+		padding-block: 40px;
+		border-top: 1px solid var(--su-border);
+	}
+
+	.home-section-head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 16px;
+		margin-bottom: 24px;
+	}
+
+	.home-section-head h2 {
+		margin: 0;
+	}
+
+	/* ---- 文章网格 ---- */
+	.home-post-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+		gap: 16px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	/* ---- 这个站点在做什么 ---- */
+	.home-about > p {
+		margin-top: 10px;
+		max-width: 60ch;
+	}
+
+	.home-highlights {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 16px;
+		margin: 28px 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.home-highlight-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		margin-bottom: 14px;
+		border: 1px solid var(--su-border);
+		border-radius: var(--su-radius-sm);
+		background-color: var(--su-canvas-soft);
+		font-size: 17px;
+		color: var(--su-muted-foreground);
+		transition:
+			color 0.15s ease,
+			border-color 0.15s ease;
+	}
+
+	.home-highlights li:hover .home-highlight-icon {
+		color: var(--su-primary);
+		border-color: var(--su-primary);
+	}
+
+	.home-highlights h3 {
+		margin: 0 0 8px;
+	}
+
+	/* ---- 标签云 ---- */
+	.home-tag-cloud {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-top: 20px;
+	}
+
+	.home-tag-cloud a {
+		padding: 5px 11px;
+		font-family: var(--font-supabase);
+	}
+
+	/* ---- 页脚 ---- */
+	.home-social ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin: 12px 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.home-social a {
+		padding: 5px 11px;
+		font-family: var(--font-supabase);
+	}
+
+	.home-legal {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+		margin-top: 28px;
+		padding-top: 24px;
+		border-top: 1px solid var(--su-border);
+		font-size: 13px;
+	}
+
+	.home-legal a {
+		color: var(--su-muted-foreground);
+		text-decoration: none;
+		transition: color 0.15s ease;
+	}
+
+	.home-legal a:hover {
+		color: var(--su-primary);
+	}
+
+	/* ---- 移动端 ---- */
+	@media (max-width: 640px) {
+		.home-hero {
+			padding-block: 8px 36px;
+		}
+		.home-stats {
+			gap: 24px;
+		}
+		.home-latest,
+		.home-about,
+		.home-tags,
+		.home-foot {
+			padding-block: 32px;
+		}
+		.home-post-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>
