@@ -15,8 +15,15 @@ if (!aboutPost) {
 const { Content } = await render(aboutPost);
 ---
 
-<SupabaseLayout title={i18n(I18nKey.about)} description={i18n(I18nKey.about)}>
-  <SbPageHeader eyebrow="About" title={i18n(I18nKey.about)} />
+<SupabaseLayout
+	title={i18n(I18nKey.about)}
+	description="我是 LegspCpd，一个折腾自部署与边缘部署的开发者。这里写教程、也写随笔。"
+>
+  <SbPageHeader
+    eyebrow="About"
+    title={i18n(I18nKey.about)}
+    subtitle="折腾自部署与边缘部署的开发者，主要写 Cloudflare / EdgeOne 相关的东西。"
+  />
 
   <div class="su-prose-page su-about-body su-animate">
     <Markdown class="">

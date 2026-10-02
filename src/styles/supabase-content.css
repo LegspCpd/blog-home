@@ -611,10 +611,11 @@
 
 /* 复制按钮：与全站视觉统一，并给出明确的悬停反馈 */
 .su-main .expressive-code .copy button {
-	border-radius: 6px;
+	border-radius: var(--su-radius-xs);
 	border: 1px solid transparent;
 	color: var(--su-muted-foreground);
 	background-color: transparent;
+	font-size: 12px;
 	transition:
 		background-color 0.15s ease,
 		border-color 0.15s ease,
@@ -631,6 +632,17 @@
 .su-main .expressive-code .copy button[data-copied="true"] {
 	color: var(--su-accent-text);
 	border-color: var(--su-accent-text);
+	background-color: var(--su-primary-soft);
+}
+
+/* expressive-code 内置文案是英文（Copy to clipboard / Copied!），
+   这里用伪元素覆盖成中文，省去改第三方库。 */
+.su-main .expressive-code .copy button::after {
+	content: "复制";
+}
+
+.su-main .expressive-code .copy button[data-copied="true"]::after {
+	content: "已复制";
 }
 
 /* --------------------------------------------------------------------------

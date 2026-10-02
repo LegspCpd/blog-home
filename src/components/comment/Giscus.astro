@@ -28,7 +28,13 @@ const darkTheme = "dark";
 	<span class="giscus-trigger-hint">加载后将跳转到 GitHub Discussions</span>
 </button>
 
-<div id="comments" class="giscus-mount" data-giscus-mount hidden></div>
+<!--
+  外层容器不能也叫 id="comments"：
+  expressive-code 的代码块复制按钮容器也用这个 id，
+  同页出现两个相同 id 会让 getElementById / 锚点跳转拿到错误的元素。
+  这里用带前缀的独立 id，功能上只需要 data-giscus-mount 定位。
+-->
+<div class="giscus-mount" data-giscus-mount hidden></div>
 
 <template id="giscus-tpl">
 	<giscus-widget

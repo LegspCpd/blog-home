@@ -23,8 +23,12 @@ import { fileURLToPath } from "node:url";
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = path.resolve(rootDir, process.argv[2] || "dist");
 
-/** 候选：这些目录历史上是上游主题的演示素材 */
-const CANDIDATES = ["demo", "endfield", "iku", "lt", "yd", "test"];
+/**
+ * 候选：这些目录历史上是上游主题的演示素材。
+ * 判断依据是「产物里没有任何 src/href/url() 指向它们」，
+ * 而不是「源码配置里有没有人写过」—— 配置里写了不代表真会用到。
+ */
+const CANDIDATES = ["demo", "pio", "endfield", "iku", "lt", "yd", "test"];
 
 /**
  * 递归收集所有文本文件，用于引用扫描。
@@ -66,18 +70,61 @@ if (!existsSync(outDir)) {
 }
 
 const textFiles = collectText(outDir, [], CANDIDATES);
-const haystack = textFiles
-	.map((f) => {
-		try {
-			return readFileSync(f, "utf8");
-		} catch {
-			return "";
-		}
-	})
-	.join("\n");
+
+/**
+ * 提取「真实的资源引用路径」。
+ *
+ * 不能用整篇文本做子串匹配 —— 文章正文里随口提到一个路径
+ * （比如复盘时写了 `/demo/` 这个字符串）就会被误判成引用，
+ * 导致本该清理的目录被保留下来。
+ *
+ * 这里只认三种来源：
+ *   1. src="..." / href="..."  —— HTML 属性
+ *   2. url(...)                 —— CSS 里的路径函数
+ *   3. import "..." / from "..." —— 模块引用
+ */
+function extractRefs(text) {
+	const refs = [];
+	const push = (v) => {
+		if (!v) return;
+		// 去掉查询串与片段
+		refs.push(v.split(/[?#]/)[0]);
+	};
+
+	for (const m of text.matchAll(/\b(?:src|href)\s*=\s*["']([^"']+)["']/g)) {
+		push(m[1]);
+	}
+	for (const m of text.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) {
+		push(m[1]);
+	}
+	for (const m of text.matchAll(
+		/\b(?:import|export)\s+(?:[\s\S]*?\sfrom\s+)?["']([^"']+)["']/g,
+	)) {
+		push(m[1]);
+	}
+	return refs;
+}
+
+const allRefs = new Set();
+for (const f of textFiles) {
+	try {
+		for (const r of extractRefs(readFileSync(f, "utf8"))) allRefs.add(r);
+	} catch {
+		/* 读不了的跳过 */
+	}
+}
+
+/** 判断某个目录是否被引用 */
+function isReferenced(name) {
+	const needle = `/${name}/`;
+	for (const r of allRefs) {
+		if (r === `/${name}` || r.startsWith(needle)) return true;
+	}
+	return false;
+}
 
 console.log(
-	`[prune] 扫描 ${textFiles.length} 个文本文件（${(haystack.length / 1024).toFixed(0)} KB）`,
+	`[prune] 扫描 ${textFiles.length} 个文本文件，提取 ${allRefs.size} 条资源引用`,
 );
 
 let freed = 0;
@@ -89,8 +136,8 @@ for (const name of CANDIDATES) {
 
 	const size = dirSize(dir);
 
-	// 二次确认：产物里是否真的没有任何地方提到这个路径
-	if (haystack.includes(`/${name}/`)) {
+	// 二次确认：产物里是否真的还引用这个目录
+	if (isReferenced(name)) {
 		console.log(
 			`[prune] 保留 ${name}/ —— 产物中仍存在引用（${(size / 1024 / 1024).toFixed(1)} MB）`,
 		);

@@ -938,6 +938,23 @@ const isLongRead = (remarkPluginFrontmatter.minutes ?? 0) >= 5;
     }
   })();
 
+  // expressive-code 的复制按钮由第三方生成，只有 title 没有 aria-label，
+  // 读屏软件读不到中文语义。这里补上，并顺手把 title 也本地化。
+  // swup 切页后代码块会被替换，因此监听 astro:page-load 重新处理。
+  function localizeCopyButtons() {
+    document
+      .querySelectorAll<HTMLButtonElement>(
+        ".expressive-code .copy button:not([data-zh])",
+      )
+      .forEach((btn) => {
+        btn.dataset.zh = "1";
+        btn.setAttribute("aria-label", "复制代码");
+        btn.title = "复制代码";
+      });
+  }
+  localizeCopyButtons();
+  document.addEventListener("astro:page-load", localizeCopyButtons);
+
   // 长文展开 / 收起。
   // 只对带 data-long-read 的正文生效（服务端按阅读时长 ≥5 分钟标记）。
   (function () {
