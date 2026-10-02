@@ -10,6 +10,7 @@ import sanitizeHtml from "sanitize-html";
 import { profileConfig, siteConfig } from "@/config";
 import { processCoverImageSync } from "@/utils/image-utils";
 import pkg from "../../package.json";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import matter from "gray-matter";
@@ -46,11 +47,28 @@ function getPostImageUrl(imagePath: string): string | undefined {
  *
  * 路径解析不能用 import.meta.url：构建后该变量指向产物目录
  * （dist/ 或 .vercel/output/），src/content 并不在其旁边。
- * 构建与预览时进程工作目录都是项目根，因此以 cwd 为基准。
+ * 构建与预览时进程工作目录都是项目根，因此以 cwd 为基准；
+ * 万一某些 CI 把工作目录设到别处，再向上层找一层兜底。
  */
+async function resolveContentDir(): Promise<string> {
+	const sub = path.join("src", "content", "posts");
+	let dir = path.resolve(process.cwd(), sub);
+	if (existsSync(dir)) return dir;
+
+	// 从 cwd 逐级向上找，最多 6 层
+	let cur = process.cwd();
+	for (let i = 0; i < 6; i++) {
+		const parent = path.dirname(cur);
+		if (parent === cur) break;
+		cur = parent;
+		dir = path.resolve(cur, sub);
+		if (existsSync(dir)) return dir;
+	}
+	return path.resolve(process.cwd(), sub);
+}
+
 async function renderPostHtml(entryId: string): Promise<string> {
-	// cwd 为项目根；content 位于 src/content/posts
-	const contentDir = path.resolve(process.cwd(), "src", "content", "posts");
+	const contentDir = await resolveContentDir();
 
 	// entry.id 形如 "cloudreve-worker" 或 "day/yxdsm"
 	const candidates = [entryId, `${entryId}.md`, `${entryId}.mdx`];
