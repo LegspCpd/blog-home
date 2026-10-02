@@ -138,6 +138,12 @@ const hasToc = headings.filter((h) => h.depth > 1 && h.depth <= 3).length > 0;
 const showActionCard =
 	siteConfig.sharePoster ||
 	(sponsorConfig.showButtonInPost && siteConfig.pages.sponsor);
+
+/**
+ * 长文折叠：阅读时长超过 5 分钟才折叠。
+ * 阈值定得比较高 —— 短文折叠反而碍事，只有真正长的教程才需要。
+ */
+const isLongRead = (remarkPluginFrontmatter.minutes ?? 0) >= 5;
 ---
 
 <SupabaseLayout
@@ -253,15 +259,33 @@ const showActionCard =
             slug={entry.id}
             hint={entry.data.passwordHint}
           >
-            <Markdown class="markdown-content su-animate">
+            <Markdown
+              class="markdown-content su-animate"
+              data-long-read={isLongRead ? "" : undefined}
+            >
               <Content />
             </Markdown>
           </EncryptedPost>
         ) : (
-          <Markdown class="markdown-content su-animate">
+          <Markdown
+            class="markdown-content su-animate"
+            data-long-read={isLongRead ? "" : undefined}
+          >
             <Content />
           </Markdown>
         )
+      }
+
+      {/* 长文展开：默认只露出开头若干屏，展开后不再限制高度 */}
+      {
+        isLongRead ? (
+          <div class="lr-toggle" data-lr-toggle>
+            <button type="button" class="su-btn su-btn--outline lr-btn">
+              <span data-lr-label>展开全文</span>
+              <Icon name="material-symbols:expand-more" class="lr-icon" />
+            </button>
+          </div>
+        ) : null
       }
 
       <!-- Tags footer -->
@@ -431,6 +455,59 @@ const showActionCard =
     padding-top: 40px;
     max-width: 1000px;
     margin-inline: auto;
+  }
+
+  /* ---- 长文折叠 ----
+     只限制正文高度并在底部渐隐，按钮浮在渐变之上。
+     展开后由 JS 移除 data-long-read，max-height 限制随之失效。 */
+  .sb-article [data-long-read] {
+    position: relative;
+    max-height: 70vh;
+    overflow: hidden;
+  }
+
+  .lr-toggle {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .lr-btn {
+    gap: 6px;
+  }
+
+  .lr-icon {
+    font-size: 18px;
+    transition: transform 0.2s ease;
+  }
+
+  /* 展开后按钮淡出，避免占位 */
+  .lr-toggle.is-expanded {
+    display: none;
+  }
+
+  /* 折叠状态下的底部渐隐，暗示「下面还有」 */
+  .sb-article [data-long-read]::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 120px;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      var(--su-background)
+    );
+  }
+
+  /* 展开后移除渐变 */
+  .sb-article [data-long-read].is-expanded {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .sb-article [data-long-read].is-expanded::after {
+    display: none;
   }
 
   /* 上下篇、相关文章：与正文左边缘对齐，跟随同一栅格。
@@ -713,6 +790,33 @@ const showActionCard =
 </style>
 
 <script>
+  // 长文展开 / 收起。
+  // 只对带 data-long-read 的正文生效（服务端按阅读时长 ≥5 分钟标记）。
+  (function () {
+    const body = document.querySelector<HTMLElement>("[data-long-read]");
+    const toggle = document.querySelector<HTMLElement>("[data-lr-toggle]");
+    const btn = toggle?.querySelector("button");
+    const label = toggle?.querySelector("[data-lr-label]");
+    if (!body || !btn || !label) return;
+
+    let expanded = false;
+
+    btn.addEventListener("click", function () {
+      expanded = !expanded;
+      body.classList.toggle("is-expanded", expanded);
+      toggle?.classList.toggle("is-expanded", expanded);
+      label.textContent = expanded ? "收起全文" : "展开全文";
+      btn.setAttribute("aria-expanded", expanded ? "true" : "false");
+
+      // 展开时把焦点移到正文开头，否则键盘用户会「丢失焦点」
+      if (expanded) {
+        body.scrollIntoView({ behavior: "smooth", block: "start" });
+        body.setAttribute("tabindex", "-1");
+        body.focus({ preventScroll: true });
+      }
+    });
+  })();
+
   // 阅读进度 + 返回顶部。
   // 用 requestAnimationFrame 节流，避免滚动时高频触发布局计算。
   (function () {
