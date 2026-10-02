@@ -177,7 +177,32 @@ const isLongRead = (remarkPluginFrontmatter.minutes ?? 0) >= 5;
 
       <!-- Title block -->
       <header class="sb-article__head">
-        <h1 class="sb-article__title su-animate">{entry.data.title}</h1>
+        <div class="sb-article__title-row">
+          <h1 class="sb-article__title su-animate">{entry.data.title}</h1>
+
+          {/* 工具按钮：复制链接 / 分享 */}
+          <div class="sb-article__tools">
+            <button
+              type="button"
+              class="sb-tool-btn"
+              data-copy-link={Astro.url.href}
+              aria-label="复制链接"
+              title="复制链接"
+            >
+              <Icon name="material-symbols:link" />
+            </button>
+            <button
+              type="button"
+              class="sb-tool-btn"
+              data-share
+              aria-label="分享"
+              title="分享"
+              hidden
+            >
+              <Icon name="material-symbols:ios-share" />
+            </button>
+          </div>
+        </div>
 
         <div class="sb-article__meta">
           <span class="su-mono">{formatDateToYYYYMMDD(entry.data.published)}</span>
@@ -510,6 +535,70 @@ const isLongRead = (remarkPluginFrontmatter.minutes ?? 0) >= 5;
     display: none;
   }
 
+  /* ---- 标题区工具按钮 ---- */
+  .sb-article__title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .sb-article__title-row .sb-article__title {
+    min-width: 0;
+  }
+
+  .sb-article__tools {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+    /* 默认低调，悬停标题区时才完全显形 */
+    opacity: 0.55;
+    transition: opacity 0.15s ease;
+  }
+
+  .sb-article__title-row:hover .sb-article__tools,
+  .sb-article__tools:focus-within {
+    opacity: 1;
+  }
+
+  .sb-tool-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--su-border);
+    border-radius: var(--su-radius-sm);
+    background-color: var(--su-card);
+    color: var(--su-muted-foreground);
+    font-size: 17px;
+    cursor: pointer;
+    transition:
+      border-color 0.15s ease,
+      color 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  .sb-tool-btn:hover {
+    border-color: var(--su-primary);
+    color: var(--su-primary);
+  }
+
+  /* 复制成功后的短暂确认 */
+  .sb-tool-btn.is-ok {
+    border-color: var(--su-primary);
+    color: var(--su-primary);
+    background-color: var(--su-primary-soft);
+  }
+
+  /* 窄屏没有 hover，始终显形 */
+  @media (max-width: 767px) {
+    .sb-article__tools {
+      opacity: 1;
+    }
+  }
+
   /* 上下篇、相关文章：与正文左边缘对齐，跟随同一栅格。
      评论区自带宽度约束（见 comment/index.astro），这里不再重复限宽。 */
   .su-article-foot,
@@ -790,6 +879,65 @@ const isLongRead = (remarkPluginFrontmatter.minutes ?? 0) >= 5;
 </style>
 
 <script>
+  // 复制链接 / 分享。
+  (function () {
+    const copyBtn = document.querySelector<HTMLButtonElement>("[data-copy-link]");
+    const shareBtn = document.querySelector<HTMLButtonElement>("[data-share]");
+
+    const flash = (btn: HTMLElement | null) => {
+      if (!btn) return;
+      btn.classList.add("is-ok");
+      setTimeout(() => btn.classList.remove("is-ok"), 1500);
+    };
+
+    const copyText = (text: string): Promise<boolean> => {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text).then(
+          () => true,
+          () => false,
+        );
+      }
+      // 非安全上下文（http 访问）退回 execCommand
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.top = "-1000px";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return Promise.resolve(ok);
+      } catch {
+        return Promise.resolve(false);
+      }
+    };
+
+    copyBtn?.addEventListener("click", () => {
+      const link = copyBtn.getAttribute("data-copy-link") || location.href;
+      copyText(link).then((ok) => {
+        flash(ok ? copyBtn : null);
+        if (!ok) copyBtn.setAttribute("aria-label", "复制失败");
+      });
+    });
+
+    // 原生分享仅在支持的浏览器上显示，避免给不支持的人一个死按钮
+    if (shareBtn && typeof navigator.share === "function") {
+      shareBtn.hidden = false;
+      shareBtn.addEventListener("click", () => {
+        navigator
+          .share({
+            title: document.title,
+            url: location.href,
+          })
+          .catch(() => {
+            /* 用户取消分享，不做处理 */
+          });
+      });
+    }
+  })();
+
   // 长文展开 / 收起。
   // 只对带 data-long-read 的正文生效（服务端按阅读时长 ≥5 分钟标记）。
   (function () {
