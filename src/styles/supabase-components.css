@@ -86,7 +86,7 @@
 	color: var(--su-ink-faint);
 }
 .su-text-primary {
-	color: var(--su-primary);
+	color: var(--su-accent-text);
 }
 .su-mono {
 	font-family: var(--font-mono-supabase);
@@ -159,8 +159,8 @@
 }
 
 .su-btn--primary {
-	background-color: var(--su-primary);
-	border-color: var(--su-primary);
+	background-color: var(--su-accent-text);
+	border-color: var(--su-accent-text);
 	color: var(--su-primary-foreground);
 }
 .su-btn--primary:hover {
@@ -229,7 +229,7 @@ a.su-pill:hover {
 	color: var(--su-foreground);
 }
 .su-pill--green {
-	background-color: var(--su-primary);
+	background-color: var(--su-accent-text);
 	color: var(--su-primary-foreground);
 }
 
@@ -260,7 +260,7 @@ a.su-pill:hover {
 	transition: color 0.15s ease;
 }
 .su-link:hover {
-	color: var(--su-primary);
+	color: var(--su-accent-text);
 }
 
 /* --------------------------------------------------------------------------

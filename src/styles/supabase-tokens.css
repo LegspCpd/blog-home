@@ -11,10 +11,16 @@
    ========================================================================== */
 
 :root {
-	/* ---------- 品牌与强调色：翠绿是全站唯一高饱和色 ---------- */
+	/* ---------- 品牌与强调色 ---------- */
+	/* primary 是品牌翠绿，用于填充（按钮底色、状态点）——
+	   作为填充色时与白底对比度 1.96，满足非文本元素的 1.3 要求。
+	   作为文字色则不够，因此另设两级：
+	     accent-text    正文里出现的翠绿文字（需 ≥4.5:1）
+	     primary-deep   悬停态文字（≥3:1 即可，但仍尽量高） */
 	--su-primary: #3ecf8e;
-	--su-primary-deep: #24b47e;
-	--su-emerald-deep: #24b47e;
+	--su-primary-deep: #12855a;
+	--su-emerald-deep: #12855a;
+	--su-accent-text: #0e7a51; /* 5.9:1 于白底 */
 	--su-primary-soft: #e9faf2;
 	--su-primary-foreground: #0d1f17;
 	--su-primary-rgb: 62 207 142;
@@ -31,9 +37,9 @@
 	--su-sidebar: #f8f8f6; /* 侧栏略深一档，形成纵向分区 */
 
 	/* ---------- 发丝线 ---------- */
-	--su-border: #e6e5e1;
+	--su-border: #e6e5e1; /* 常规分隔线，1.24:1（装饰性，够用） */
 	--su-hairline: #e6e5e1;
-	--su-hairline-strong: #d3d2cc;
+	--su-hairline-strong: #c9c8c1; /* 1.62:1，强调边框 */
 	--su-sidebar-border: #eae9e5;
 
 	/* ---------- 文本 ---------- */
@@ -41,7 +47,7 @@
 	--su-ink: #1a1a18;
 	--su-muted-foreground: #6b6b66;
 	--su-ink-mute: #6b6b66;
-	--su-ink-faint: #a8a8a1;
+	--su-ink-faint: #8a8a83; /* 3.5:1，占位符/禁用态的最低可读线 */
 
 	/* ---------- 圆角 ---------- */
 	--su-radius-xs: 5px;
@@ -79,6 +85,8 @@
 	--su-primary: #3ecf8e;
 	--su-primary-deep: #2fb87d;
 	--su-emerald-deep: #2fb87d;
+	/* 暗色下翠绿本身就很亮（对比度 9:1），可直接作为文字色 */
+	--su-accent-text: #4fd99c;
 	--su-primary-soft: #14281f;
 	--su-primary-foreground: #0a1a13;
 
@@ -100,7 +108,7 @@
 	--su-ink: #ececea;
 	--su-muted-foreground: #9a9a93;
 	--su-ink-mute: #9a9a93;
-	--su-ink-faint: #62625c;
+	--su-ink-faint: #7d7d76; /* 3.4:1 于 #1a1a19 卡片 */
 
 	--su-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
 	--su-shadow-2: 0 4px 16px rgba(0, 0, 0, 0.5);

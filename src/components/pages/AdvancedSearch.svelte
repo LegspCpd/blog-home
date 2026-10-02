@@ -243,7 +243,7 @@
 	}
 
 	.as-field:focus-within {
-		border-color: var(--su-primary);
+		border-color: var(--su-accent-text);
 		box-shadow: 0 0 0 3px var(--su-primary-soft);
 	}
 
@@ -391,7 +391,7 @@
 
 	.as-spinner {
 		font-size: 32px;
-		color: var(--su-primary);
+		color: var(--su-accent-text);
 	}
 
 	.as-hint {
