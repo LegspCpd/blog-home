@@ -433,10 +433,10 @@ const showActionCard =
     margin-inline: auto;
   }
 
-  /* 上/下一篇、相关文章、评论区：与正文左边缘对齐，跟随同一栅格 */
+  /* 上下篇、相关文章：与正文左边缘对齐，跟随同一栅格。
+     评论区自带宽度约束（见 comment/index.astro），这里不再重复限宽。 */
   .su-article-foot,
-  .su-article-related,
-  .su-article-comments {
+  .su-article-related {
     max-width: 720px;
     margin-inline: auto;
     padding-inline: 0;
