@@ -2,9 +2,8 @@
 import type { GetStaticPaths } from "astro";
 import { Icon } from "astro-icon/components";
 import SbPageHeader from "@/components/layout/SbPageHeader.astro";
-import SupabaseShell from "@/layouts/SupabaseShell.astro";
+import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
 import { pagesConfig, siteConfig } from "@/config";
-import { profileConfig } from "@/config/profileConfig";
 import { getSortedPosts } from "@utils/content-utils";
 import { formatDateToYYYYMMDD } from "@utils/date-utils";
 import { getPostUrlBySlug } from "@utils/url-utils";
@@ -24,8 +23,7 @@ export const getStaticPaths = (async ({ paginate }) => {
 }) satisfies GetStaticPaths;
 
 const { page } = Astro.props;
-
-const latestPosts = page.data;
+const totalPosts = (page as any).props?.totalPosts ?? 0;
 
 // ===================================================================
 // 文章列表的文案 / 卡片 / 阈值全部来自 src/config/pagesConfig.ts
@@ -33,55 +31,55 @@ const latestPosts = page.data;
 const postList = pagesConfig.postList;
 ---
 
-<SupabaseShell>
+<SupabaseLayout>
   <SbPageHeader
     eyebrow={postList.kicker}
     title={postList.title}
     subtitle={`第 {page.currentPage} / {page.lastPage} 页 · 共 {totalPosts} 篇`}
   >
-    <div class="sb-page-tabs">
-      <a class="sb-pill sb-pill--outline" href="/archive/">按年份归档</a>
-      <a class="sb-pill sb-pill--outline" href="/rss/">RSS 订阅</a>
+    <div class="su-page-tabs">
+      <a class="su-pill su-pill--outline" href="/archive/">按年份归档</a>
+      <a class="su-pill su-pill--outline" href="/rss/">RSS 订阅</a>
     </div>
   </SbPageHeader>
 
-  <div class="sb-prose-page">
-    <ul class="sb-list">
+  <div class="su-prose-page">
+    <ul class="su-list">
       {page.data.map((entry) => (
         <li>
-          <a class="sb-row" href={getPostUrlBySlug(entry.id)}>
-            <time class="sb-row-date sb-mono" datetime={entry.data.published.toISOString()}>
+          <a class="su-row" href={getPostUrlBySlug(entry.id)}>
+            <time class="su-row-date su-mono" datetime={entry.data.published.toISOString()}>
               {formatDateToYYYYMMDD(entry.data.published)}
             </time>
-            <span class="sb-row-title">{entry.data.title}</span>
+            <span class="su-row-title">{entry.data.title}</span>
           </a>
         </li>
       ))}
     </ul>
 
     {(page.url.prev || page.url.next) && (
-      <nav class="sb-pager" aria-label="分页导航">
+      <nav class="su-pager" aria-label="分页导航">
         {page.url.prev ? (
-          <a class="sb-btn sb-btn--outline" href={page.url.prev}>
+          <a class="su-btn su-btn--outline" href={page.url.prev}>
             <Icon name="material-symbols:chevron-left-rounded" width="16" height="16" />
             {postList.prevLabel}
           </a>
         ) : (
-          <span class="sb-btn sb-btn--outline" aria-disabled="true">
+          <span class="su-btn su-btn--outline" aria-disabled="true">
             <Icon name="material-symbols:chevron-left-rounded" width="16" height="16" />
             {postList.prevLabel}
           </span>
         )}
-        <span class="sb-text-mute sb-mono">
+        <span class="su-text-mute su-mono">
           {page.currentPage} / {page.lastPage}
         </span>
         {page.url.next ? (
-          <a class="sb-btn sb-btn--outline" href={page.url.next}>
+          <a class="su-btn su-btn--outline" href={page.url.next}>
             {postList.nextLabel}
             <Icon name="material-symbols:chevron-right-rounded" width="16" height="16" />
           </a>
         ) : (
-          <span class="sb-btn sb-btn--outline" aria-disabled="true">
+          <span class="su-btn su-btn--outline" aria-disabled="true">
             {postList.nextLabel}
             <Icon name="material-symbols:chevron-right-rounded" width="16" height="16" />
           </span>
@@ -89,37 +87,37 @@ const postList = pagesConfig.postList;
       </nav>
     )}
   </div>
-</SupabaseShell>
+</SupabaseLayout>
 
 <style>
-  .sb-prose-page {
+  .su-prose-page {
     max-width: 800px;
     margin-inline: auto;
   }
 
-  .sb-page-tabs {
+  .su-page-tabs {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     margin-top: 24px;
   }
 
-  .sb-list {
+  .su-list {
     list-style: none;
     padding: 0;
     margin: 0;
-    border-top: 1px solid var(--sb-hairline);
+    border-top: 1px solid var(--su-hairline);
   }
 
-  .sb-list > li {
-    border-top: 1px solid var(--sb-hairline);
+  .su-list > li {
+    border-top: 1px solid var(--su-hairline);
   }
 
-  .sb-list > li:first-child {
+  .su-list > li:first-child {
     border-top: 0;
   }
 
-  .sb-row {
+  .su-row {
     display: flex;
     align-items: center;
     gap: 16px;
@@ -128,25 +126,25 @@ const postList = pagesConfig.postList;
     color: inherit;
   }
 
-  .sb-row-date {
+  .su-row-date {
     font-size: 13px;
-    color: var(--sb-ink-mute);
+    color: var(--su-ink-mute);
     white-space: nowrap;
     flex-shrink: 0;
   }
 
-  .sb-row-title {
+  .su-row-title {
     flex: 1;
     min-width: 0;
-    color: var(--sb-ink);
+    color: var(--su-ink);
     transition: color 0.15s ease;
   }
 
-  .sb-row:hover .sb-row-title {
-    color: var(--sb-primary);
+  .su-row:hover .su-row-title {
+    color: var(--su-primary);
   }
 
-  .sb-pager {
+  .su-pager {
     display: flex;
     align-items: center;
     justify-content: space-between;

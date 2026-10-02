@@ -1,0 +1,187 @@
+/* ==========================================================================
+   SupabaseLayout 布局层
+   处理：左侧可折叠 Sidebar + 右侧主内容区 的几何关系
+   仅包含几何/定位规则，视觉样式由 supabase-content.css 提供
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. CSS 变量（供 shadcn Sidebar 与本文件共用）
+   -------------------------------------------------------------------------- */
+:root {
+	--sidebar-width: 240px;
+	--sidebar-width-icon: 64px;
+	--sidebar-width-mobile: 272px;
+	--sidebar-height: 100vh;
+}
+
+/* 暗色模式变量由 supabase.css 的 :root.dark 覆盖 */
+
+/* --------------------------------------------------------------------------
+   2. 侧栏作用域（shadcn Sidebar.Provider 的 class="su-scope"）
+   -------------------------------------------------------------------------- */
+.su-scope {
+	/* 侧栏使用 fixed 定位，始终占据左侧 */
+	--sidebar-h: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   3. 主内容区 #su-main
+   -------------------------------------------------------------------------- */
+#su-main {
+	/* 让出侧栏宽度 */
+	margin-left: var(--sidebar-width);
+	min-height: 100vh;
+	transition: margin-left 0.2s ease;
+
+	/* swup 容器 */
+	#swup-container {
+		width: 100%;
+	}
+}
+
+/* 侧栏折叠时：主内容区跟随收缩 */
+.su-scope[data-state="collapsed"] ~ #su-main,
+.su-scope:has([data-state="collapsed"]) ~ #su-main {
+	margin-left: var(--sidebar-width-icon);
+}
+
+/* 移动端：侧栏改为抽屉，主内容区不让位 */
+@media (max-width: 767px) {
+	#su-main {
+		margin-left: 0;
+	}
+}
+
+/* --------------------------------------------------------------------------
+   4. 侧栏触发按钮（移动端右下角）
+   -------------------------------------------------------------------------- */
+.su-mobile-trigger {
+	display: none;
+	position: fixed;
+	right: 16px;
+	bottom: 16px;
+	z-index: 50;
+}
+
+@media (max-width: 767px) {
+	.su-mobile-trigger {
+		display: block;
+	}
+}
+
+/* --------------------------------------------------------------------------
+   5. 侧栏内部细节（shadcn 组件的微调）
+   -------------------------------------------------------------------------- */
+
+/* 侧栏根容器 */
+.su-scope [data-sidebar="sidebar"] {
+	height: 100vh;
+	border-right: 1px solid var(--su-border);
+	background-color: var(--su-canvas);
+}
+
+/* 侧栏头部 */
+.su-scope [data-sidebar="header"] {
+	padding: 0;
+}
+
+/* 侧栏内容区 */
+.su-scope [data-sidebar="content"] {
+	padding-top: 12px;
+	padding-bottom: 12px;
+}
+
+/* 侧栏底部 */
+.su-scope [data-sidebar="footer"] {
+	border-top: 1px solid var(--su-border);
+}
+
+/* 侧栏分组标签 */
+.su-scope [data-sidebar="group-label"] {
+	font-family: var(--font-mono-supabase);
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--su-muted-foreground);
+}
+
+/* 侧栏菜单按钮 */
+.su-scope [data-sidebar="menu-button"] {
+	border-radius: 6px !important;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.su-scope [data-sidebar="menu-button"]:hover {
+	background-color: var(--su-accent) !important;
+	color: var(--su-foreground) !important;
+}
+
+.su-scope [data-sidebar="menu-button"][data-active="true"] {
+	background-color: var(--su-primary) !important;
+	color: var(--su-primary-foreground) !important;
+}
+
+.su-scope [data-sidebar="menu-button"][data-active="true"]:hover {
+	background-color: var(--su-primary-deep) !important;
+}
+
+/* 侧栏菜单项图标 */
+.su-scope [data-sidebar="menu-button"] svg {
+	flex-shrink: 0;
+	width: 16px;
+	height: 16px;
+}
+
+/* 折叠状态下图标居中 */
+.su-scope[data-state="collapsed"] [data-sidebar="menu-button"] {
+	justify-content: center;
+	padding-left: 0 !important;
+	padding-right: 0 !important;
+}
+
+/* Tooltip 箭头颜色 */
+.su-scope [data-side="top"][data-state="open"] {
+	--tooltip-bg: var(--su-canvas-night);
+	--tooltip-color: var(--su-on-dark);
+}
+
+.su-scope [data-side="bottom"][data-state="open"] {
+	--tooltip-bg: var(--su-canvas-night);
+	--tooltip-color: var(--su-on-dark);
+}
+
+/* --------------------------------------------------------------------------
+   6. 背景氛围类（SupabaseLayout 传入的 ambientStyle 消费）
+   -------------------------------------------------------------------------- */
+.su-ambient {
+	/* 背景氛围由内联样式控制，这里只做兜底 */
+}
+
+.su-elevate {
+	/* 交互式高程效果 */
+}
+
+/* --------------------------------------------------------------------------
+   7. 暗色模式下的侧栏边框
+   -------------------------------------------------------------------------- */
+.dark .su-scope [data-sidebar="sidebar"] {
+	border-right-color: var(--su-border);
+}
+
+.dark .su-scope [data-sidebar="footer"] {
+	border-top-color: var(--su-border);
+}
+
+/* --------------------------------------------------------------------------
+   8. 打印样式
+   -------------------------------------------------------------------------- */
+@media print {
+	.su-scope,
+	.su-mobile-trigger {
+		display: none !important;
+	}
+
+	#su-main {
+		margin-left: 0 !important;
+	}
+}

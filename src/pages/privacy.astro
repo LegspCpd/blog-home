@@ -2,7 +2,7 @@
 import { getEntry, render } from "astro:content";
 import Markdown from "@components/common/Markdown.astro";
 import SbPageHeader from "@/components/layout/SbPageHeader.astro";
-import SupabaseShell from "@/layouts/SupabaseShell.astro";
+import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
 import { pagesConfig } from "@/config";
 import { siteConfig } from "@/config/siteConfig";
 
@@ -18,47 +18,47 @@ const { Content } = await render(privacyPost);
 const { title: pageTitle, description } = pagesConfig.privacy;
 ---
 
-<SupabaseShell title={pageTitle} description={description}>
+<SupabaseLayout title={pageTitle} description={description}>
   <SbPageHeader
     eyebrow="法律条款"
     title={pageTitle}
     subtitle={description}
   >
-    <p class="sb-page-meta">
-      <span class="sb-text-mute sb-mono">{siteConfig.title}</span>
-      <span class="sb-text-mute">·</span>
-      <a class="sb-link" href="/about/">返回关于我</a>
+    <p class="su-page-meta">
+      <span class="su-text-mute su-mono">{siteConfig.title}</span>
+      <span class="su-text-mute">·</span>
+      <a class="su-link" href="/about/">返回关于我</a>
     </p>
   </SbPageHeader>
 
-  <div class="sb-prose-page">
-    <div class="sb-prose-body">
+  <div class="su-prose-page">
+    <div class="su-prose-body">
       <Markdown class="markdown-content">
         <Content />
       </Markdown>
     </div>
   </div>
-</SupabaseShell>
+</SupabaseLayout>
 
 <style>
-  .sb-prose-page {
+  .su-prose-page {
     max-width: 820px;
     margin-inline: auto;
   }
 
-  .sb-prose-body {
+  .su-prose-body {
     font-size: 16px;
     line-height: 1.8;
-    color: var(--sb-ink);
+    color: var(--su-ink);
   }
 
-  .sb-page-meta {
+  .su-page-meta {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     margin-top: 16px;
     font-size: 13px;
-    color: var(--sb-ink-mute);
+    color: var(--su-ink-mute);
   }
 </style>
