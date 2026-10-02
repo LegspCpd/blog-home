@@ -12,6 +12,7 @@
  */
 import AppSidebar from "@components/layout/AppSidebar.astro";
 import CommandPalette from "@/components/layout/CommandPalette.astro";
+import Reveal from "@/components/common/Reveal.astro";
 import { backgroundAtmosphere } from "@/config/backgroundAtmosphere";
 import { defaultNavItems as navDefaults } from "@/config/sidebarNav";
 import type { SidebarNavItem } from "@/config/sidebarNav";
@@ -71,6 +72,9 @@ const ambientStyle = getAmbientBackgroundStyle();
 
   <!-- 全局命令面板：Ctrl/⌘+K 唤起。放在 swup 容器外，切页不丢状态。 -->
   <CommandPalette />
+
+  <!-- 滚动渐入动效：只注册一次观察器，切页自动接管新元素 -->
+  <Reveal />
 
   <!-- 移动端顶栏：侧栏在窄屏收成抽屉，这里补一条固定顶栏，
        承载站点名 + 导航入口。

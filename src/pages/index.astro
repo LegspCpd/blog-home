@@ -91,7 +91,7 @@ const topTags = [...tagCount.entries()]
 	</header>
 
 	<!-- ============ 最新文章 ============ -->
-	<section class="home-latest" aria-labelledby="home-latest-title">
+	<section class="home-latest rv" aria-labelledby="home-latest-title">
 		<div class="home-section-head">
 			<h2 id="home-latest-title" class="su-heading-lg">最新文章</h2>
 			<a href={url("/posts/")} class="su-link">
@@ -102,8 +102,13 @@ const topTags = [...tagCount.entries()]
 
 		<ul class="home-post-grid">
 			{
-				latest.map((post) => (
-					<li>
+				latest.map((post, i) => (
+					// 逐个错开 60ms，形成「依次浮现」的节奏；
+					// 上限 5 次，避免后面的卡片等太久
+					<li
+						class="rv"
+						style={i < 5 ? `--rv-d:${i * 60}ms` : undefined}
+					>
 						<SbPostCard
 							entry={post}
 							title={post.data.title}
@@ -123,7 +128,7 @@ const topTags = [...tagCount.entries()]
 	</section>
 
 	<!-- ============ 这个站点在做什么 ============ -->
-	<section class="home-about" aria-labelledby="home-about-title">
+	<section class="home-about rv" aria-labelledby="home-about-title">
 		<h2 id="home-about-title" class="su-heading-lg">{home.highlightsTitle}</h2>
 		<p class="su-body-md su-text-mute">{home.highlightsDescription}</p>
 
@@ -145,7 +150,7 @@ const topTags = [...tagCount.entries()]
 	<!-- ============ 标签 ============ -->
 	{
 		topTags.length > 0 ? (
-			<section class="home-tags" aria-labelledby="home-tags-title">
+			<section class="home-tags rv" aria-labelledby="home-tags-title">
 				<h2 id="home-tags-title" class="su-heading-lg">
 					常读的标签
 				</h2>
@@ -161,7 +166,7 @@ const topTags = [...tagCount.entries()]
 	}
 
 	<!-- ============ 社交 + 页脚链接 ============ -->
-	<footer class="home-foot">
+	<footer class="home-foot rv">
 		{
 			socialLinks.length > 0 ? (
 				<nav class="home-social" aria-label={home.socialTitle}>

@@ -1,0 +1,94 @@
+---
+/**
+ * Reveal.astro —— 滚动渐入动效
+ *
+ * 用 IntersectionObserver 给带 .rv 的元素在进入视口时加 .rv-in，
+ * 由 CSS 完成淡入 + 上移。
+ *
+ * 为什么不用纯 CSS 的 animation-timeline（scroll()）：
+ *  - 浏览器支持还不够，Astro 的目标用户包含大量移动端
+ *  - 无法方便地做「只播一次」
+ *
+ * 放在 #swup-container 之外由 Layout 常驻，脚本只绑定一次；
+ * 但被观察的元素在容器内，切页后会自动重新观察。
+ */
+---
+
+<script is:inline>
+	(function () {
+		var reduced = window.matchMedia("(prefers-reduced-motion: reduce)")
+			.matches;
+
+		if (reduced || !("IntersectionObserver" in window)) {
+			// 用户不希望有动效：直接全部显示，避免内容「不可见」
+			document.querySelectorAll(".rv").forEach(function (el) {
+				el.classList.add("rv-in");
+			});
+			return;
+		}
+
+		var io = new IntersectionObserver(
+			function (entries) {
+				entries.forEach(function (e) {
+					if (!e.isIntersecting) return;
+					e.target.classList.add("rv-in");
+					// 只播一次，播完就停止观察
+					io.unobserve(e.target);
+				});
+			},
+			{
+				// 元素露出约 12% 或进入视口顶部 80px 时触发
+				rootMargin: "0px 0px -12% 0px",
+				threshold: 0.01,
+			},
+		);
+
+		function observeAll() {
+			var els = document.querySelectorAll(".rv:not(.rv-in)");
+			for (var i = 0; i < els.length; i++) io.observe(els[i]);
+		}
+
+		observeAll();
+		// swup 切页后新加入容器的元素也要观察
+		document.addEventListener("astro:page-load", observeAll);
+
+		// 立即刷新一次：首屏元素在 observer 注册时已在视口内
+		observeAll();
+	})();
+</script>
+
+<style is:global>
+	/* 初始状态：略透明 + 轻微下移 */
+	.rv {
+		opacity: 0;
+		transform: translateY(14px);
+		transition:
+			opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+			transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+		will-change: opacity, transform;
+	}
+
+	/* 进入视口 */
+	.rv-in {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	/* 动效结束后撤掉 will-change，避免长期占用合成层 */
+	.rv-in {
+		will-change: auto;
+	}
+
+	/* 逐个延迟，形成错落感；用 --rv-d 控制节奏 */
+	.rv[style*="--rv-d"] {
+		transition-delay: var(--rv-d, 0ms);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.rv {
+			opacity: 1;
+			transform: none;
+			transition: none;
+		}
+	}
+</style>

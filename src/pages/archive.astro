@@ -122,7 +122,7 @@ const groups = [...byYear.entries()].sort((a, b) => b[0] - a[0]);
 							<ul class="ar-list">
 								{entries.map((post) => (
 									<li>
-										<a class="ar-row" href={getPostUrlBySlug(post.id)}>
+										<a class="ar-row rv" href={getPostUrlBySlug(post.id)}>
 											<time
 												class="ar-row-date su-mono"
 												datetime={post.data.published.toISOString()}

@@ -73,7 +73,7 @@ const siblings = [...siblingCount.entries()].sort((a, b) => b[1] - a[1]);
 		{
 			posts.map((post) => (
 				<li>
-					<a class="cat-row" href={getPostUrlBySlug(post.id)}>
+					<a class="cat-row rv" href={getPostUrlBySlug(post.id)}>
 						<time
 							class="cat-row-date su-mono"
 							datetime={post.data.published.toISOString()}

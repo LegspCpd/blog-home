@@ -66,7 +66,7 @@ const siblings = [...relatedTags.entries()].sort((a, b) => b[1] - a[1]).slice(0,
 		{
 			posts.map((post) => (
 				<li>
-					<a class="tag-row" href={getPostUrlBySlug(post.id)}>
+					<a class="tag-row rv" href={getPostUrlBySlug(post.id)}>
 						<time
 							class="tag-row-date su-mono"
 							datetime={post.data.published.toISOString()}
