@@ -8,56 +8,163 @@ if (!commentConfig || !commentConfig.giscus) {
 const giscus = commentConfig.giscus;
 const lightTheme = "light";
 const darkTheme = "dark";
+
+// 说明：giscus 的 loading 属性设为 lazy（见下方 widget），
+// 并且脚本本身也延迟注入 —— 见页面底部脚本。
 ---
 
-<script is:inline type="module" src="https://esm.sh/giscus"></script>
+<!--
+  Giscus 官方 Web Component 用法，兼容 Astro 静态输出，无需 npm 依赖。
+  参考：https://giscus.app/
 
-<!-- 
-  Giscus 官方Web Component用法，兼容Astro静态输出，无需import包，无需NPM依赖！
-  参考：https://giscus.app/ 详情配置说明
+  这里只输出容器，不立即加载脚本：
+  - giscus 会从 GitHub 拉取 Discussions 与用户信息，体积不小
+  - 评论区在文章末尾，访客未必会滚到这里
+  因此改为「点击展开」时才注入脚本（见下方脚本），
+  页面首屏因此少一个第三方请求。
 -->
-<giscus-widget
-  id="comments"
-  repo={giscus.repo}
-  repoId={giscus.repoId}
-  category={giscus.category}
-  categoryId={giscus.categoryId}
-  mapping={giscus.mapping}
-  strict={giscus.strict}
-  reactionsEnabled={giscus.reactionsEnabled}
-  emitMetadata={giscus.emitMetadata}
-  inputPosition={giscus.inputPosition}
-  theme={lightTheme}
-  lang={giscus.lang}
-  loading={giscus.loading}
-/>
+<button type="button" class="giscus-trigger" data-giscus-open>
+	<span class="giscus-trigger-title">评论</span>
+	<span class="giscus-trigger-hint">加载后将跳转到 GitHub Discussions</span>
+</button>
+
+<div id="comments" class="giscus-mount" data-giscus-mount hidden></div>
+
+<template id="giscus-tpl">
+	<giscus-widget
+		id="comments"
+		repo={giscus.repo}
+		repoId={giscus.repoId}
+		category={giscus.category}
+		categoryId={giscus.categoryId}
+		mapping={giscus.mapping}
+		strict={giscus.strict}
+		reactionsEnabled={giscus.reactionsEnabled}
+		emitMetadata={giscus.emitMetadata}
+		inputPosition={giscus.inputPosition}
+		theme={lightTheme}
+		lang={giscus.lang}
+		loading="lazy"
+	></giscus-widget>
+</template>
 
 <script is:inline define:vars={{ lightTheme, darkTheme }}>
-  function updateGiscusTheme() {
-    const isDark = document.documentElement.classList.contains('dark');
-    const theme = isDark ? darkTheme : lightTheme;
-    const widget = document.querySelector('giscus-widget');
-    if (widget) {
-      widget.setAttribute('theme', theme);
-    }
-  }
+	(function () {
+		var trigger = document.querySelector("[data-giscus-open]");
+		var mount = document.querySelector("[data-giscus-mount]");
+		var tpl = document.getElementById("giscus-tpl");
+		if (!trigger || !mount || !tpl) return;
 
-  // Initial update
-  updateGiscusTheme();
+		var loaded = false;
+		var observer = null;
 
-  // Clean up previous observer if exists
-  if (window.giscusThemeObserver) {
-    window.giscusThemeObserver.disconnect();
-  }
+		function applyTheme() {
+			var isDark = document.documentElement.classList.contains("dark");
+			var widget = mount.querySelector("giscus-widget");
+			if (widget) {
+				widget.setAttribute("theme", isDark ? darkTheme : lightTheme);
+			}
+		}
 
-  // Create new observer
-  window.giscusThemeObserver = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-        updateGiscusTheme();
-      }
-    });
-  });
+		function load() {
+			if (loaded) return;
+			loaded = true;
 
-  window.giscusThemeObserver.observe(document.documentElement, { attributes: true });
+			// giscus 的 web component 脚本，第一次加载后全局可用
+			if (!window.giscus) {
+				var s = document.createElement("script");
+				s.src = "https://esm.sh/giscus";
+				s.async = true;
+				s.crossOrigin = "anonymous";
+				document.head.appendChild(s);
+			}
+
+			mount.appendChild(tpl.content.cloneNode(true));
+			mount.hidden = false;
+			trigger.hidden = true;
+
+			// 主题跟随：项目里 Layout.astro 与 setting-utils.ts 都会写
+			// html.dark，这里直接观察该 class 变化即可。
+			// 组件被 swup 替换时会重新执行本脚本，因此每次只留一个 observer。
+			if (observer) observer.disconnect();
+			observer = new MutationObserver(applyTheme);
+			observer.observe(document.documentElement, {
+				attributes: true,
+				attributeFilter: ["class"],
+			});
+
+			// 等 web component 真正升级后再同步一次主题
+			requestAnimationFrame(applyTheme);
+		}
+
+		trigger.addEventListener("click", load);
+
+		// 视口进入评论区附近时预加载，让点击时几乎无等待
+		if ("IntersectionObserver" in window) {
+			var io = new IntersectionObserver(
+				function (entries) {
+					for (var i = 0; i < entries.length; i++) {
+						if (entries[i].isIntersecting) {
+							load();
+							io.disconnect();
+							return;
+						}
+					}
+				},
+				{ rootMargin: "300px" },
+			);
+			io.observe(mount);
+		}
+
+		// giscus iframe 加载完后把「跳转到 GitHub」的提示去掉
+		window.addEventListener("message", function (e) {
+			if (!loaded || !mount) return;
+			if (e.origin === "https://giscus.app") {
+				var hint = trigger.querySelector(".giscus-trigger-hint");
+				if (hint && mount.querySelector("iframe")) hint.textContent = "";
+			}
+		});
+	})();
 </script>
+
+<style is:global>
+	.giscus-trigger {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 4px;
+		width: 100%;
+		padding: 20px;
+		border: 1px solid var(--su-border);
+		border-radius: var(--su-radius-lg);
+		background-color: var(--su-canvas-soft);
+		color: inherit;
+		font-family: inherit;
+		text-align: left;
+		cursor: pointer;
+		transition:
+			border-color 0.15s ease,
+			background-color 0.15s ease;
+	}
+
+	.giscus-trigger:hover {
+		border-color: var(--su-hairline-strong);
+		background-color: var(--su-accent);
+	}
+
+	.giscus-trigger-title {
+		font-size: 15px;
+		font-weight: 500;
+		color: var(--su-foreground);
+	}
+
+	.giscus-trigger-hint {
+		font-size: 13px;
+		color: var(--su-muted-foreground);
+	}
+
+	.giscus-mount {
+		margin-top: 4px;
+		min-height: 120px;
+	}
+</style>

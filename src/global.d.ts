@@ -14,6 +14,10 @@ declare global {
 		/** 命令面板：供外部（如顶栏按钮）调用 */
 		cmdOpen?: () => void;
 		cmdClose?: () => void;
+		/** Giscus web component 加载后由 esm.sh 注入 */
+		giscus?: unknown;
+		/** Giscus 主题观察器（切换页面时需断开旧的） */
+		giscusThemeObserver?: MutationObserver;
 		// biome-ignore lint/suspicious/noExplicitAny: External library
 		spinePlayerInstance?: any;
 		pagefind: {
