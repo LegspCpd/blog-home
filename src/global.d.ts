@@ -11,6 +11,9 @@ declare global {
 		live2dModelInitialized?: boolean;
 		spineModelInitialized?: boolean;
 		floatingTOCListenersInitialized?: boolean;
+		/** 命令面板：供外部（如顶栏按钮）调用 */
+		cmdOpen?: () => void;
+		cmdClose?: () => void;
 		// biome-ignore lint/suspicious/noExplicitAny: External library
 		spinePlayerInstance?: any;
 		pagefind: {
