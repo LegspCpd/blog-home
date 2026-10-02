@@ -13,6 +13,7 @@
 import AppSidebar from "@components/layout/AppSidebar.astro";
 import CommandPalette from "@/components/layout/CommandPalette.astro";
 import Reveal from "@/components/common/Reveal.astro";
+import SbFooter from "@/components/layout/SbFooter.astro";
 import { backgroundAtmosphere } from "@/config/backgroundAtmosphere";
 import { defaultNavItems as navDefaults } from "@/config/sidebarNav";
 import type { SidebarNavItem } from "@/config/sidebarNav";
@@ -109,4 +110,7 @@ const ambientStyle = getAmbientBackgroundStyle();
       <slot />
     </div>
   </main>
+
+  <!-- 页脚：放在 main 之外，与内容一同随页面切换 -->
+  <SbFooter />
 </Layout>

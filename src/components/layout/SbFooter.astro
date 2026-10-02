@@ -1,28 +1,34 @@
 ---
 /**
- * Supabase-style site footer.
- *   - White canvas, hairline top border, muted caption type
- *   - 4-column link grid (brand + up to 3 link groups) + legal row
+ * SbFooter.astro —— 全站页脚
+ *
+ * 侧栏布局下作为 <main> 的兄弟节点渲染，因此不走 sb-container，
+ * 宽度由 supabase-layout.css 的 .su-main > * 统一约束。
+ * 样式全部使用 su-* 令牌。
  */
 import { Icon } from "astro-icon/components";
-import { siteConfig } from "@/config";
+import { profileConfig, siteConfig } from "@/config";
 import { url } from "@/utils/url-utils";
 
-interface Props {
-	siteTitle?: string;
-}
-
-const { siteTitle = siteConfig.title || "LegspCpd Blog" } = Astro.props;
 const year = new Date().getFullYear();
+const siteTitle = siteConfig.title || "LegspCpd Blog";
 
-const columns: { title: string; links: { name: string; href: string; external?: boolean }[] }[] = [
+// 从 profileConfig 取社交链接，避免在两处重复维护
+const socials = (profileConfig.links ?? [])
+	.filter((l) => /^https?:/.test(l.url))
+	.map((l) => ({ name: l.name, href: l.url, icon: l.icon }));
+
+const columns: {
+	title: string;
+	links: { name: string; href: string; external?: boolean }[];
+}[] = [
 	{
 		title: "内容",
 		links: [
-			{ name: "主页", href: "/" },
+			{ name: "最新文章", href: "/" },
+			{ name: "全部文章", href: "/posts/" },
 			{ name: "归档", href: "/archive/" },
-			{ name: "分类", href: "/archive/" },
-			{ name: "标签", href: "/archive/" },
+			{ name: "项目", href: "/projects/" },
 		],
 	},
 	{
@@ -30,80 +36,216 @@ const columns: { title: string; links: { name: string; href: string; external?: 
 		links: [
 			{ name: "留言板", href: "/guestbook/" },
 			{ name: "友链", href: "/friends/" },
-			{ name: "相册", href: "/gallery/" },
-			{ name: "番组计划", href: "/bangumi/" },
+			{ name: "联系我", href: "/contact/" },
+			{ name: "RSS", href: "/rss.xml" },
 		],
 	},
 	{
 		title: "关于",
 		links: [
 			{ name: "关于我", href: "/about/" },
-			{ name: "赞助", href: "/sponsor/" },
-			{ name: "RSS 订阅", href: "/rss.xml" },
+			{ name: "隐私政策", href: "/privacy/" },
+			{ name: "站点源码", href: "https://github.com/LegspCpd/blog-home", external: true },
 		],
 	},
 ];
-
-// 站外资源（沿用原站点配置中的社交链接）
-const socials = [
-	{ name: "GitHub", href: "https://github.com/LegspCpd/Firefly", icon: "fa7-brands:github" },
-	{ name: "Gitee", href: "https://gitee.com/LegspCpd/Firefly", icon: "fa7-brands:gitee" },
-	{ name: "Discord", href: "https://discord.gg/legspcpd", icon: "fa7-brands:discord" },
-];
 ---
 
-<footer class="sb-footer">
-  <div class="sb-container">
-    <div class="sb-footer__grid">
-      <!-- Brand column -->
-      <div>
-        <a href={url("/")} class="sb-footer__brand">
-          <Icon name="material-symbols:terminal" style="font-size:20px;color:var(--sb-primary)" />
-          {siteTitle}<span class="sb-nav__dot" aria-hidden="true"></span>
-        </a>
-        <p class="sb-caption" style="max-width:34ch;margin:0 0 18px;color:var(--sb-ink-mute);">
-          {siteConfig.description || "记录技术、日常与思考的个人博客。"}
-        </p>
-        <div style="display:flex;gap:8px;">
-          {
-            socials.map((s) => (
-              <a
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="sb-btn sb-btn--ghost sb-btn--sm"
-                aria-label={s.name}
-                title={s.name}
-              >
-                <Icon name={s.icon} style="font-size:16px;" />
-              </a>
-            ))
-          }
-        </div>
-      </div>
+<footer class="sf">
+	<div class="sf-grid">
+		<!-- 品牌列 -->
+		<div class="sf-brand">
+			<a href={url("/")} class="sf-brand-name">
+				{siteTitle}
+				<span class="sf-dot" aria-hidden="true"></span>
+			</a>
+			<p class="sf-desc">{siteConfig.description}</p>
 
-      <!-- Link columns -->
-      {
-        columns.map((col) => (
-          <div>
-            <div class="sb-footer__col-title">{col.title}</div>
-            <nav class="sb-footer__links">
-              {col.links.map((link) => (
-                <a href={url(link.href)}>{link.name}</a>
-              ))}
-            </nav>
-          </div>
-        ))
-      }
-    </div>
+			{
+				socials.length > 0 ? (
+					<div class="sf-socials">
+						{socials.map((s) => (
+							<a
+								href={s.href}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="su-btn su-btn--ghost su-btn--sm sf-social"
+								aria-label={s.name}
+								title={s.name}
+							>
+								<Icon name={s.icon} />
+							</a>
+						))}
+					</div>
+				) : null
+			}
+		</div>
 
-    <div class="sb-footer__legal">
-      <span>© {year} {siteTitle}. All rights reserved.</span>
-      <span>
-        由 <a class="sb-link" href="https://astro.build" target="_blank" rel="noopener noreferrer">Astro</a> 驱动 ·
-        <a class="sb-link" href="https://pages.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare Pages</a> /
-        <a class="sb-link" href="https://edgeone.ai/" target="_blank" rel="noopener noreferrer">EdgeOne Pages</a> 部署
-      </span>
-    </div>
-  </div>
+		<!-- 链接列 -->
+		{
+			columns.map((col) => (
+				<nav class="sf-col" aria-label={col.title}>
+					<h2 class="sf-col-title">{col.title}</h2>
+					<ul class="sf-col-list">
+						{col.links.map((link) => (
+							<li>
+								<a
+									href={
+										link.external
+											? link.href
+											: url(link.href)
+									}
+									target={link.external ? "_blank" : undefined}
+									rel={
+										link.external
+											? "noopener noreferrer"
+											: undefined
+									}
+								>
+									{link.name}
+								</a>
+							</li>
+						))}
+					</ul>
+				</nav>
+			))
+		}
+	</div>
+
+	<div class="sf-legal">
+		<span>© {year} {siteTitle}</span>
+		<span>
+			由{" "}
+			<a href="https://astro.build" target="_blank" rel="noopener noreferrer">Astro</a>
+			驱动 · 部署于{" "}
+			<a href="https://edgeone.ai/" target="_blank" rel="noopener noreferrer">EdgeOne Pages</a>
+		</span>
+	</div>
 </footer>
+
+<style is:global>
+	.sf {
+		margin-top: 64px;
+		padding-top: 40px;
+		padding-bottom: 32px;
+		border-top: 1px solid var(--su-border);
+		font-size: 13px;
+		color: var(--su-muted-foreground);
+	}
+
+	/* ---- 栅格 ---- */
+	.sf-grid {
+		display: grid;
+		grid-template-columns: 2fr repeat(3, minmax(0, 1fr));
+		gap: 32px;
+	}
+
+	/* ---- 品牌列 ---- */
+	.sf-brand-name {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 15px;
+		font-weight: 600;
+		color: var(--su-foreground);
+		text-decoration: none;
+	}
+
+	/* 品牌名后的翠绿圆点，沿用导航栏的品牌语言 */
+	.sf-dot {
+		width: 6px;
+		height: 6px;
+		border-radius: var(--su-radius-full);
+		background-color: var(--su-primary);
+	}
+
+	.sf-desc {
+		margin: 10px 0 16px;
+		max-width: 34ch;
+		line-height: 1.6;
+	}
+
+	.sf-socials {
+		display: flex;
+		gap: 4px;
+	}
+
+	.sf-social {
+		padding: 6px;
+		min-height: 30px;
+		font-size: 16px;
+	}
+
+	/* ---- 链接列 ---- */
+	.sf-col-title {
+		margin: 0 0 12px;
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--su-foreground);
+	}
+
+	.sf-col-list {
+		display: flex;
+		flex-direction: column;
+		gap: 9px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.sf-col-list a {
+		color: var(--su-muted-foreground);
+		text-decoration: none;
+		transition: color 0.15s ease;
+	}
+
+	.sf-col-list a:hover {
+		color: var(--su-primary);
+	}
+
+	/* ---- 底部法务行 ---- */
+	.sf-legal {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px 20px;
+		margin-top: 40px;
+		padding-top: 20px;
+		border-top: 1px solid var(--su-border);
+		font-size: 12px;
+		color: var(--su-ink-faint);
+	}
+
+	.sf-legal a {
+		color: var(--su-muted-foreground);
+		text-decoration: none;
+	}
+
+	.sf-legal a:hover {
+		color: var(--su-primary);
+	}
+
+	/* ---- 响应式 ---- */
+	@media (max-width: 1023px) {
+		.sf-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 28px;
+		}
+		/* 品牌列在两列布局下占满整行 */
+		.sf-brand {
+			grid-column: 1 / -1;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.sf-grid {
+			grid-template-columns: 1fr;
+			gap: 24px;
+		}
+		.sf-legal {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+	}
+</style>

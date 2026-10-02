@@ -252,6 +252,32 @@ body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
 	}
 }
 
+/* ==========================================================================
+   页脚
+   --------------------------------------------------------------------------
+   SbFooter 渲染在 <main> 之外（避免每页都写一遍），因此宽度约束
+   需要自己声明一次，与主内容区保持左对齐。
+   ========================================================================== */
+.sf {
+	padding-inline: 40px;
+	max-width: calc(1280px + 80px);
+	margin-inline: auto;
+}
+
+@media (min-width: 768px) {
+	body:has([data-slot="sidebar"][data-state="collapsed"]) .sf {
+		padding-inline-start: 104px; /* 64(折叠栏) + 40 */
+	}
+}
+
+@media (max-width: 767px) {
+	/* 窄屏跟随主内容区的左缩进；顶部那 60px 已被顶栏占位，
+	   这里只需对齐左右 */
+	.sf {
+		padding-inline: 16px;
+	}
+}
+
 /* 移动端为抽屉式侧栏，不占据横向空间；顶栏占 60px，顶部让出同等高度 */
 @media (max-width: 767px) {
 	.su-main,
