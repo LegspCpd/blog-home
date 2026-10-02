@@ -278,6 +278,103 @@ body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
 	}
 }
 
+/* ==========================================================================
+   浮动控件栈（FAB）
+   --------------------------------------------------------------------------
+   命令面板、返回顶部这类「悬浮在右下角」的元素，如果各自写
+   position: fixed; bottom: 20px; 它们会精确重叠 —— 表现就是
+   「两个按钮叠在一起，点到上面那个」。
+
+   这里改成：所有 [data-fab] 按钮都交给同一套规则，
+   各自用 data-fab-order 声明序号（1 最靠下），CSS 据此向上错开。
+   以后再加新的浮动按钮，只需给它一个序号，不会再撞车。
+   ========================================================================== */
+[data-fab] {
+	position: fixed;
+	right: 20px;
+	z-index: 50;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	height: 38px;
+	padding: 0 14px;
+	border: 1px solid var(--su-border);
+	border-radius: var(--su-radius-full);
+	background-color: var(--su-card);
+	color: var(--su-muted-foreground);
+	box-shadow: var(--su-shadow-2);
+	font-family: inherit;
+	font-size: 13px;
+	line-height: 1;
+	cursor: pointer;
+	transition:
+		border-color 0.15s ease,
+		color 0.15s ease,
+		transform 0.15s ease,
+		opacity 0.2s ease,
+		visibility 0.2s ease;
+}
+
+[data-fab] svg {
+	width: 16px;
+	height: 16px;
+	flex: none;
+}
+
+[data-fab]:hover {
+	border-color: var(--su-accent-text);
+	color: var(--su-foreground);
+	transform: translateY(-1px);
+}
+
+/* 序号 → 距底距离：1 最靠下，之后每个上移 46px（38 高 + 8 间距） */
+[data-fab][data-fab-order="1"] {
+	bottom: 20px;
+}
+[data-fab][data-fab-order="2"] {
+	bottom: 66px;
+}
+[data-fab][data-fab-order="3"] {
+	bottom: 112px;
+}
+
+/* 圆形图标变体：用于只有图标的按钮（如返回顶部） */
+[data-fab][data-fab-icon-only] {
+	width: 38px;
+	padding: 0;
+	justify-content: center;
+}
+
+/* 隐藏态：返回顶部未滚动到位时不可见也不可点 */
+[data-fab][hidden],
+[data-fab].is-hidden {
+	bottom: 0;
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
+}
+
+@media (max-width: 767px) {
+	[data-fab] {
+		right: 14px;
+		height: 36px;
+		padding: 0 12px;
+	}
+	[data-fab][data-fab-order="1"] {
+		bottom: 14px;
+	}
+	[data-fab][data-fab-order="2"] {
+		bottom: 58px;
+	}
+	[data-fab][data-fab-order="3"] {
+		bottom: 102px;
+	}
+	/* 手机上顶栏已有导航，抽屉即入口，隐藏搜索 FAB */
+	[data-fab][data-cmd-open] {
+		display: none;
+	}
+}
+
 /* 移动端为抽屉式侧栏，不占据横向空间；顶栏占 60px，顶部让出同等高度 */
 @media (max-width: 767px) {
 	.su-main,

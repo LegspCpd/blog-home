@@ -130,8 +130,16 @@ const groups = [...new Set(commands.map((c) => c.group))];
 	</div>
 </div>
 
-<!-- 唤起按钮：侧栏底部 -->
-<button type="button" class="cmd-trigger" data-cmd-open aria-label="打开命令面板">
+<!-- 唤起按钮：放进布局的浮动控件栈，与返回顶部等按钮自动错开 -->
+<button
+	type="button"
+	class="su-fab"
+	data-fab
+	data-fab-order="2"
+	data-cmd-open
+	aria-label="打开命令面板"
+	title="打开命令面板"
+>
 	<svg
 		viewBox="0 0 24 24"
 		fill="none"
@@ -142,8 +150,8 @@ const groups = [...new Set(commands.map((c) => c.group))];
 		<circle cx="11" cy="11" r="7" />
 		<path d="m20 20-3.5-3.5" stroke-linecap="round" />
 	</svg>
-	<span>搜索</span>
-	<kbd>Ctrl K</kbd>
+	<span class="su-fab-label">搜索</span>
+	<kbd class="su-fab-kbd">Ctrl K</kbd>
 </button>
 
 <script is:inline define:vars={{ siteTitle: siteConfig.title }}>
@@ -369,53 +377,14 @@ const groups = [...new Set(commands.map((c) => c.group))];
 </script>
 
 <style is:global>
-	/* ---- 唤起按钮 ----
-	   固定在右下角，不占文档流（否则会把主内容整体下推）。
-	   移动端隐藏：那里已有顶栏文字导航 + 抽屉入口，
-	   再加一个浮动按钮只会挤占本就有限的屏幕。 */
-	.cmd-trigger {
-		position: fixed;
-		right: 20px;
-		bottom: 20px;
-		z-index: 50;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		width: auto;
-		height: 36px;
-		padding: 0 12px;
-		border: 1px solid var(--su-border);
-		border-radius: var(--su-radius-full);
-		background-color: var(--su-card);
-		color: var(--su-muted-foreground);
-		box-shadow: var(--su-shadow-2);
-		font-size: 13px;
-		font-family: inherit;
-		cursor: pointer;
-		transition:
-			border-color 0.15s ease,
-			color 0.15s ease,
-			transform 0.15s ease;
-	}
-
-	.cmd-trigger:hover {
-		border-color: var(--su-accent-text);
-		color: var(--su-foreground);
-		transform: translateY(-1px);
-	}
-
-	.cmd-trigger svg {
-		width: 15px;
-		height: 15px;
-		flex: none;
-	}
-
-	.cmd-trigger span {
+	/* 唤起按钮的样式由布局的浮动控件栈统一定义（.su-fab），
+	   这里只补充它特有的两个元素：文字标签与快捷键提示。 */
+	.su-fab-label {
 		flex: 1;
 		text-align: left;
 	}
 
-	.cmd-trigger kbd {
+	.su-fab-kbd {
 		font-family: var(--font-mono-supabase);
 		font-size: 10px;
 		color: var(--su-ink-faint);
@@ -637,9 +606,7 @@ const groups = [...new Set(commands.map((c) => c.group))];
 			display: none; /* 手机无物理键盘 */
 		}
 		/* 移动端不显示浮动唤起按钮：顶栏已有导航，抽屉即入口。
-		   面板本身仍可通过 Ctrl+K（外接键盘）打开。 */
-		.cmd-trigger {
-			display: none;
-		}
+		   面板本身仍可通过 Ctrl+K（外接键盘）打开。
+		   具体隐藏规则见布局的 .su-fab-dock。 */
 	}
 </style>
