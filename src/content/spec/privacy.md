@@ -1,3 +1,5 @@
+# 服务条款与隐私政策 (Terms of Service & Privacy Policy)
+
 **生效日期**：2026年8月25日  
 **适用范围**：本网站（`legspcpd.top` 及相关子域名）、自部署 Macro/API 服务，以及由本站运营的所有第三方平台集成接口（包括但不限于 Google OAuth 客户端、Google API Services 和搜索引擎自动化服务）。
 
