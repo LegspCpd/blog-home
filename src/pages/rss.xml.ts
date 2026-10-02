@@ -10,6 +10,10 @@ import sanitizeHtml from "sanitize-html";
 import { profileConfig, siteConfig } from "@/config";
 import { processCoverImageSync } from "@/utils/image-utils";
 import pkg from "../../package.json";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import matter from "gray-matter";
+import { marked } from "marked";
 
 function stripInvalidXmlChars(str: string): string {
 	return str.replace(
@@ -26,6 +30,45 @@ function getPostImageUrl(imagePath: string): string | undefined {
 	if (imagePath.startsWith("/")) return `${siteConfig.site_url}${imagePath}`;
 	// 本地 src 目录图片
 	return `${siteConfig.site_url}/${imagePath}`;
+}
+
+/**
+ * 渲染文章正文为 HTML。
+ *
+ * 这里刻意不走 astro:content 的 render() + AstroContainer：
+ * 那条路径会拉起 Astro 7 默认的 Rust Markdown 渲染器（Sätteri），
+ * 它依赖平台相关的原生包，在 EdgeOne 构建机上因可选依赖缺失而直接崩溃
+ * （Cannot find module '@bruits/satteri-linux-x64-gnu'）。
+ *
+ * 改为直接读原始 .md，用 marked 转 HTML —— 纯 JS，跨平台零原生依赖，
+ * 构建稳定。代价是不走项目自定义的 remark 插件（KaTeX、callout 等），
+ * 但 RSS 消费端对样式依赖低，基础 HTML 已足够。
+ *
+ * 路径解析不能用 import.meta.url：构建后该变量指向产物目录
+ * （dist/ 或 .vercel/output/），src/content 并不在其旁边。
+ * 构建与预览时进程工作目录都是项目根，因此以 cwd 为基准。
+ */
+async function renderPostHtml(entryId: string): Promise<string> {
+	// cwd 为项目根；content 位于 src/content/posts
+	const contentDir = path.resolve(process.cwd(), "src", "content", "posts");
+
+	// entry.id 形如 "cloudreve-worker" 或 "day/yxdsm"
+	const candidates = [entryId, `${entryId}.md`, `${entryId}.mdx`];
+
+	for (const rel of candidates) {
+		// 防目录穿越
+		const full = path.resolve(contentDir, rel);
+		if (!full.startsWith(contentDir)) continue;
+		try {
+			const raw = await readFile(full, "utf8");
+			const { content } = matter(raw);
+			if (!content.trim()) continue;
+			return await marked.parse(content, { async: true, gfm: true });
+		} catch {
+			// 换下一个候选路径
+		}
+	}
+	return "";
 }
 
 export async function GET(context: APIContext): Promise<Response> {
@@ -56,9 +99,30 @@ export async function GET(context: APIContext): Promise<Response> {
 			remarkPluginFrontmatter.excerpt?.trim() ||
 			post.data.title;
 
-		// 使用摘要作为 content，避免在 EdgeOne 等环境下因原生绑定缺失导致构建失败
-		// 完整内容渲染需要 AstroContainer + MDX renderer，依赖 @bruits/satteri 原生绑定
-		const postContent = postDescription;
+		// 渲染完整正文；失败时退回摘要，保证 feed 始终有内容
+		let postContent = postDescription;
+		try {
+			const html = await renderPostHtml(post.id);
+			if (html.trim()) {
+				postContent = sanitizeHtml(stripInvalidXmlChars(html), {
+					allowedTags: sanitizeHtml.defaults.allowedTags.concat([
+						"img",
+						"h1",
+						"h2",
+						"pre",
+						"code",
+					]),
+					// 允许必要的属性，否则链接/图片会被剥掉
+					allowedAttributes: {
+						a: ["href", "name", "target", "rel"],
+						img: ["src", "alt", "title", "width", "height", "loading"],
+						code: ["class"],
+					},
+				});
+			}
+		} catch (err) {
+			console.warn(`[rss] ${post.id} 正文渲染失败，改用摘要：`, err);
+		}
 
 		feedItems.push({
 			title: post.data.title,

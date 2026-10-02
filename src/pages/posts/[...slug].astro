@@ -632,3 +632,132 @@ const showActionCard =
     }
   }
 </style>
+
+<!-- 阅读进度条：长文很有必要，纯 CSS 变量驱动，零 JS 依赖阅读本身 -->
+<div class="rd-progress" aria-hidden="true">
+  <span class="rd-progress-bar"></span>
+</div>
+
+<!-- 返回顶部：滚动超过一屏后出现 -->
+<button type="button" class="rd-top" data-rd-top aria-label="返回顶部">
+  <Icon name="material-symbols:keyboard-arrow-up" />
+</button>
+
+<style is:global>
+  /* 进度条固定在顶部，宽度由 JS 写入 --rd-progress */
+  .rd-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 60;
+    pointer-events: none;
+    background-color: transparent;
+  }
+
+  .rd-progress-bar {
+    display: block;
+    height: 100%;
+    width: var(--rd-progress, 0%);
+    background-color: var(--su-primary);
+    transition: width 0.1s linear;
+  }
+
+  /* 返回顶部 */
+  .rd-top {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 55;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--su-border);
+    border-radius: var(--su-radius-full);
+    background-color: var(--su-card);
+    color: var(--su-foreground);
+    box-shadow: var(--su-shadow-2);
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition:
+      opacity 0.2s ease,
+      visibility 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .rd-top.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .rd-top:hover {
+    color: var(--su-primary);
+    border-color: var(--su-primary);
+  }
+
+  /* 窄屏：按钮下移避让可能的移动端浏览器 UI */
+  @media (max-width: 767px) {
+    .rd-top {
+      right: 14px;
+      bottom: 14px;
+      width: 38px;
+      height: 38px;
+    }
+  }
+</style>
+
+<script>
+  // 阅读进度 + 返回顶部。
+  // 用 requestAnimationFrame 节流，避免滚动时高频触发布局计算。
+  (function () {
+    const bar = document.querySelector<HTMLElement>(".rd-progress-bar");
+    const top = document.querySelector<HTMLButtonElement>("[data-rd-top]");
+    const article = document.querySelector<HTMLElement>(".sb-article");
+    if (!bar || !article) return;
+
+    let ticking = false;
+
+    const update = () => {
+      ticking = false;
+      const rect = article.getBoundingClientRect();
+      const total = rect.height - window.innerHeight;
+      // 文章可能不满一屏，此时进度直接给满，避免出现负值
+      const scrolled =
+        total > 0 ? Math.min(Math.max(-rect.top / total, 0), 1) : 1;
+      bar.style.setProperty("--rd-progress", `${(scrolled * 100).toFixed(2)}%`);
+
+      if (top) {
+        top.classList.toggle("is-visible", window.scrollY > window.innerHeight * 0.6);
+      }
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+
+    top?.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    // swup 切页后重新绑定（astro:page-load 由 swup 派发）
+    document.addEventListener("astro:page-load", () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onScroll, { passive: true });
+      update();
+    });
+  })();
+</script>
