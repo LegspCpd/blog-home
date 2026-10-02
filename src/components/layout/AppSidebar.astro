@@ -31,8 +31,26 @@ const searchItem = {
  * 折叠状态持久化：shadcn 的 Sidebar.Provider 只负责「写」cookie，
  * 初始化时需要由使用方读取。这里在 SSR 阶段读取，
  * 保证首屏就是用户上次选择的状态（不会先展开再收起）。
+ *
+ * 静态输出（EdgeOne / 纯静态托管）在构建期拿不到访问者 cookie：
+ * 强行读会触发 Astro「预渲染页访问 request」警告，且每个页面刷一条
+ * （实测 63 页 × 2 次 = 114 条），严重淹没真正的报错。
+ *
+ * 因此这里按构建目标分流：
+ *  - DEPLOY_TARGET=static（EdgeOne）：跳过 cookie 读取，直接用默认值。
+ *    折叠状态由客户端的 SidebarStateSync 依据 cookie 纠偏，
+ *    视觉上最多差一帧，但构建日志干净。
+ *  - 其它（Vercel 等按请求渲染）：照常读 cookie，保留首屏无闪烁。
+ *
+ * 判定用 process.env 而非 import.meta.env：前者是构建脚本注入的
+ * 进程环境变量，在 Astro 的 frontmatter 中可直接访问。
  */
-const sidebarCookie = Astro.cookies.get("sidebar_state");
+const isStaticTarget =
+	(process.env.DEPLOY_TARGET || "vercel").toLowerCase() === "static";
+
+const sidebarCookie = isStaticTarget
+	? undefined
+	: Astro.cookies.get("sidebar_state");
 const defaultOpen = sidebarCookie ? sidebarCookie.value !== "false" : true;
 ---
 
