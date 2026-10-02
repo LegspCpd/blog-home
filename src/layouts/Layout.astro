@@ -480,6 +480,12 @@ const connectionHintOrigins = Array.from(
 
       // 立即执行函数来处理DOM
       (function applyWallpaperMode() {
+        // 守卫：页面里没有 #wallpaper-wrapper 时直接返回。
+        // 当前全站使用 SupabaseLayout，不渲染 banner / wallpaper 相关元素，
+        // 后面上百行对它们做 DOM 查询全是空操作。
+        // 若将来重新启用 banner 布局，此处会自动走回完整逻辑。
+        if (!document.getElementById("wallpaper-wrapper")) return;
+
         // 使用 requestAnimationFrame 确保在下一帧之前执行
         requestAnimationFrame(function () {
           // 根据模式隐藏显示对应元素

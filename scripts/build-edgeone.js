@@ -54,6 +54,13 @@ function main() {
     status = run(process.execPath, [pagefindScript]);
     if (status !== 0) process.exit(status);
 
+    // 4.5 剔除未被任何页面引用的静态目录
+    // public/ 下的演示素材（Live2D / Spine 模型等）会被原样拷贝到产物，
+    // 实测有约 60MB 从未被任何页面引用，白白拖慢部署与上传。
+    // 这里只清理产物，不动 public/ 源文件，本地开发不受影响。
+    const pruneScript = path.join(rootDir, "scripts", "prune-unused-assets.mjs");
+    run(process.execPath, [pruneScript, outDir]);
+
     // 5. IndexNow 推送（可选，构建成功后自动提交 sitemap）
     const pingScript = path.join(rootDir, "scripts", "ping-indexnow.js");
     run(process.execPath, [pingScript]);
