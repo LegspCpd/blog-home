@@ -171,15 +171,15 @@ const showActionCard =
 
       <!-- Title block -->
       <header class="sb-article__head">
-        <h1 class="sb-article__title sb-animate">{entry.data.title}</h1>
+        <h1 class="sb-article__title su-animate">{entry.data.title}</h1>
 
         <div class="sb-article__meta">
-          <span class="sb-mono">{formatDateToYYYYMMDD(entry.data.published)}</span>
+          <span class="su-mono">{formatDateToYYYYMMDD(entry.data.published)}</span>
           {
             entry.data.updated && (
               <>
                 <span class="sb-article__dot" aria-hidden="true" />
-                <span class="sb-mono">
+                <span class="su-mono">
                   更新于 {formatDateToYYYYMMDD(entry.data.updated)}
                 </span>
               </>
@@ -253,12 +253,12 @@ const showActionCard =
             slug={entry.id}
             hint={entry.data.passwordHint}
           >
-            <Markdown class="markdown-content sb-animate">
+            <Markdown class="markdown-content su-animate">
               <Content />
             </Markdown>
           </EncryptedPost>
         ) : (
-          <Markdown class="markdown-content sb-animate">
+          <Markdown class="markdown-content su-animate">
             <Content />
           </Markdown>
         )
@@ -283,14 +283,14 @@ const showActionCard =
       <!-- Action card -->
       {
         showActionCard && (
-          <div class="sb-card sb-action-card">
+          <div class="su-card sb-action-card">
             <div class="sb-action-card__text">
-              <div class="sb-heading-md">
+              <div class="su-heading-md">
                 {sponsorConfig.showButtonInPost && siteConfig.pages.sponsor
                   ? i18n(I18nKey.sponsorButton)
                   : i18n(I18nKey.shareOnSocial)}
               </div>
-              <p class="sb-caption sb-text-mute" style="margin-top:4px;">
+              <p class="su-caption su-text-mute" style="margin-top:4px;">
                 {sponsorConfig.showButtonInPost && siteConfig.pages.sponsor
                   ? i18n(I18nKey.sponsorButtonText)
                   : i18n(I18nKey.shareOnSocialDescription)}
@@ -314,7 +314,7 @@ const showActionCard =
               }
               {
                 sponsorConfig.showButtonInPost && siteConfig.pages.sponsor && (
-                  <a href={url("/sponsor/")} class="sb-btn sb-btn--primary">
+                  <a href={url("/sponsor/")} class="su-btn su-btn su-btn--primary">
                     {i18n(I18nKey.sponsor)}
                   </a>
                 )
@@ -335,7 +335,7 @@ const showActionCard =
             sourceLink={entry.data.sourceLink}
             licenseName={entry.data.licenseName}
             licenseUrl={entry.data.licenseUrl}
-            class="license-container sb-animate"
+            class="license-container su-animate"
           />
         )
       }
@@ -352,7 +352,7 @@ const showActionCard =
         href={entry.data.nextSlug
           ? getPostUrlBySlug(entry.data.nextSlug)
           : url("/")}
-        class="sb-card sb-card--hover sb-prevnext__item"
+        class="su-card su-card su-card--hover sb-prevnext__item"
       >
         <span class="sb-prevnext__label">
           <Icon name="material-symbols:arrow-back" style="font-size:15px;" />
@@ -367,7 +367,7 @@ const showActionCard =
         href={entry.data.prevSlug
           ? getPostUrlBySlug(entry.data.prevSlug)
           : url("/")}
-        class="sb-card sb-card--hover sb-prevnext__item sb-prevnext__item--next"
+        class="su-card su-card su-card--hover sb-prevnext__item sb-prevnext__item--next"
       >
         <span class="sb-prevnext__label">
           下一篇
@@ -383,9 +383,9 @@ const showActionCard =
   <!-- Related -->
   {
     relatedPosts.length > 0 && (
-      <section class="sb-section-sm">
+      <section class="su-section-sm">
         <div class="su-article-related">
-          <h2 class="sb-display-md" style="margin-bottom:24px;">
+          <h2 class="su-display-md" style="margin-bottom:24px;">
             相关文章
           </h2>
           <div class="sb-related-grid">

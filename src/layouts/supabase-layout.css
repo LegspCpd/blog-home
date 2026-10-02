@@ -183,17 +183,42 @@ body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
 		text-overflow: ellipsis;
 	}
 
-	.su-mobile-bar-actions {
+	.su-mobile-bar-nav {
 		display: flex;
 		align-items: center;
-		gap: 6px;
+		gap: 2px;
 		flex: none;
-		order: 2;
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	.su-mobile-bar-nav::-webkit-scrollbar {
+		display: none;
+	}
+
+	/* 文字导航：抽屉之外的兜底入口，脚本失效时仍可跳转 */
+	.su-mobile-bar-link {
+		padding: 5px 8px;
+		border-radius: var(--su-radius-xs);
+		font-size: 13px;
+		color: var(--su-muted-foreground);
+		text-decoration: none;
+		white-space: nowrap;
+		transition:
+			color 0.15s ease,
+			background-color 0.15s ease;
+	}
+
+	.su-mobile-bar-link:hover,
+	.su-mobile-bar-link:focus-visible {
+		color: var(--su-foreground);
+		background-color: var(--su-accent);
 	}
 
 	/* 抽屉触发按钮由 AppSidebar（Provider 内）渲染，固定到顶栏左侧。
 	   它必须留在 Provider 里才能拿到侧栏上下文，所以用 fixed 归位，
-	   而不是把它搬进顶栏 —— 后者会破坏 shadcn 的 context 依赖。 */
+	   而不是把它搬进顶栏 —— 后者会破坏 shadcn 的 context 依赖。
+	   z-index 高于顶栏（45），确保按钮浮在顶栏背景之上。 */
 	.su-mobile-trigger {
 		position: fixed;
 		top: 12px;
@@ -210,9 +235,18 @@ body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
 		color: var(--su-foreground);
 	}
 
-	/* 按钮占位：顶栏品牌左侧留出 36+8px，避免文字压在按钮下 */
+	/* 按钮占位：顶栏品牌左侧留出 36+8px，避免文字压在按钮下。
+	   超窄屏隐藏品牌名，把空间让给导航链接（导航更重要）。 */
 	.su-mobile-bar-brand {
 		padding-left: 44px;
+		flex: none;
+		white-space: nowrap;
+	}
+
+	@media (max-width: 480px) {
+		.su-mobile-bar-brand {
+			display: none;
+		}
 	}
 }
 
