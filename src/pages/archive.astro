@@ -63,8 +63,8 @@ const maxPerYear = Math.max(1, ...groups.map(([, list]) => list.length));
 	<!-- 年度分布：一眼看出写作节奏 -->
 	{
 		groups.length > 1 ? (
-			<section class="ar-block rv" aria-labelledby="ar-chart-title">
-				<h2 id="ar-chart-title" class="ar-block-title">
+			<section class="su-section rv" aria-labelledby="ar-chart-title">
+				<h2 id="ar-chart-title" class="su-section-title">
 					<Icon name="material-symbols:bar-chart-outline" />
 					年度分布
 				</h2>
@@ -96,8 +96,8 @@ const maxPerYear = Math.max(1, ...groups.map(([, list]) => list.length));
 	<!-- 标签筛选 -->
 	{
 		tags.length > 0 ? (
-			<section class="ar-block" aria-labelledby="ar-tags-title">
-				<h2 id="ar-tags-title" class="ar-block-title">
+			<section class="su-section" aria-labelledby="ar-tags-title">
+				<h2 id="ar-tags-title" class="su-section-title">
 					<Icon name="material-symbols:sell-outline" />
 					标签
 				</h2>
@@ -119,8 +119,8 @@ const maxPerYear = Math.max(1, ...groups.map(([, list]) => list.length));
 	<!-- 分类 -->
 	{
 		categories.length > 0 ? (
-			<section class="ar-block" aria-labelledby="ar-cats-title">
-				<h2 id="ar-cats-title" class="ar-block-title">
+			<section class="su-section" aria-labelledby="ar-cats-title">
+				<h2 id="ar-cats-title" class="su-section-title">
 					<Icon name="material-symbols:category-outline" />
 					分类
 				</h2>
@@ -140,8 +140,8 @@ const maxPerYear = Math.max(1, ...groups.map(([, list]) => list.length));
 	}
 
 	<!-- 时间线 -->
-	<section class="ar-block" aria-labelledby="ar-timeline-title">
-		<h2 id="ar-timeline-title" class="ar-block-title">
+	<section class="su-section" aria-labelledby="ar-timeline-title">
+		<h2 id="ar-timeline-title" class="su-section-title">
 			<Icon name="material-symbols:timeline-outline" />
 			时间线
 		</h2>
@@ -194,31 +194,6 @@ const maxPerYear = Math.max(1, ...groups.map(([, list]) => list.length));
 </SupabaseLayout>
 
 <style>
-	.ar-block {
-		padding-block: 28px;
-		border-top: 1px solid var(--su-border);
-	}
-
-	.ar-block:first-of-type {
-		border-top: 0;
-		padding-top: 0;
-	}
-
-	.ar-block-title {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		margin: 0 0 16px;
-		font-size: 15px;
-		font-weight: 600;
-		color: var(--su-foreground);
-	}
-
-	.ar-block-title :global(svg) {
-		font-size: 18px;
-		color: var(--su-muted-foreground);
-	}
-
 	/* ---- 年度分布条形图 ---- */
 	.ar-chart {
 		display: flex;

@@ -68,6 +68,25 @@
 	--su-content-max: 760px;
 	--su-header-height: 60px;
 
+	/* ---------- 间距刻度 ----------
+	   统一到 4px 基准，页面里不再随手写 margin/padding 的具体数值。
+	   命名用语义（block / gap）而非倍数，便于按需微调而不影响全局。 */
+	--su-space-3xs: 2px;
+	--su-space-2xs: 4px;
+	--su-space-xs: 8px;
+	--su-space-sm: 12px;
+	--su-space-md: 16px;
+	--su-space-lg: 24px;
+	--su-space-xl: 32px;
+	--su-space-2xl: 48px;
+	--su-space-3xl: 64px;
+	--su-space-4xl: 96px;
+
+	/* 区块之间的垂直节奏 */
+	--su-gap-section: var(--su-space-2xl);
+	--su-gap-block: var(--su-space-lg);
+	--su-gap-inline: var(--su-space-md);
+
 	/* ---------- 字体 ---------- */
 	--font-supabase:
 		"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
