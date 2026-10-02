@@ -60,10 +60,14 @@ const siteTitle = siteConfig.title || "LegspCpd Blog";
     <main class:list={["sb-main", mainClass]}>
       {contained ? (
         <div class="sb-container">
-          <slot />
+          <div id="swup-container">
+            <slot />
+          </div>
         </div>
       ) : (
-        <slot />
+        <div id="swup-container">
+          <slot />
+        </div>
       )}
     </main>
 

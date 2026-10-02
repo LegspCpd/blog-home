@@ -159,7 +159,7 @@ function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
 export async function getRelatedPosts(
 	currentPost: CollectionEntry<"posts">,
 	maxCount = 5,
-): Promise<PostForList[]> {
+): Promise<CollectionEntry<"posts">[]> {
 	const allPosts = await getCollection("posts", ({ data }) => {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});
@@ -215,11 +215,11 @@ export async function getRelatedPosts(
 	const withTagMatch = scored.filter((s) => s.tagMatchScore > 0);
 	const withoutTagMatch = scored.filter((s) => s.tagMatchScore === 0);
 
-	const result: PostForList[] = [];
+	const result: CollectionEntry<"posts">[] = [];
 
 	for (const s of withTagMatch) {
 		if (result.length >= maxCount) break;
-		result.push({ id: s.post.id, data: s.post.data });
+		result.push(s.post);
 	}
 
 	// 不足时从剩余候选中按 timeFreshnessScore + categoryBonus 降序补充
@@ -232,7 +232,7 @@ export async function getRelatedPosts(
 		);
 		for (const s of withoutTagMatch) {
 			if (result.length >= maxCount) break;
-			result.push({ id: s.post.id, data: s.post.data });
+			result.push(s.post);
 		}
 	}
 

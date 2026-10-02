@@ -1,7 +1,8 @@
 ---
 import { getEntry, render } from "astro:content";
 import Markdown from "@components/common/Markdown.astro";
-import SupabaseLayout from "@layouts/SupabaseLayout.astro";
+import SbPageHeader from "@/components/layout/SbPageHeader.astro";
+import SupabaseShell from "@/layouts/SupabaseShell.astro";
 import { pagesConfig } from "@/config";
 import { siteConfig } from "@/config/siteConfig";
 
@@ -17,57 +18,47 @@ const { Content } = await render(privacyPost);
 const { title: pageTitle, description } = pagesConfig.privacy;
 ---
 
-<SupabaseLayout title={pageTitle} description={description}>
-  <div class="su-prose-page">
-    <header class="su-page-head">
-      <p class="su-kicker">法律条款</p>
-      <h1 class="su-title">{pageTitle}</h1>
-      <p class="su-page-desc">{description}</p>
-      <p class="su-page-meta">
-        <span class="su-num">{siteConfig.title}</span>
-        <span class="su-dot">·</span>
-        <a class="su-link" href="/about/">返回关于我</a>
-      </p>
-    </header>
+<SupabaseShell title={pageTitle} description={description}>
+  <SbPageHeader
+    eyebrow="法律条款"
+    title={pageTitle}
+    subtitle={description}
+  >
+    <p class="sb-page-meta">
+      <span class="sb-text-mute sb-mono">{siteConfig.title}</span>
+      <span class="sb-text-mute">·</span>
+      <a class="sb-link" href="/about/">返回关于我</a>
+    </p>
+  </SbPageHeader>
 
-    <div class="su-prose-body">
+  <div class="sb-prose-page">
+    <div class="sb-prose-body">
       <Markdown class="markdown-content">
         <Content />
       </Markdown>
     </div>
   </div>
-</SupabaseLayout>
+</SupabaseShell>
 
 <style>
-  .su-prose-page {
+  .sb-prose-page {
     max-width: 820px;
     margin-inline: auto;
   }
 
-  .su-page-head {
-    margin-bottom: 40px;
-    padding-bottom: 32px;
-    border-bottom: 1px solid var(--su-border);
-  }
-
-  .su-title {
-    margin: 8px 0 12px;
-  }
-
-  .su-page-desc {
-    margin: 0 0 16px;
+  .sb-prose-body {
     font-size: 16px;
-    line-height: 1.7;
-    color: var(--su-muted-foreground);
+    line-height: 1.8;
+    color: var(--sb-ink);
   }
 
-  .su-page-meta {
+  .sb-page-meta {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-    margin: 0;
+    margin-top: 16px;
     font-size: 13px;
-    color: var(--su-muted-foreground);
+    color: var(--sb-ink-mute);
   }
 </style>

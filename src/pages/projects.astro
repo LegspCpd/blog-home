@@ -1,6 +1,7 @@
 ---
 import { Icon } from "astro-icon/components";
-import SupabaseLayout from "@layouts/SupabaseLayout.astro";
+import SbPageHeader from "@/components/layout/SbPageHeader.astro";
+import SupabaseShell from "@/layouts/SupabaseShell.astro";
 import {
 	projectStatusLabel,
 	projectsConfig,
@@ -21,40 +22,41 @@ const statusCount = projects.reduce<Record<string, number>>((acc, item) => {
 }, {});
 ---
 
-<SupabaseLayout title={title} description={description}>
-  <div class="su-projects">
-    <header class="su-page-head">
-      <p class="su-kicker">{title}</p>
-      <h1 class="su-title">{title}</h1>
-      <p class="su-page-desc">{description}</p>
-      <p class="su-page-meta">
-        <span class="su-num">{projects.length}</span> 个项目
-        {
-          Object.entries(statusCount).map(([status, count]) => (
-            <>
-              <span class="su-dot">·</span>
-              <span class="su-num">
-                {projectStatusLabel[status] ?? status} {count}
-              </span>
-            </>
-          ))
-        }
-      </p>
-    </header>
+<SupabaseShell title={title} description={description}>
+  <SbPageHeader
+    eyebrow={title}
+    title={title}
+    subtitle={description}
+  >
+    <p class="sb-page-meta">
+      <span class="sb-text-mute sb-mono">{projects.length}</span> 个项目
+      {
+        Object.entries(statusCount).map(([status, count]) => (
+          <>
+            <span class="sb-text-mute">·</span>
+            <span class="sb-text-mute sb-mono">
+              {projectStatusLabel[status] ?? status} {count}
+            </span>
+          </>
+        ))
+      }
+    </p>
+  </SbPageHeader>
 
+  <div class="sb-prose-page">
     {
       projects.length > 0 ? (
-        <ul class="su-project-grid">
+        <ul class="sb-project-grid">
           {projects.map((project) => (
             <li>
               <a
-                class="su-project"
+                class="sb-project"
                 href={project.url}
                 target={/^https?:/.test(project.url) ? "_blank" : undefined}
                 rel={/^https?:/.test(project.url) ? "noopener noreferrer" : undefined}
               >
-                <span class="su-project-icon">
-                  <span class="su-project-initial" aria-hidden="true">
+                <span class="sb-project-icon">
+                  <span class="sb-project-initial" aria-hidden="true">
                     {project.name.slice(0, 1).toUpperCase()}
                   </span>
                   {project.iconSrc && (
@@ -71,23 +73,23 @@ const statusCount = projects.reduce<Record<string, number>>((acc, item) => {
                   )}
                 </span>
 
-                <span class="su-project-body">
-                  <span class="su-project-head">
-                    <span class="su-project-name">{project.name}</span>
+                <span class="sb-project-body">
+                  <span class="sb-project-head">
+                    <span class="sb-project-name">{project.name}</span>
                     {project.status && (
-                      <span class="su-project-status">
+                      <span class="sb-project-status">
                         {projectStatusLabel[project.status] ?? project.status}
                       </span>
                     )}
                   </span>
 
-                  <span class="su-project-desc">{project.desc}</span>
+                  <span class="sb-project-desc">{project.desc}</span>
 
-                  <span class="su-project-foot">
+                  <span class="sb-project-foot">
                     {project.tags && project.tags.length > 0 && (
-                      <span class="su-project-tags">
+                      <span class="sb-project-tags">
                         {project.tags.map((tag) => (
-                          <span class="su-project-tag">{tag}</span>
+                          <span class="sb-project-tag">{tag}</span>
                         ))}
                       </span>
                     )}
@@ -95,7 +97,7 @@ const statusCount = projects.reduce<Record<string, number>>((acc, item) => {
                       name="material-symbols:arrow-outward"
                       width="14"
                       height="14"
-                      class="su-project-arrow"
+                      class="sb-project-arrow"
                     />
                   </span>
                 </span>
@@ -104,50 +106,22 @@ const statusCount = projects.reduce<Record<string, number>>((acc, item) => {
           ))}
         </ul>
       ) : (
-        <p class="su-projects-empty">
+        <p class="sb-projects-empty">
           还没有项目。编辑 <code>src/config/projectsConfig.ts</code> 的
           <code>items</code> 数组即可添加。
         </p>
       )
     }
   </div>
-</SupabaseLayout>
+</SupabaseShell>
 
 <style>
-  .su-projects {
+  .sb-prose-page {
     max-width: 1000px;
     margin-inline: auto;
   }
 
-  .su-page-head {
-    margin-bottom: 40px;
-    padding-bottom: 32px;
-    border-bottom: 1px solid var(--su-border);
-  }
-
-  .su-title {
-    margin: 8px 0 12px;
-  }
-
-  .su-page-desc {
-    margin: 0 0 16px;
-    font-size: 16px;
-    line-height: 1.7;
-    color: var(--su-muted-foreground);
-  }
-
-  .su-page-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-    font-size: 13px;
-    color: var(--su-muted-foreground);
-  }
-
-  /* 项目卡片：细边框 + 12px 圆角，无阴影无渐变 */
-  .su-project-grid {
+  .sb-project-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 12px;
@@ -156,27 +130,27 @@ const statusCount = projects.reduce<Record<string, number>>((acc, item) => {
     list-style: none;
   }
 
-  .su-project {
+  .sb-project {
     display: flex;
     align-items: flex-start;
     gap: 14px;
     height: 100%;
     padding: 18px;
-    border: 1px solid var(--su-border);
-    border-radius: 12px;
-    background-color: var(--su-card);
+    border: 1px solid var(--sb-hairline);
+    border-radius: var(--sb-radius-lg);
+    background-color: var(--sb-canvas);
     text-decoration: none;
     transition:
       border-color 0.15s ease,
       background-color 0.15s ease;
   }
 
-  .su-project:hover {
-    background-color: var(--su-accent);
-    border-color: var(--su-muted-foreground);
+  .sb-project:hover {
+    background-color: var(--sb-canvas-soft);
+    border-color: var(--sb-ink-mute);
   }
 
-  .su-project-icon {
+  .sb-project-icon {
     position: relative;
     display: flex;
     flex: none;
@@ -185,13 +159,13 @@ const statusCount = projects.reduce<Record<string, number>>((acc, item) => {
     width: 40px;
     height: 40px;
     overflow: hidden;
-    border: 1px solid var(--su-border);
-    border-radius: 8px;
-    background-color: var(--su-background);
+    border: 1px solid var(--sb-hairline);
+    border-radius: var(--sb-radius-sm);
+    background-color: var(--sb-canvas-soft);
   }
 
   /* 首字母占位：图片加载失败被移除后自动露出 */
-  .su-project-initial {
+  .sb-project-initial {
     position: absolute;
     inset: 0;
     display: flex;
@@ -200,19 +174,19 @@ const statusCount = projects.reduce<Record<string, number>>((acc, item) => {
     font-family: var(--font-mono-supabase);
     font-size: 16px;
     font-weight: 500;
-    color: var(--su-muted-foreground);
+    color: var(--sb-ink-mute);
   }
 
-  .su-project-icon img {
+  .sb-project-icon img {
     position: relative;
     z-index: 1;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    background-color: var(--su-background);
+    background-color: var(--sb-canvas-soft);
   }
 
-  .su-project-body {
+  .sb-project-body {
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -220,39 +194,39 @@ const statusCount = projects.reduce<Record<string, number>>((acc, item) => {
     flex: 1;
   }
 
-  .su-project-head {
+  .sb-project-head {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
   }
 
-  .su-project-name {
+  .sb-project-name {
     font-size: 16px;
     font-weight: 500;
     line-height: 1.4;
-    color: var(--su-foreground);
+    color: var(--sb-ink);
     transition: color 0.15s ease;
   }
 
-  .su-project:hover .su-project-name {
-    color: var(--su-primary);
+  .sb-project:hover .sb-project-name {
+    color: var(--sb-primary);
   }
 
-  .su-project-status {
+  .sb-project-status {
     flex: none;
     font-family: var(--font-mono-supabase);
     font-size: 11px;
-    color: var(--su-muted-foreground);
+    color: var(--sb-ink-mute);
   }
 
-  .su-project-desc {
+  .sb-project-desc {
     font-size: 14px;
     line-height: 1.65;
-    color: var(--su-muted-foreground);
+    color: var(--sb-ink-mute);
   }
 
-  .su-project-foot {
+  .sb-project-foot {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -261,45 +235,55 @@ const statusCount = projects.reduce<Record<string, number>>((acc, item) => {
     padding-top: 4px;
   }
 
-  .su-project-tags {
+  .sb-project-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
 
-  .su-project-tag {
+  .sb-project-tag {
     font-family: var(--font-mono-supabase);
     font-size: 11px;
-    color: var(--su-ink-faint);
+    color: var(--sb-ink-faint);
   }
 
-  .su-project-arrow {
+  .sb-project-arrow {
     flex: none;
     margin-left: auto;
-    color: var(--su-ink-faint);
+    color: var(--sb-ink-faint);
     opacity: 0;
     transition: opacity 0.15s ease;
   }
 
-  .su-project:hover .su-project-arrow {
+  .sb-project:hover .sb-project-arrow {
     opacity: 1;
   }
 
-  .su-projects-empty {
+  .sb-projects-empty {
     margin: 0;
     padding: 32px 0;
     font-size: 14px;
     line-height: 1.8;
-    color: var(--su-muted-foreground);
+    color: var(--sb-ink-mute);
   }
 
-  .su-projects-empty code {
+  .sb-projects-empty code {
     padding: 2px 6px;
-    border: 1px solid var(--su-border);
-    border-radius: 4px;
-    background-color: var(--su-muted);
+    border: 1px solid var(--sb-hairline);
+    border-radius: var(--sb-radius-xs);
+    background-color: var(--sb-canvas-soft);
     font-family: var(--font-mono-supabase);
     font-size: 13px;
-    color: var(--su-foreground);
+    color: var(--sb-ink);
+  }
+
+  .sb-page-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--sb-ink-mute);
   }
 </style>
