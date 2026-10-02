@@ -44,6 +44,10 @@ for (const post of posts) {
 	else byYear.set(year, [post]);
 }
 const groups = [...byYear.entries()].sort((a, b) => b[0] - a[0]);
+
+// 年度分布条形图：纯 CSS，零依赖。
+// 条宽按当年文章数 / 最多的一年的比例计算，避免除零。
+const maxPerYear = Math.max(1, ...groups.map(([, list]) => list.length));
 ---
 
 <SupabaseLayout
@@ -55,6 +59,39 @@ const groups = [...byYear.entries()].sort((a, b) => b[0] - a[0]);
 		title="归档"
 		subtitle={`共 ${posts.length} 篇文章 · ${tags.length} 个标签 · ${categories.length} 个分类`}
 	/>
+
+	<!-- 年度分布：一眼看出写作节奏 -->
+	{
+		groups.length > 1 ? (
+			<section class="ar-block rv" aria-labelledby="ar-chart-title">
+				<h2 id="ar-chart-title" class="ar-block-title">
+					<Icon name="material-symbols:bar-chart-outline" />
+					年度分布
+				</h2>
+				<div class="ar-chart">
+					{groups.map(([year, list]) => (
+						<a
+							class="ar-chart-col"
+							href={`#ar-y${year}`}
+							title={`${year} 年 · ${list.length} 篇`}
+						>
+							<span class="ar-chart-bar-wrap">
+								<span
+									class="ar-chart-bar"
+									style={`height:${Math.max(
+										8,
+										Math.round((list.length / maxPerYear) * 100),
+									)}%`}
+								/>
+							</span>
+							<span class="ar-chart-label su-mono">{year}</span>
+							<span class="ar-chart-num">{list.length}</span>
+						</a>
+					))}
+				</div>
+			</section>
+		) : null
+	}
 
 	<!-- 标签筛选 -->
 	{
@@ -113,7 +150,7 @@ const groups = [...byYear.entries()].sort((a, b) => b[0] - a[0]);
 			groups.length > 0 ? (
 				<div class="ar-timeline">
 					{groups.map(([year, entries]) => (
-						<section class="ar-year">
+						<section class="ar-year" id={`ar-y${year}`}>
 							<h3 class="ar-year-label">
 								<span class="ar-year-num">{year}</span>
 								<span class="ar-year-count">{entries.length} 篇</span>
@@ -182,6 +219,62 @@ const groups = [...byYear.entries()].sort((a, b) => b[0] - a[0]);
 		color: var(--su-muted-foreground);
 	}
 
+	/* ---- 年度分布条形图 ---- */
+	.ar-chart {
+		display: flex;
+		align-items: flex-end;
+		gap: 10px;
+		height: 140px;
+	}
+
+	.ar-chart-col {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 6px;
+		height: 100%;
+		text-decoration: none;
+		color: inherit;
+	}
+
+	/* 条形区：底部对齐，条从这里往上长 */
+	.ar-chart-bar-wrap {
+		flex: 1;
+		width: 100%;
+		display: flex;
+		align-items: flex-end;
+		justify-content: center;
+	}
+
+	.ar-chart-bar {
+		width: 100%;
+		max-width: 44px;
+		min-height: 8px;
+		border-radius: var(--su-radius-xs) var(--su-radius-xs) 0 0;
+		background-color: var(--su-muted);
+		transition:
+			background-color 0.18s ease,
+			transform 0.18s ease;
+	}
+
+	.ar-chart-col:hover .ar-chart-bar {
+		background-color: var(--su-primary);
+		transform: scaleX(1.06);
+	}
+
+	.ar-chart-label {
+		font-size: 11px;
+		color: var(--su-muted-foreground);
+	}
+
+	.ar-chart-num {
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--su-foreground);
+	}
+
 	/* ---- 标签/分类云 ---- */
 	.ar-cloud {
 		display: flex;
@@ -207,6 +300,11 @@ const groups = [...byYear.entries()].sort((a, b) => b[0] - a[0]);
 		display: flex;
 		flex-direction: column;
 		gap: 32px;
+	}
+
+	.ar-year {
+		/* 锚点跳转时不要被顶栏遮住 */
+		scroll-margin-top: calc(var(--su-header-height) + 24px);
 	}
 
 	.ar-year-label {
@@ -291,6 +389,22 @@ const groups = [...byYear.entries()].sort((a, b) => b[0] - a[0]);
 	}
 
 	@media (max-width: 640px) {
+		/* 年份多时改为横向滚动，避免每根条被压得看不出高低 */
+		.ar-chart {
+			overflow-x: auto;
+			gap: 8px;
+			scrollbar-width: none;
+		}
+
+		.ar-chart::-webkit-scrollbar {
+			display: none;
+		}
+
+		.ar-chart-col {
+			flex: none;
+			width: 44px;
+		}
+
 		.ar-row {
 			flex-direction: column;
 			gap: 6px;
