@@ -51,6 +51,11 @@ export const STATIC_ROUTE_META: Record<string, RouteMeta> = {
 		description: "通过 GitHub、Discord 或邮箱联系 LegspCpd",
 		ogType: "website",
 	},
+	"/stats/": {
+		title: "站点统计",
+		description: "这个博客写了多少字、发了多少篇、都在聊些什么",
+		ogType: "website",
+	},
 	"/friends/": {
 		title: "友链",
 		description: "我的朋友们 - 友情链接",

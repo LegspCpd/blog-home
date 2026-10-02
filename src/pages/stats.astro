@@ -1,0 +1,508 @@
+---
+/**
+ * stats.astro —— 站点统计
+ *
+ * 所有数字都在构建期算好，页面本身零客户端脚本。
+ * 仿照「站点分析」类页面的做法：概览 + 分布 + 趋势。
+ */
+import { Icon } from "astro-icon/components";
+import SbPageHeader from "@/components/layout/SbPageHeader.astro";
+import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
+import { getSortedPosts } from "@/utils/content-utils";
+import { getPostUrlBySlug, url } from "@/utils/url-utils";
+import { render } from "astro:content";
+
+const posts = await getSortedPosts();
+
+// ---- 逐篇取字数与阅读时长 ----
+interface PostStat {
+	id: string;
+	title: string;
+	words: number;
+	minutes: number;
+	published: Date;
+	href: string;
+}
+
+let totalWords = 0;
+let totalMinutes = 0;
+const perPost: PostStat[] = [];
+
+for (const post of posts) {
+	const { remarkPluginFrontmatter } = await render(post);
+	const words = remarkPluginFrontmatter.words ?? 0;
+	const minutes = remarkPluginFrontmatter.minutes ?? 0;
+	totalWords += words;
+	totalMinutes += minutes;
+	perPost.push({
+		id: post.id,
+		title: post.data.title,
+		words,
+		minutes,
+		published: post.data.published,
+		href: getPostUrlBySlug(post.id),
+	});
+}
+
+// ---- 分类分布 ----
+const catCount = new Map<string, number>();
+for (const p of posts) {
+	const c = p.data.category;
+	if (c && c.trim()) catCount.set(c.trim(), (catCount.get(c.trim()) ?? 0) + 1);
+}
+const categories = [...catCount.entries()].sort((a, b) => b[1] - a[1]);
+
+// ---- 标签 Top ----
+const tagCount = new Map<string, number>();
+for (const p of posts) {
+	for (const t of p.data.tags ?? []) tagCount.set(t, (tagCount.get(t) ?? 0) + 1);
+}
+const topTags = [...tagCount.entries()].sort((a, b) => b[1] - a[1]);
+
+// ---- 年度趋势 ----
+const yearCount = new Map<number, number>();
+for (const p of posts) {
+	const y = new Date(p.data.published).getFullYear();
+	yearCount.set(y, (yearCount.get(y) ?? 0) + 1);
+}
+const years = [...yearCount.entries()].sort((a, b) => a[0] - b[0]);
+const maxYear = Math.max(1, ...years.map(([, n]) => n));
+
+// ---- 最长的几篇 ----
+const longest = [...perPost].sort((a, b) => b.words - a.words).slice(0, 5);
+
+const firstPost = posts[posts.length - 1];
+const lastPost = posts[0];
+const days = firstPost
+	? Math.max(
+			1,
+			Math.round(
+				(new Date().getTime() - new Date(firstPost.data.published).getTime()) /
+					86400000,
+			),
+		)
+	: 0;
+
+const fmt = (n: number) => n.toLocaleString("zh-CN");
+---
+
+<SupabaseLayout title="站点统计" description="这个博客写了多少字、发了多少篇、都在聊些什么。">
+	<SbPageHeader
+		eyebrow="Stats"
+		title="站点统计"
+		subtitle="这个博客到目前为止的全部数字。"
+	/>
+
+	<!-- 概览 -->
+	<dl class="st-overview">
+		<div class="st-metric rv">
+			<dt>文章</dt>
+			<dd class="su-mono">{fmt(posts.length)}</dd>
+			<span>篇</span>
+		</div>
+		<div class="st-metric rv" style="--rv-d:60ms">
+			<dt>总字数</dt>
+			<dd class="su-mono">{fmt(totalWords)}</dd>
+			<span>字</span>
+		</div>
+		<div class="st-metric rv" style="--rv-d:120ms">
+			<dt>总阅读</dt>
+			<dd class="su-mono">{fmt(totalMinutes)}</dd>
+			<span>分钟</span>
+		</div>
+		<div class="st-metric rv" style="--rv-d:180ms">
+			<dt>标签</dt>
+			<dd class="su-mono">{fmt(topTags.length)}</dd>
+			<span>个</span>
+		</div>
+	</dl>
+
+	<!-- 概览补充 -->
+	<div class="st-note rv">
+		<span>
+			从 <time class="su-mono">{firstPost ? new Date(firstPost.data.published).toISOString().slice(0, 10) : "—"}</time>
+			的第一篇
+		</span>
+		<span class="su-dot">·</span>
+		<span>已经 {fmt(days)} 天</span>
+		<span class="su-dot">·</span>
+		<span>
+			平均每周 <span class="su-mono">{(posts.length / (days / 7)).toFixed(1)}</span> 篇
+		</span>
+	</div>
+
+	<!-- 年度趋势 -->
+	<section class="su-section rv">
+		<h2 class="su-section-title">
+			<Icon name="material-symbols:show-chart" />
+			年度趋势
+		</h2>
+		<div class="st-chart">
+			{
+				years.map(([year, count]) => (
+					<div class="st-chart-col">
+						<span class="st-chart-bar-wrap">
+							<span
+								class="st-chart-bar"
+								style={`height:${Math.max(
+									8,
+									Math.round((count / maxYear) * 100),
+								)}%`}
+							/>
+						</span>
+						<span class="st-chart-label su-mono">{year}</span>
+						<span class="st-chart-num">{count}</span>
+					</div>
+				))
+			}
+		</div>
+	</section>
+
+	<!-- 分类分布 -->
+	{
+		categories.length > 0 ? (
+			<section class="su-section rv">
+				<h2 class="su-section-title">
+					<Icon name="material-symbols:category" />
+					分类分布
+				</h2>
+				<ul class="st-bars">
+					{categories.map(([name, count]) => (
+						<li class="st-bar-row">
+							<a
+								href={url(`/categories/${encodeURIComponent(name)}/`)}
+								class="st-bar-name"
+							>
+								{name}
+							</a>
+							<span class="st-bar-track">
+								<span
+									class="st-bar-fill"
+									style={`width:${Math.round(
+										(count / categories[0][1]) * 100,
+									)}%`}
+								/>
+							</span>
+							<span class="st-bar-num su-mono">{count}</span>
+						</li>
+					))}
+				</ul>
+			</section>
+		) : null
+	}
+
+	<!-- 标签 Top -->
+	{
+		topTags.length > 0 ? (
+			<section class="su-section rv">
+				<h2 class="su-section-title">
+					<Icon name="material-symbols:sell" />
+					高频标签
+				</h2>
+				<div class="st-tags">
+					{topTags.slice(0, 18).map(([tag, count]) => (
+						<a
+							href={url(`/tags/${encodeURIComponent(tag)}/`)}
+							class="su-pill su-pill--outline"
+						>
+							#{tag}
+							<span class="st-tag-num">{count}</span>
+						</a>
+					))}
+				</div>
+			</section>
+		) : null
+	}
+
+	<!-- 最长的几篇 -->
+	{
+		longest.length > 0 ? (
+			<section class="su-section rv">
+				<h2 class="su-section-title">
+					<Icon name="material-symbols:format-align-left" />
+					最长的五篇
+				</h2>
+				<ol class="st-longest">
+					{longest.map((p, i) => (
+						<li>
+							<a href={p.href} class="st-longest-row">
+								<span class="st-longest-rank su-mono">
+									{i + 1}
+								</span>
+								<span class="st-longest-title">{p.title}</span>
+								<span class="st-longest-num su-mono">
+									{fmt(p.words)} 字 · {p.minutes} 分钟
+								</span>
+							</a>
+						</li>
+					))}
+				</ol>
+			</section>
+		) : null
+	}
+
+	<!-- 最近更新 -->
+	<p class="st-foot su-caption su-text-faint">
+		{
+			lastPost
+				? `最近更新于 ${new Date(
+						lastPost.data.updated ?? lastPost.data.published,
+					).toISOString().slice(0, 10)}`
+				: "还没有文章"
+		}
+	</p>
+</SupabaseLayout>
+
+<style>
+	/* ---- 概览数字 ---- */
+	.st-overview {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		gap: var(--su-space-md);
+		margin: 0 0 var(--su-space-lg);
+	}
+
+	.st-metric {
+		padding: var(--su-space-md) var(--su-space-lg);
+		border: 1px solid var(--su-border);
+		border-radius: var(--su-radius-lg);
+		background-color: var(--su-card);
+	}
+
+	.st-metric dt {
+		font-size: 12px;
+		color: var(--su-muted-foreground);
+		margin-bottom: 6px;
+	}
+
+	.st-metric dd {
+		margin: 0;
+		font-size: 26px;
+		font-weight: 600;
+		line-height: 1.1;
+		letter-spacing: -0.6px;
+		color: var(--su-foreground);
+		display: inline;
+	}
+
+	.st-metric span {
+		margin-left: 4px;
+		font-size: 12px;
+		color: var(--su-ink-faint);
+	}
+
+	/* ---- 补充说明 ---- */
+	.st-note {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: var(--su-space-lg);
+		font-size: 13px;
+		color: var(--su-muted-foreground);
+	}
+
+	/* ---- 年度趋势 ---- */
+	.st-chart {
+		display: flex;
+		align-items: flex-end;
+		gap: 10px;
+		height: 140px;
+	}
+
+	.st-chart-col {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 6px;
+		height: 100%;
+	}
+
+	.st-chart-bar-wrap {
+		flex: 1;
+		width: 100%;
+		display: flex;
+		align-items: flex-end;
+		justify-content: center;
+	}
+
+	.st-chart-bar {
+		width: 100%;
+		max-width: 44px;
+		min-height: 8px;
+		border-radius: var(--su-radius-xs) var(--su-radius-xs) 0 0;
+		background-color: var(--su-accent-text);
+		transition: transform 0.18s ease;
+	}
+
+	.st-chart-col:hover .st-chart-bar {
+		transform: scaleX(1.08);
+	}
+
+	.st-chart-label {
+		font-size: 11px;
+		color: var(--su-muted-foreground);
+	}
+
+	.st-chart-num {
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--su-foreground);
+	}
+
+	/* ---- 分类分布条 ---- */
+	.st-bars {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.st-bar-row {
+		display: grid;
+		grid-template-columns: 120px 1fr 40px;
+		align-items: center;
+		gap: var(--su-space-md);
+		padding: 7px 0;
+	}
+
+	.st-bar-name {
+		font-size: 14px;
+		color: var(--su-foreground);
+		text-decoration: none;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.st-bar-name:hover {
+		color: var(--su-accent-text);
+	}
+
+	.st-bar-track {
+		height: 6px;
+		border-radius: var(--su-radius-full);
+		background-color: var(--su-muted);
+		overflow: hidden;
+	}
+
+	.st-bar-fill {
+		display: block;
+		height: 100%;
+		border-radius: var(--su-radius-full);
+		background-color: var(--su-accent-text);
+		transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	.st-bar-num {
+		font-size: 12px;
+		color: var(--su-muted-foreground);
+		text-align: right;
+	}
+
+	/* ---- 高频标签 ---- */
+	.st-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--su-space-xs);
+	}
+
+	.st-tags a {
+		padding: 5px 11px;
+		font-family: var(--font-supabase);
+	}
+
+	.st-tag-num {
+		margin-left: 4px;
+		font-family: var(--font-mono-supabase);
+		font-size: 11px;
+		color: var(--su-ink-faint);
+	}
+
+	/* ---- 最长的几篇 ---- */
+	.st-longest {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		counter-reset: longest;
+	}
+
+	.st-longest-row {
+		display: flex;
+		align-items: baseline;
+		gap: var(--su-space-md);
+		padding: 10px 4px;
+		color: inherit;
+		text-decoration: none;
+		border-bottom: 1px solid var(--su-border);
+		border-radius: var(--su-radius-sm);
+		transition: background-color 0.15s ease;
+	}
+
+	.st-longest-row:hover {
+		background-color: var(--su-canvas-soft);
+	}
+
+	.st-longest-rank {
+		flex: none;
+		width: 1.5em;
+		font-size: 13px;
+		color: var(--su-ink-faint);
+	}
+
+	.st-longest-title {
+		flex: 1;
+		min-width: 0;
+		font-size: 15px;
+		color: var(--su-foreground);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.st-longest-row:hover .st-longest-title {
+		color: var(--su-accent-text);
+	}
+
+	.st-longest-num {
+		flex: none;
+		font-size: 12px;
+		color: var(--su-muted-foreground);
+	}
+
+	.st-foot {
+		margin-top: var(--su-space-xl);
+		text-align: center;
+	}
+
+	/* ---- 窄屏 ---- */
+	@media (max-width: 640px) {
+		.st-overview {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+		.st-chart {
+			overflow-x: auto;
+			scrollbar-width: none;
+		}
+		.st-chart::-webkit-scrollbar {
+			display: none;
+		}
+		.st-chart-col {
+			flex: none;
+			width: 44px;
+		}
+		.st-bar-row {
+			grid-template-columns: 88px 1fr 32px;
+			gap: var(--su-space-xs);
+		}
+		.st-longest-row {
+			flex-wrap: wrap;
+			gap: 4px 10px;
+		}
+		.st-longest-num {
+			width: 100%;
+			padding-left: calc(1.5em + var(--su-space-md));
+		}
+	}
+</style>

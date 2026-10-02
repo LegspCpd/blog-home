@@ -18,6 +18,7 @@ const iconMap: Record<string, string> = {
 	friends: "material-symbols:group-outline",
 	guestbook: "material-symbols:chat-outline",
 	contact: "material-symbols:alternate-email",
+	stats: "material-symbols:bar-chart-outline",
 	search: "material-symbols:search",
 	rss: "material-symbols:rss-feed",
 };
@@ -30,6 +31,7 @@ export const defaultNavItems: SidebarNavItem[] = [
 	{ title: "首页", href: "/", icon: "home" },
 	{ title: "文章", href: "/posts/", icon: "article" },
 	{ title: "归档", href: "/archive/", icon: "archive" },
+	{ title: "统计", href: "/stats/", icon: "stats" },
 	{ title: "标签", href: "/archive/#tags", icon: "tags" },
 	{ title: "项目", href: "/projects/", icon: "project" },
 	{ title: "友链", href: "/friends/", icon: "friends" },
