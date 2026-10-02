@@ -1,6 +1,4 @@
-import { loadRenderers } from "astro:container";
 import { render } from "astro:content";
-import { getContainerRenderer as getMDXRenderer } from "@astrojs/mdx";
 import rss, { type RSSFeedItem } from "@astrojs/rss";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
@@ -8,7 +6,6 @@ import { getSortedPosts } from "@utils/content-utils";
 import { formatDateI18nWithTime } from "@utils/date-utils";
 import { url } from "@utils/url-utils";
 import type { APIContext } from "astro";
-import { experimental_AstroContainer as AstroContainer } from "astro/container";
 import sanitizeHtml from "sanitize-html";
 import { profileConfig, siteConfig } from "@/config";
 import { processCoverImageSync } from "@/utils/image-utils";
@@ -33,9 +30,8 @@ function getPostImageUrl(imagePath: string): string | undefined {
 
 export async function GET(context: APIContext): Promise<Response> {
 	const blog = await getSortedPosts();
-	const renderers = await loadRenderers([getMDXRenderer()]);
-	const container = await AstroContainer.create({ renderers });
 	const feedItems: RSSFeedItem[] = [];
+
 	for (const post of blog) {
 		if (post.data.password) {
 			feedItems.push({
@@ -47,9 +43,8 @@ export async function GET(context: APIContext): Promise<Response> {
 			});
 			continue;
 		}
-		const { Content, remarkPluginFrontmatter } = await render(post);
-		const rawContent = await container.renderToString(Content);
-		const cleanedContent = stripInvalidXmlChars(rawContent);
+
+		const { remarkPluginFrontmatter } = await render(post);
 		const postImage = processCoverImageSync(post.data.image, post.id);
 		const categories = [post.data.category, ...post.data.tags].filter(
 			Boolean,
@@ -61,14 +56,16 @@ export async function GET(context: APIContext): Promise<Response> {
 			remarkPluginFrontmatter.excerpt?.trim() ||
 			post.data.title;
 
+		// 使用摘要作为 content，避免在 EdgeOne 等环境下因原生绑定缺失导致构建失败
+		// 完整内容渲染需要 AstroContainer + MDX renderer，依赖 @bruits/satteri 原生绑定
+		const postContent = postDescription;
+
 		feedItems.push({
 			title: post.data.title,
 			pubDate: post.data.published,
 			description: postDescription,
 			link: url(`/posts/${post.id}/`),
-			content: sanitizeHtml(cleanedContent, {
-				allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img"]),
-			}),
+			content: postContent,
 			categories,
 			author: `${profileConfig.name}`,
 			...((postImage
@@ -78,6 +75,7 @@ export async function GET(context: APIContext): Promise<Response> {
 				: {}) as Record<string, string>),
 		});
 	}
+
 	return rss({
 		title: siteConfig.title,
 		description: siteConfig.subtitle || "No description",
