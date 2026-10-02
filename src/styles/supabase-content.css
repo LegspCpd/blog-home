@@ -433,6 +433,23 @@
 	border-radius: 12px;
 }
 
+/* 已接入灯箱的图片：光标与轻微放大，明示「可点击」 */
+.su-main .custom-md img[data-fancybox="article"]:not(.not-prose *),
+.su-main #post-cover img[data-fancybox="article"] {
+	cursor: zoom-in;
+	transition:
+		border-color 0.15s ease,
+		box-shadow 0.15s ease,
+		transform 0.15s ease;
+}
+
+.su-main .custom-md img[data-fancybox="article"]:not(.not-prose *):hover,
+.su-main #post-cover img[data-fancybox="article"]:hover {
+	border-color: var(--su-hairline-strong);
+	box-shadow: var(--su-shadow-2);
+	transform: translateY(-2px);
+}
+
 .su-main .custom-md figure:not(.not-prose *) {
 	margin: 24px 0;
 }

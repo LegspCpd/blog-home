@@ -3,7 +3,13 @@ import { visit } from "unist-util-visit";
 import { shouldAddNoReferrer } from "../utils/image-utils.ts";
 
 /**
- * 将带有 alt 文本的图片转换为包含 figcaption 的 figure 元素的 rehype 插件
+ * 图片处理 rehype 插件
+ *
+ * 做两件事：
+ *  1. 给所有正文图片打上 data-fancybox="article" 与 data-src，
+ *     使 FancyboxManager 能接管，实现点击放大与左右切换。
+ *     没有 data-fancybox 的图片点击是「点了没反应」。
+ *  2. 把带 alt 文本的图片包进 <figure>，并用 figcaption 呈现 alt。
  *
  * @returns {Function} A transformer function for the rehype plugin
  */
@@ -21,6 +27,15 @@ export default function rehypeFigure() {
 			// 无论是否有 alt，都要检查并添加 referrerpolicy
 			if (imgProps.src && shouldAddNoReferrer(imgProps.src)) {
 				imgProps.referrerpolicy = "no-referrer";
+			}
+
+			// 接入灯箱：FancyboxManager 依赖 data-fancybox 分组名来聚合同一篇的图，
+			// 靠 data-src 拿原图地址。装饰性图标（.no-lightbox）排除在外。
+			const cls = imgProps.class;
+			const isDecorative = Array.isArray(cls) && cls.includes("no-lightbox");
+			if (!isDecorative && imgProps.src) {
+				imgProps["data-fancybox"] = "article";
+				imgProps["data-src"] = imgProps.src;
 			}
 
 			// 获取 alt 属性

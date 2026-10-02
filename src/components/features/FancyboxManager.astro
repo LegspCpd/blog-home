@@ -9,6 +9,8 @@ import "@/styles/fancybox-custom.css";
 
   async function setup() {
     const selectors = [
+      // 正文/封面图片 —— rehype-figure 会打上 data-fancybox="article"
+      '.custom-md img[data-fancybox="article"], #post-cover img[data-fancybox="article"]',
       ".custom-md img, #post-cover img, .moment-images img",
       ".moment-images a[data-fancybox]",
       "[data-fancybox]:not(.moment-images a)"

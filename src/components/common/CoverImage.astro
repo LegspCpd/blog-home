@@ -205,6 +205,9 @@ const remoteReferrerPolicy =
 			data-cover-img
 			data-remote="true"
 			referrerpolicy={remoteReferrerPolicy}
+			/* 接入灯箱：点封面可放大查看 */
+			data-fancybox="article"
+			data-src={isPublic ? url(src) : src}
 		/>
 	)}
 </div>
