@@ -312,11 +312,3 @@ body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
 .su-main #content-wrapper {
 	max-width: none;
 }
-
-/* 移动端抽屉触发按钮与顶栏的样式，统一在上面「移动端顶栏」一节定义，
-   此处不再重复，避免两处规则互相覆盖。 */
-@media (min-width: 768px) {
-	.su-mobile-trigger {
-		display: none;
-	}
-}

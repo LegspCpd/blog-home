@@ -1012,4 +1012,61 @@ const isLongRead = (remarkPluginFrontmatter.minutes ?? 0) >= 5;
       update();
     });
   })();
+
+  // ------------------------------------------------------------
+  // 阅读位置记忆
+  // ------------------------------------------------------------
+  // 长文读到一半离开、稍后回来时，应该回到离开时的位置，
+  // 而不是从头开始。用 sessionStorage 而非 localStorage：
+  // 关掉标签页后这次「阅读会话」就结束了，下次进来从头读更自然。
+  (function () {
+    var KEY = "rd-pos:" + location.pathname;
+    var article = document.querySelector<HTMLElement>(".sb-article");
+    if (!article) return;
+
+    // 只在有一定滚动量时才记录，否则「刚进来就离开」会存下 0
+    var MIN_SAVE = 200;
+
+    var save = function () {
+      var y = window.scrollY;
+      if (y > MIN_SAVE) {
+        try {
+          sessionStorage.setItem(KEY, String(Math.round(y)));
+        } catch {
+          /* 隐私模式下 sessionStorage 可能不可写，忽略 */
+        }
+      }
+    };
+
+    // 恢复：延后一帧，等 swup 完成内容替换与布局稳定
+    var restore = function () {
+      var raw: string | null = null;
+      try {
+        raw = sessionStorage.getItem(KEY);
+      } catch {
+        return;
+      }
+      if (!raw) return;
+
+      var y = parseInt(raw, 10);
+      if (!y || y <= MIN_SAVE) return;
+
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          window.scrollTo({ top: y, behavior: "auto" });
+          // 恢复后清掉，避免用户再次滚动时又被旧位置干扰
+          try {
+            sessionStorage.removeItem(KEY);
+          } catch {
+            /* ignore */
+          }
+        });
+      });
+    };
+
+    window.addEventListener("pagehide", save);
+    document.addEventListener("astro:page-load", restore);
+    // 首次直接打开（非 swup 切页）时也要恢复
+    restore();
+  })();
 </script>
