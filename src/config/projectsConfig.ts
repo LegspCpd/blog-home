@@ -49,21 +49,54 @@ export const projectsConfig: {
 	items: [
 		{
 			name: "LegspCpd Blog",
-			desc: "本站。Astro + Svelte + Tailwind，Supabase 视觉语言的个人开发者站点。",
-			url: "https://github.com/LegspCpd/Firefly",
+			desc: "本站。Astro + Svelte + Tailwind，Supabase 视觉语言的个人开发者站点，部署在 EdgeOne Pages。",
+			url: "https://github.com/LegspCpd/blog-home",
 			tags: ["Astro", "Svelte", "Tailwind"],
 			status: "active",
 			featured: true,
 		},
-		// 示例（按需取消注释 / 照抄修改）：
-		// {
-		// 	name: "示例项目",
-		// 	desc: "一句话说明这个项目在做什么。",
-		// 	url: "https://example.com",        // 未给 icon 时自动取该站 favicon
-		// 	icon: "assets/images/logo.png",    // 也可写 "/icons/logo.svg" 或远程地址
-		// 	tags: ["TypeScript"],
-		// 	status: "wip",
-		// },
+		{
+			name: "CloudFlare 优选",
+			desc: "自建的 Cloudflare 优选域名，配合 SaaS / Worker 路由，让国内访问不再是减速器。",
+			url: "https://cf.legspcpd.furry.bz/",
+			tags: ["CloudFlare", "CDN", "优选"],
+			status: "active",
+		},
+		{
+			name: "移动网络优选",
+			desc: "针对移动网络的 Cloudflare 优选节点，单独做了优化。",
+			url: "https://cmcc.legspcpd.furry.bz/",
+			tags: ["CloudFlare", "移动网络", "优选"],
+			status: "active",
+		},
+		{
+			name: "EdgeOne 优选",
+			desc: "EdgeOne Pages 的优选接入，让国内访问更快更稳。",
+			url: "https://eo.legspcpd.furry.bz/",
+			tags: ["EdgeOne", "CDN", "优选"],
+			status: "active",
+		},
+		{
+			name: "EdgeOne 多 IP 优选",
+			desc: "多 IP 版 EdgeOne 优选域名，由服务端自动做多节点负载。",
+			url: "https://e.legspcpd.furry.bz/",
+			tags: ["EdgeOne", "CDN", "多 IP"],
+			status: "active",
+		},
+		{
+			name: "GitHub 反向代理",
+			desc: "给 GitHub 原始文件 / Release 准备的反向代理，解决国内直连不畅的问题。",
+			url: "https://v-gh.legspcpd.de5.net/",
+			tags: ["GitHub", "代理"],
+			status: "active",
+		},
+		{
+			name: "Cloudreve on Workers",
+			desc: "把 Cloudreve v4 后端重写为可直接跑在 Cloudflare Workers 上的 TypeScript 实现。",
+			url: "https://github.com/LegspCpd/Cloudreve-Worker",
+			tags: ["CloudFlare", "Workers", "R2"],
+			status: "wip",
+		},
 	],
 };
 
