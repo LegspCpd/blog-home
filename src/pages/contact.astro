@@ -92,6 +92,35 @@ const isExternal = (href: string) => /^(https?:|mailto:)/.test(href);
 		</div>
 	</div>
 
+	<!-- 键盘快捷键：命令面板已存在，但需要一个地方告诉用户 -->
+	<section class="ct-keys" aria-label="键盘快捷键">
+		<h2 class="su-heading-md">键盘快捷键</h2>
+		<p class="su-caption su-text-mute ct-keys-lead">
+			写东西的时候手不用离开键盘。
+		</p>
+		<ul class="ct-keys-list">
+			<li>
+				<span class="ct-keys-name">打开命令面板</span>
+				<span class="ct-keys-combo"><kbd>Ctrl</kbd><kbd>K</kbd></span>
+			</li>
+			<li>
+				<span class="ct-keys-name">同上（Mac）</span>
+				<span class="ct-keys-combo"><kbd>⌘</kbd><kbd>K</kbd></span>
+			</li>
+			<li>
+				<span class="ct-keys-name">在命令面板内选择</span>
+				<span class="ct-keys-combo"><kbd>↑</kbd><kbd>↓</kbd></span>
+			</li>
+			<li>
+				<span class="ct-keys-name">关闭弹层</span>
+				<span class="ct-keys-combo"><kbd>Esc</kbd></span>
+			</li>
+		</ul>
+		<p class="su-caption su-text-faint ct-keys-foot">
+			在搜索页按 <kbd>/</kbd> 可直接聚焦搜索框。
+		</p>
+	</section>
+
 	<p class="ct-foot su-caption su-text-faint">
 		{siteConfig.title} · {siteConfig.site_url}
 	</p>
@@ -242,6 +271,67 @@ const isExternal = (href: string) => /^(https?:|mailto:)/.test(href);
 
 	.ct-guestbook h2 {
 		margin: 0 0 4px;
+	}
+
+	/* ---- 快捷键 ---- */
+	.ct-keys {
+		max-width: none;
+		margin-bottom: 32px;
+		padding: 20px;
+		border: 1px solid var(--su-border);
+		border-radius: var(--su-radius-lg);
+		background-color: var(--su-canvas-soft);
+	}
+
+	.ct-keys-lead {
+		margin: 4px 0 14px;
+	}
+
+	.ct-keys-list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		border-top: 1px solid var(--su-border);
+	}
+
+	.ct-keys-list li {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 9px 2px;
+		border-bottom: 1px solid var(--su-border);
+		font-size: 14px;
+	}
+
+	.ct-keys-name {
+		color: var(--su-foreground);
+	}
+
+	.ct-keys-combo {
+		display: inline-flex;
+		gap: 4px;
+		flex: none;
+	}
+
+	.ct-keys kbd,
+	.ct-keys-foot kbd {
+		display: inline-block;
+		min-width: 22px;
+		padding: 2px 6px;
+		border: 1px solid var(--su-border);
+		border-bottom-width: 2px;
+		border-radius: var(--su-radius-xs);
+		background-color: var(--su-card);
+		font-family: var(--font-mono-supabase);
+		font-size: 11px;
+		line-height: 1.4;
+		color: var(--su-muted-foreground);
+		text-align: center;
+	}
+
+	.ct-keys-foot {
+		margin-top: 14px;
 	}
 
 	.ct-foot {
