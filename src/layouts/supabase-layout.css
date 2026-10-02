@@ -7,19 +7,143 @@
 /* ---------- 侧栏作用域 ---------- */
 .su-scope {
 	min-height: 100vh;
-	background-color: var(--su-background);
+	background-color: var(--su-sidebar);
 	color: var(--su-foreground);
 	font-family: var(--font-supabase);
-	/* shadcn-svelte Sidebar 尺寸契约：展开 240px / 折叠 64px */
-	--sidebar-width: 240px;
-	--sidebar-width-icon: 64px;
-	--sidebar-width-mobile: 272px;
+	/* shadcn-svelte Sidebar 尺寸契约：展开 264px / 折叠 68px */
+	--sidebar-width: 264px;
+	--sidebar-width-icon: 68px;
+	--sidebar-width-mobile: 288px;
 }
 
 /* 图标在作用域内跟随文字颜色 */
 .su-scope,
 .su-main {
 	--lucide-color: currentColor;
+}
+
+/* ==========================================================================
+   侧栏视觉
+   --------------------------------------------------------------------------
+   侧栏是全站面积最大的固定元素，视觉权重应该高于正文区：
+   用略深的底色 + 顶部品牌色带建立「这是一个导航」的心理暗示。
+   ========================================================================== */
+.su-scope [data-slot="sidebar"] {
+	background-color: var(--su-sidebar);
+}
+
+/* 顶部品牌色带：3px 翠绿细条，作为「这里是侧栏」的锚点 */
+.su-scope [data-slot="sidebar"]::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 3px;
+	background: linear-gradient(
+		90deg,
+		var(--su-primary),
+		var(--su-primary-deep)
+	);
+	z-index: 1;
+}
+
+/* ---- 品牌区 ---- */
+.su-scope [data-slot="sidebar-header"] {
+	padding: 0;
+	border-bottom: 1px solid var(--su-sidebar-border);
+}
+
+.su-scope [data-slot="sidebar-header"] a {
+	height: 60px;
+	padding-inline: var(--su-space-md);
+	gap: 10px;
+	transition: background-color 0.15s ease;
+}
+
+.su-scope [data-slot="sidebar-header"] a:hover {
+	background-color: var(--su-accent);
+}
+
+.su-scope [data-slot="sidebar-header"] img {
+	width: 30px;
+	height: 30px;
+	border-radius: var(--su-radius-sm);
+	border-color: var(--su-sidebar-border);
+}
+
+/* 品牌文字：两级层次，比正文更重 */
+.su-scope [data-slot="sidebar-header"] .su-label > span:first-child {
+	font-size: 15px;
+	font-weight: 700;
+	letter-spacing: -0.3px;
+	color: var(--su-foreground);
+}
+
+.su-scope [data-slot="sidebar-header"] .su-label > span:last-child {
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.02em;
+	color: var(--su-ink-faint);
+}
+
+/* ---- 内容区 ---- */
+.su-scope [data-slot="sidebar-content"] {
+	padding: var(--su-space-md) var(--su-space-sm);
+}
+
+/* 分组标题：小号字距拉开，与导航项拉开一个层级 */
+.su-scope [data-sidebar="group-label"] {
+	height: auto;
+	padding: var(--su-space-3xs) var(--su-space-sm);
+	margin-bottom: var(--su-space-2xs);
+	font-family: var(--font-supabase);
+	font-size: 10.5px;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--su-ink-faint);
+}
+
+/* ---- 导航项 ---- */
+.su-scope [data-sidebar="menu-button"] {
+	height: 36px;
+	padding-inline: var(--su-space-sm);
+	gap: 10px;
+	border-radius: var(--su-radius-sm);
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--su-muted-foreground);
+	transition:
+		background-color 0.14s ease,
+		color 0.14s ease;
+}
+
+.su-scope [data-sidebar="menu-button"]:hover {
+	background-color: var(--su-accent);
+	color: var(--su-foreground);
+}
+
+/* 当前页：底色 + 左侧色条，比单纯变色更容易定位 */
+.su-scope [data-sidebar="menu-button"][data-active="true"] {
+	background-color: var(--su-primary-soft);
+	color: var(--su-foreground);
+	font-weight: 600;
+}
+
+.su-scope [data-sidebar="menu-button"][data-active="true"] svg {
+	color: var(--su-accent-text);
+}
+
+/* ---- 底部区 ---- */
+.su-scope [data-slot="sidebar-footer"] {
+	border-top: 1px solid var(--su-sidebar-border);
+	padding: var(--su-space-sm);
+	background-color: color-mix(
+		in srgb,
+		var(--su-sidebar) 92%,
+		var(--su-foreground) 8%
+	);
 }
 
 /* 折叠/展开动画平滑；尊重「减少动效」偏好 */
@@ -77,12 +201,12 @@ body > astro-island:has([data-slot="sidebar-wrapper"]) .su-mobile-trigger {
 
 /* ==========================================================================
    主内容区
-   展开 240px / 折叠 64px —— 与 AppSidebar 的 --sidebar-width* 保持一致。
-   上下留白按设计稿的 section padding（64–96px）给足。
+   左侧让位宽度 = 侧栏展开宽度 + 页面留白，与 .su-scope 的 --sidebar-width 一致。
+   折叠时只让出图标栏宽度。
    ========================================================================== */
 .su-main {
 	min-height: 100vh;
-	padding: 64px 40px 96px calc(240px + 40px);
+	padding: 64px 40px 96px calc(264px + 40px);
 	background-color: var(--su-background);
 	color: var(--su-foreground);
 	font-family: var(--font-supabase);
@@ -132,9 +256,9 @@ body > astro-island:has([data-slot="sidebar-wrapper"]) .su-mobile-trigger {
 		border-color 160ms ease-out;
 }
 
-/* 桌面端折叠后：只让出 64px 图标栏宽度 */
+/* 桌面端折叠后：只让出图标栏宽度（68px） */
 body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
-	padding-inline-start: calc(64px + 40px);
+	padding-inline-start: calc(68px + 40px);
 }
 
 /* ==========================================================================
@@ -266,7 +390,7 @@ body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
 
 @media (min-width: 768px) {
 	body:has([data-slot="sidebar"][data-state="collapsed"]) .sf {
-		padding-inline-start: 104px; /* 64(折叠栏) + 40 */
+		padding-inline-start: 108px; /* 68(折叠栏) + 40 */
 	}
 }
 
@@ -393,7 +517,7 @@ body:has([data-slot="sidebar"][data-state="collapsed"]) .su-main {
 @media (min-width: 768px) {
 	html.su-sidebar-collapsed .su-scope [data-slot="sidebar-gap"],
 	html.su-sidebar-collapsed .su-scope [data-slot="sidebar-container"] {
-		width: 64px !important;
+		width: 68px !important;
 	}
 
 	/* 文字全隐藏：导航项 / 分组标题 / 自定义标签（主题切换、品牌文字） */

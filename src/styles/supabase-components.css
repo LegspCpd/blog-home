@@ -1,74 +1,76 @@
 /* ==========================================================================
    Supabase 组件层（--su-* 工具类）
    --------------------------------------------------------------------------
-   与令牌层分离：这里只放「可复用的组件类」，不放颜色定义。
-   所有颜色一律引用令牌，便于暗色模式整体反相。
+   只放可复用的组件类，不放颜色定义 —— 颜色一律引用令牌，
+   这样暗色模式只需换令牌即可整体反相。
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
    1. 排版层级
+   字号的落差比之前更大：正文 15px，页面标题 40px，比例约 1:2.7，
+   让「哪里是主次」一眼可见。
    -------------------------------------------------------------------------- */
 .su-display-xl {
 	margin: 0;
-	font-size: 44px;
-	font-weight: 600;
+	font-size: 40px;
+	font-weight: 700;
 	line-height: 1.12;
-	letter-spacing: -1.3px;
+	letter-spacing: -1.4px;
 	color: var(--su-foreground);
 }
 .su-display-lg {
 	margin: 0;
-	font-size: 34px;
-	font-weight: 600;
+	font-size: 32px;
+	font-weight: 700;
 	line-height: 1.18;
 	letter-spacing: -0.9px;
 	color: var(--su-foreground);
 }
 .su-display-md {
 	margin: 0;
-	font-size: 26px;
-	font-weight: 600;
+	font-size: 24px;
+	font-weight: 650;
 	line-height: 1.25;
 	letter-spacing: -0.5px;
 	color: var(--su-foreground);
 }
 .su-heading-lg {
 	margin: 0;
-	font-size: 20px;
-	font-weight: 600;
-	line-height: 1.3;
+	font-size: 19px;
+	font-weight: 650;
+	line-height: 1.35;
 	letter-spacing: -0.2px;
 	color: var(--su-foreground);
 }
 .su-heading-md {
 	margin: 0;
 	font-size: 16px;
-	font-weight: 600;
-	line-height: 1.4;
+	font-weight: 650;
+	line-height: 1.45;
 	color: var(--su-foreground);
 }
 .su-body-lg {
 	margin: 0;
 	font-size: 17px;
-	line-height: 1.65;
+	line-height: 1.7;
 	color: var(--su-foreground);
 }
 .su-body-md {
 	margin: 0;
 	font-size: 15px;
-	line-height: 1.6;
+	line-height: 1.65;
 	color: var(--su-foreground);
 }
 .su-body-sm {
 	margin: 0;
 	font-size: 14px;
-	line-height: 1.6;
+	line-height: 1.65;
 	color: var(--su-foreground);
 }
 .su-caption {
 	margin: 0;
 	font-size: 13px;
-	line-height: 1.5;
+	line-height: 1.55;
 	color: var(--su-muted-foreground);
 }
 .su-micro {
@@ -92,7 +94,6 @@
 	font-family: var(--font-mono-supabase);
 	font-variant-numeric: tabular-nums;
 }
-/* 等宽数值：日期、字数、统计 */
 .su-num {
 	font-family: var(--font-mono-supabase);
 	font-variant-numeric: tabular-nums;
@@ -100,16 +101,31 @@
 	color: var(--su-muted-foreground);
 }
 
+/* ---- 小标签（kicker）：品牌色的主要载体 ---- */
+.su-kicker {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	font-family: var(--font-mono-supabase);
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--su-accent-text);
+}
+
 /* --------------------------------------------------------------------------
    2. 卡片
+   常态就带极淡的投影，边界不靠描边而靠「亮一点 + 浮一点」
    -------------------------------------------------------------------------- */
 .su-card {
 	background-color: var(--su-card);
 	border: 1px solid var(--su-border);
 	border-radius: var(--su-radius-lg);
+	box-shadow: var(--su-shadow-1);
 }
 .su-card--pad {
-	padding: var(--su-radius-lg);
+	padding: var(--su-space-lg);
 }
 .su-card--hover {
 	transition:
@@ -119,26 +135,27 @@
 }
 .su-card--hover:hover {
 	border-color: var(--su-hairline-strong);
-	box-shadow: var(--su-shadow-2);
+	box-shadow: var(--su-shadow-3);
 	transform: translateY(-2px);
 }
 
 /* --------------------------------------------------------------------------
    3. 按钮
+   圆角更方正（6px），hover 时有明确的下压反馈
    -------------------------------------------------------------------------- */
 .su-btn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	gap: 8px;
-	min-height: 36px;
-	padding: 8px 16px;
+	gap: 7px;
+	min-height: 38px;
+	padding: 0 16px;
 	border: 1px solid transparent;
 	border-radius: var(--su-radius-sm);
 	background-color: transparent;
 	font-family: inherit;
 	font-size: 14px;
-	font-weight: 500;
+	font-weight: 550;
 	line-height: 1;
 	color: var(--su-foreground);
 	text-decoration: none;
@@ -147,10 +164,11 @@
 	transition:
 		background-color 0.15s ease,
 		border-color 0.15s ease,
-		color 0.15s ease;
+		color 0.15s ease,
+		transform 0.1s ease;
 }
 .su-btn:active {
-	transform: translateY(0.5px);
+	transform: translateY(1px);
 }
 .su-btn[aria-disabled="true"],
 .su-btn:disabled {
@@ -159,9 +177,10 @@
 }
 
 .su-btn--primary {
-	background-color: var(--su-accent-text);
-	border-color: var(--su-accent-text);
+	background-color: var(--su-primary);
+	border-color: var(--su-primary);
 	color: var(--su-primary-foreground);
+	font-weight: 600;
 }
 .su-btn--primary:hover {
 	background-color: var(--su-primary-deep);
@@ -169,17 +188,18 @@
 }
 
 .su-btn--outline {
-	border-color: var(--su-border);
+	border-color: var(--su-hairline-strong);
 	color: var(--su-foreground);
+	background-color: var(--su-card);
 }
 .su-btn--outline:hover {
 	background-color: var(--su-accent);
-	border-color: var(--su-hairline-strong);
+	border-color: var(--su-foreground);
 }
 
 .su-btn--ghost {
 	color: var(--su-muted-foreground);
-	padding: 8px 10px;
+	padding: 0 10px;
 }
 .su-btn--ghost:hover {
 	background-color: var(--su-accent);
@@ -187,8 +207,8 @@
 }
 
 .su-btn--sm {
-	min-height: 30px;
-	padding: 5px 11px;
+	min-height: 32px;
+	padding: 0 12px;
 	font-size: 13px;
 	border-radius: var(--su-radius-xs);
 }
@@ -205,7 +225,7 @@
 	border-radius: var(--su-radius-full);
 	background-color: var(--su-muted);
 	font-family: var(--font-mono-supabase);
-	font-size: 12px;
+	font-size: 11.5px;
 	line-height: 1.5;
 	color: var(--su-muted-foreground);
 	text-decoration: none;
@@ -218,19 +238,21 @@
 a.su-pill:hover {
 	background-color: var(--su-accent);
 	color: var(--su-foreground);
+	border-color: var(--su-hairline-strong);
 }
 .su-pill--outline {
 	background-color: transparent;
 	border-color: var(--su-border);
 }
 .su-pill--soft {
-	background-color: var(--su-muted);
+	background-color: var(--su-canvas-soft);
 	border-color: var(--su-border);
 	color: var(--su-foreground);
 }
 .su-pill--green {
-	background-color: var(--su-accent-text);
+	background-color: var(--su-primary);
 	color: var(--su-primary-foreground);
+	border-color: var(--su-primary);
 }
 
 /* --------------------------------------------------------------------------
@@ -252,9 +274,9 @@ a.su-pill:hover {
 .su-link {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	gap: 5px;
 	font-size: 14px;
-	font-weight: 500;
+	font-weight: 550;
 	color: var(--su-foreground);
 	text-decoration: none;
 	transition: color 0.15s ease;
@@ -272,7 +294,6 @@ a.su-pill:hover {
 	padding-block: var(--su-space-2xs) var(--su-space-xl);
 }
 
-/* 区块：顶部留白 + 发丝线，形成稳定的纵向节奏 */
 .su-section {
 	padding-block: var(--su-gap-section);
 	border-top: 1px solid var(--su-border);
@@ -287,16 +308,16 @@ a.su-pill:hover {
 	display: flex;
 	align-items: center;
 	gap: var(--su-space-xs);
-	margin: 0 0 var(--su-space-md);
-	font-size: 20px;
-	font-weight: 600;
+	margin: 0 0 var(--su-space-lg);
+	font-size: 19px;
+	font-weight: 650;
 	line-height: 1.3;
 	letter-spacing: -0.2px;
 	color: var(--su-foreground);
 }
 
 .su-section-title :global(svg) {
-	font-size: 20px;
+	font-size: 19px;
 	color: var(--su-accent-text);
 }
 
@@ -325,12 +346,12 @@ a.su-pill:hover {
 }
 
 /* --------------------------------------------------------------------------
-   8. 进场动效（尊重系统「减少动效」设置）
+   8. 进场动效
    -------------------------------------------------------------------------- */
 @keyframes su-fade-up {
 	from {
 		opacity: 0;
-		transform: translateY(10px);
+		transform: translateY(12px);
 	}
 	to {
 		opacity: 1;
@@ -338,7 +359,7 @@ a.su-pill:hover {
 	}
 }
 .su-animate {
-	animation: su-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+	animation: su-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* --------------------------------------------------------------------------
@@ -346,15 +367,15 @@ a.su-pill:hover {
    -------------------------------------------------------------------------- */
 @media (max-width: 767px) {
 	.su-display-xl {
-		font-size: 30px;
-		letter-spacing: -0.8px;
+		font-size: 28px;
+		letter-spacing: -0.7px;
 	}
 	.su-display-lg {
-		font-size: 25px;
+		font-size: 24px;
 		letter-spacing: -0.5px;
 	}
 	.su-display-md {
-		font-size: 21px;
+		font-size: 20px;
 	}
 }
 

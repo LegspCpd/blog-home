@@ -1,10 +1,11 @@
 ---
 /**
- * SbPageHeader.astro
- * ---------------------------------------------------------------------------
- * 内页统一页头：标题 + 副标题，底部一条发丝线分区。
- * 已迁移到 su-* 令牌体系，不再依赖 supabase.css（--sb-*），
- * 因此侧栏布局无需再全局加载那份 CSS。
+ * SbPageHeader.astro —— 内页统一页头
+ *
+ * 结构：品牌色竖条 + 大标题 + 副标题 + 右侧操作区。
+ * 相比之前的纯文字版，这里加了两处视觉锚点：
+ *   1. 标题左侧的渐变色条，暗示「从这里开始」
+ *   2. 底部分区线用渐变淡出，右侧不硬切
  */
 interface Props {
 	title: string;
@@ -19,52 +20,89 @@ const { title, subtitle, eyebrow } = Astro.props;
 	<div class="su-page-header-main">
 		{
 			eyebrow ? (
-				<span class="su-pill su-pill--outline su-page-header-eyebrow">
-					{eyebrow}
-				</span>
+				<span class="su-kicker su-page-header-eyebrow">{eyebrow}</span>
 			) : null
 		}
-		<h1 class="su-display-lg su-page-header-title">{title}</h1>
+
+		<h1 class="su-page-header-title">{title}</h1>
+
 		{subtitle ? <p class="su-body-md su-text-mute">{subtitle}</p> : null}
+
+		<slot />
 	</div>
-	<slot />
 </header>
 
 <style>
 	.su-page-header {
-		display: flex;
-		align-items: flex-end;
-		justify-content: space-between;
-		gap: 16px 24px;
-		flex-wrap: wrap;
-		padding-bottom: 24px;
-		margin-bottom: 32px;
-		border-bottom: 1px solid var(--su-border);
+		position: relative;
+		padding: 0 0 var(--su-space-lg) 0;
+		margin-bottom: var(--su-space-xl);
+	}
+
+	/* 分区线：从左侧的品牌色渐变淡出到透明，
+	   相比一条等宽的实线更有「起点」的感觉 */
+	.su-page-header::after {
+		content: "";
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 1px;
+		background: linear-gradient(
+			90deg,
+			var(--su-primary) 0,
+			var(--su-border) 120px,
+			var(--su-border) 100%
+		);
+		opacity: 0.55;
 	}
 
 	.su-page-header-main {
-		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 10px;
+		gap: var(--su-space-sm);
 	}
 
 	.su-page-header-eyebrow {
 		align-self: flex-start;
 	}
 
+	/* 标题左侧的品牌色竖条 */
 	.su-page-header-title {
+		position: relative;
 		margin: 0;
-		letter-spacing: -0.6px;
+		padding-left: var(--su-space-md);
+		font-size: 34px;
+		font-weight: 700;
+		line-height: 1.15;
+		letter-spacing: -1px;
+		color: var(--su-foreground);
 	}
 
-	@media (max-width: 640px) {
+	.su-page-header-title::before {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 0.12em;
+		bottom: 0.12em;
+		width: 3px;
+		border-radius: var(--su-radius-full);
+		background: linear-gradient(
+			180deg,
+			var(--su-primary),
+			var(--su-primary-deep)
+		);
+	}
+
+	@media (max-width: 767px) {
 		.su-page-header {
-			align-items: flex-start;
-			flex-direction: column;
-			gap: 16px;
-			padding-bottom: 20px;
-			margin-bottom: 24px;
+			margin-bottom: var(--su-space-lg);
+		}
+
+		.su-page-header-title {
+			font-size: 26px;
+			letter-spacing: -0.6px;
+			padding-left: var(--su-space-sm);
 		}
 	}
 </style>

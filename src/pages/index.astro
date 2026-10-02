@@ -46,57 +46,59 @@ const randomPool = posts.map((p) => getPostUrlBySlug(p.id));
 
 <SupabaseLayout>
 	<!-- ============ Hero ============ -->
-	<header class="home-hero su-animate">
-		<p class="su-kicker">{siteConfig.title}</p>
-		<h1 class="su-display-xl home-hero-title">{profileConfig.bio}</h1>
-		<p class="su-body-lg su-text-mute home-hero-lead">
-			{siteConfig.description}
-		</p>
+	<header class="home-hero">
+		<div class="home-hero-main">
+			<p class="su-kicker home-hero-kicker">{siteConfig.title}</p>
 
-		<div class="home-hero-actions">
-			{
-				home.actions.map((action, index) => (
-					<a
-						class:list={[
-							"su-btn",
-							index === 0 ? "su-btn--primary" : "su-btn--outline",
-						]}
-						href={isExternal(action.href) ? action.href : url(action.href)}
-					>
-						{action.label}
-						{action.icon ? <Icon name={action.icon} /> : null}
-					</a>
-				))
-			}
-			{randomPool.length > 1 ? (
-				<button type="button" class="su-btn su-btn--ghost" data-random-post>
-					<Icon name="material-symbols:casino-outline" />
-					随机一篇
-				</button>
-			) : null}
+			<h1 class="home-hero-title">{profileConfig.bio}</h1>
+
+			<p class="su-body-lg su-text-mute home-hero-lead">
+				{siteConfig.description}
+			</p>
+
+			<div class="home-hero-actions">
+				{
+					home.actions.map((action, index) => (
+						<a
+							class:list={[
+								"su-btn",
+								index === 0 ? "su-btn--primary" : "su-btn--outline",
+							]}
+							href={isExternal(action.href) ? action.href : url(action.href)}
+						>
+							{action.label}
+							{action.icon ? <Icon name={action.icon} /> : null}
+						</a>
+					))
+				}
+				{randomPool.length > 1 ? (
+					<button type="button" class="su-btn su-btn--ghost" data-random-post>
+						<Icon name="material-symbols:casino-outline" />
+						随机一篇
+					</button>
+				) : null}
+			</div>
 		</div>
 
-		<!-- 统计条 -->
-		<dl class="home-stats">
-			<div>
-				<dt>文章</dt>
-				<dd class="su-mono">{totalPosts}</dd>
+		<!-- 统计：做成竖排卡片，给 Hero 右侧一点重量 -->
+		<aside class="home-hero-side" aria-label="站点概览">
+			<div class="home-stat">
+				<span class="home-stat-num su-mono">{totalPosts}</span>
+				<span class="home-stat-label">篇文章</span>
 			</div>
-			<div>
-				<dt>标签</dt>
-				<dd class="su-mono">{tagCount.size}</dd>
+			<div class="home-stat">
+				<span class="home-stat-num su-mono">{tagCount.size}</span>
+				<span class="home-stat-label">个标签</span>
 			</div>
-			{
-				lastUpdated ? (
-					<div>
-						<dt>最近更新</dt>
-						<dd class="su-mono">
-							{lastUpdated.toISOString().slice(0, 10)}
-						</dd>
-					</div>
-				) : null
-			}
-		</dl>
+			<div class="home-stat">
+				<span class="home-stat-num su-mono">
+					{lastUpdated ? new Date(lastUpdated).getFullYear() : "—"}
+				</span>
+				<span class="home-stat-label">
+					{lastUpdated ? "年更新至今" : "尚未更新"}
+				</span>
+			</div>
+		</aside>
 	</header>
 
 	<!-- ============ 最新文章 ============ -->
@@ -246,51 +248,90 @@ const randomPool = posts.map((p) => getPostUrlBySlug(p.id));
 </script>
 
 <style>
-	/* ---- Hero ---- */
+	/* ======================================================================
+	   Hero：左文右卡的经典杂志式构图
+	   左侧标题占主导，右侧统计卡片给页面一个「锚」，
+	   避免大面积文字让首屏显得空。
+	   ====================================================================== */
 	.home-hero {
-		padding-block: 16px 48px;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: end;
+		gap: var(--su-space-2xl);
+		padding-block: var(--su-space-md) var(--su-space-2xl);
 	}
 
+	.home-hero-main {
+		min-width: 0;
+	}
+
+	.home-hero-kicker {
+		animation: su-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+	}
+
+	/* 大标题：中文长句需要更紧的字距与更高的行距 */
 	.home-hero-title {
-		margin: 14px 0 0;
-		max-width: 20ch;
-		/* 中文长句在 display 档位下需要更紧的字距 */
-		letter-spacing: -1px;
+		margin: var(--su-space-md) 0 0;
+		max-width: 16ch;
+		font-size: 46px;
+		font-weight: 700;
+		line-height: 1.14;
+		letter-spacing: -1.6px;
+		color: var(--su-foreground);
+		animation: su-fade-up 0.55s 0.06s cubic-bezier(0.22, 1, 0.36, 1) both;
 	}
 
 	.home-hero-lead {
-		max-width: 54ch;
-		margin-top: 18px;
+		max-width: 46ch;
+		margin-top: var(--su-space-md);
+		animation: su-fade-up 0.55s 0.12s cubic-bezier(0.22, 1, 0.36, 1) both;
 	}
 
 	.home-hero-actions {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 10px;
-		margin-top: 28px;
+		gap: var(--su-space-xs);
+		margin-top: var(--su-space-lg);
+		animation: su-fade-up 0.55s 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
 	}
 
-	/* 统计条：三等分，用发丝线分隔 */
-	.home-stats {
+	/* ---- 右侧统计卡 ---- */
+	.home-hero-side {
 		display: flex;
-		flex-wrap: wrap;
-		gap: 32px;
-		margin: 36px 0 0;
-		padding-top: 24px;
+		flex-direction: column;
+		gap: var(--su-space-md);
+		min-width: 132px;
+		padding: var(--su-space-lg);
+		border: 1px solid var(--su-border);
+		border-radius: var(--su-radius-lg);
+		background-color: var(--su-card);
+		box-shadow: var(--su-shadow-1);
+		animation: su-fade-up 0.6s 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+	}
+
+	.home-stat {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	/* 统计卡之间用发丝线分隔 */
+	.home-stat + .home-stat {
+		padding-top: var(--su-space-md);
 		border-top: 1px solid var(--su-border);
 	}
 
-	.home-stats dt {
-		font-size: 12px;
-		color: var(--su-muted-foreground);
-		margin-bottom: 4px;
+	.home-stat-num {
+		font-size: 26px;
+		font-weight: 700;
+		line-height: 1.1;
+		letter-spacing: -0.8px;
+		color: var(--su-foreground);
 	}
 
-	.home-stats dd {
-		margin: 0;
-		font-size: 18px;
-		font-weight: 500;
-		color: var(--su-foreground);
+	.home-stat-label {
+		font-size: 12px;
+		color: var(--su-muted-foreground);
 	}
 
 	/* ---- 区块通用 ---- */
