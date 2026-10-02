@@ -2,16 +2,13 @@
 /**
  * SbPostCard.astro
  * ---------------------------------------------------------------------------
- * Supabase-style post card for the centered grid.
- *   - White surface, 1px hairline, 12px radius
- *   - Flat, quiet chrome: title / meta / description / tags
- *   - Emerald only appears as the hover accent and the pinned dot
+ * 文章卡片：用于相关文章、精选文章等场景。
+ * 已迁移到 su-* 令牌体系，不再依赖 supabase.css（--sb-*）。
  */
 import type { CollectionEntry } from "astro:content";
 import { render } from "astro:content";
 import { Icon } from "astro-icon/components";
 import { formatDateToYYYYMMDD } from "@/utils/date-utils";
-import { getTagUrl } from "@/utils/url-utils";
 
 interface Props {
 	entry: CollectionEntry<"posts">;
@@ -45,145 +42,158 @@ const descriptionText = description || remarkPluginFrontmatter.excerpt || "";
 const visibleTags = (tags || []).slice(0, 3);
 ---
 
-<article class="sb-card sb-card--hover sb-post-card sb-animate" style={style}>
-  <a href={url} class="sb-post-card__link" aria-label={title}>
-    <!-- Meta row -->
-    <div class="sb-post-card__meta">
-      <time datetime={published.toISOString()} class="sb-mono">
-        {formatDateToYYYYMMDD(published)}
-      </time>
-      {
-        category && (
-          <>
-            <span class="sb-post-card__sep" aria-hidden="true">/</span>
-            <span>{category}</span>
-          </>
-        )
-      }
-      {
-        pinned && (
-          <span class="sb-pill sb-pill--green" style="margin-left:auto;">
-            <Icon name="material-symbols:push-pin" style="font-size:11px;" />
-            置顶
-          </span>
-        )
-      }
-      {
-        password && (
-          <Icon
-            name="material-symbols:lock-outline"
-            class="sb-post-card__lock"
-            style="margin-left:auto;"
-            title="需要密码"
-          />
-        )
-      }
-    </div>
+<article class="su-card su-card--hover su-post-card" style={style}>
+	<a href={url} class="su-post-card-link">
+		<!-- 元信息行 -->
+		<div class="su-post-card-meta">
+			<time datetime={published.toISOString()} class="su-mono">
+				{formatDateToYYYYMMDD(published)}
+			</time>
+			{
+				category ? (
+					<>
+						<span class="su-post-card-sep" aria-hidden="true">
+							/
+						</span>
+						<span>{category}</span>
+					</>
+				) : null
+			}
+			{
+				password ? (
+					<span class="su-post-card-lock">
+						<Icon name="material-symbols:lock-outline" />
+					</span>
+				) : null
+			}
+			{
+				pinned ? (
+					<span class="su-pill su-pill--green su-post-card-pinned">
+						<Icon name="material-symbols:push-pin" />
+						置顶
+					</span>
+				) : null
+			}
+		</div>
 
-    <!-- Title -->
-    <h2 class="sb-post-card__title">{title}</h2>
+		<h2 class="su-post-card-title">{title}</h2>
 
-    <!-- Description -->
-    {descriptionText && <p class="sb-post-card__desc">{descriptionText}</p>}
+		{descriptionText ? <p class="su-post-card-desc">{descriptionText}</p> : null}
 
-    <!-- Tags -->
-    {
-      visibleTags.length > 0 && (
-        <div class="sb-post-card__tags">
-          {visibleTags.map((tag) => (
-            <span class="sb-pill sb-pill--outline">#{tag.trim()}</span>
-          ))}
-        </div>
-      )
-    }
+		{
+			visibleTags.length > 0 ? (
+				<div class="su-post-card-tags">
+					{visibleTags.map((tag) => (
+						<span class="su-pill su-pill--outline">#{tag.trim()}</span>
+					))}
+				</div>
+			) : null
+		}
 
-    <!-- Read more -->
-    <span class="sb-post-card__more">
-      阅读全文
-      <Icon name="material-symbols:arrow-right-alt" style="font-size:16px;" />
-    </span>
-  </a>
+		<span class="su-post-card-more">
+			阅读全文
+			<Icon name="material-symbols:arrow-right-alt" />
+		</span>
+	</a>
 </article>
 
 <style>
-  .sb-post-card {
-    display: flex;
-    height: 100%;
-  }
+	.su-post-card {
+		display: flex;
+		height: 100%;
+	}
 
-  .sb-post-card__link {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    padding: 24px;
-    text-decoration: none;
-    color: inherit;
-    gap: 12px;
-  }
+	.su-post-card-link {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		gap: 12px;
+		padding: 22px;
+		color: inherit;
+		text-decoration: none;
+	}
 
-  .sb-post-card__meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--sb-ink-mute-2);
-    min-height: 20px;
-  }
+	/* ---- 元信息 ---- */
+	.su-post-card-meta {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 12px;
+		color: var(--su-ink-faint);
+		min-height: 20px;
+	}
 
-  .sb-post-card__sep {
-    color: var(--sb-hairline-strong);
-  }
+	.su-post-card-meta .su-mono {
+		font-size: 12px;
+		color: var(--su-muted-foreground);
+	}
 
-  .sb-post-card__lock {
-    font-size: 15px;
-    color: var(--sb-ink-faint);
-  }
+	.su-post-card-sep {
+		color: var(--su-ink-faint);
+	}
 
-  .sb-post-card__title {
-    font-size: 22px;
-    font-weight: 500;
-    line-height: 1.25;
-    letter-spacing: -0.2px;
-    margin: 0;
-    color: var(--sb-ink);
-    transition: color 0.15s ease;
-  }
+	.su-post-card-lock {
+		display: inline-flex;
+		align-items: center;
+		font-size: 14px;
+		color: var(--su-ink-faint);
+	}
 
-  .sb-post-card:hover .sb-post-card__title {
-    color: var(--sb-primary-deep);
-  }
+	.su-post-card-pinned {
+		margin-left: auto;
+		font-family: var(--font-supabase);
+	}
 
-  .sb-post-card__desc {
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.6;
-    color: var(--sb-ink-mute);
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    flex-grow: 1;
-  }
+	/* ---- 标题 ---- */
+	.su-post-card-title {
+		margin: 0;
+		font-size: 19px;
+		font-weight: 600;
+		line-height: 1.35;
+		letter-spacing: -0.2px;
+		color: var(--su-foreground);
+		transition: color 0.15s ease;
+	}
 
-  .sb-post-card__tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
+	.su-post-card:hover .su-post-card-title {
+		color: var(--su-primary-deep);
+	}
 
-  .sb-post-card__more {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--sb-ink);
-    margin-top: auto;
-    padding-top: 4px;
-  }
+	/* ---- 摘要 ---- */
+	.su-post-card-desc {
+		margin: 0;
+		font-size: 14px;
+		line-height: 1.6;
+		color: var(--su-muted-foreground);
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		flex-grow: 1;
+	}
 
-  .sb-post-card:hover .sb-post-card__more {
-    color: var(--sb-primary-deep);
-  }
+	/* ---- 标签 ---- */
+	.su-post-card-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+
+	/* ---- 阅读更多 ---- */
+	.su-post-card-more {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		margin-top: auto;
+		padding-top: 6px;
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--su-foreground);
+		transition: color 0.15s ease;
+	}
+
+	.su-post-card:hover .su-post-card-more {
+		color: var(--su-primary-deep);
+	}
 </style>

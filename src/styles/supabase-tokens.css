@@ -1,294 +1,108 @@
 /* ==========================================================================
    Supabase 设计令牌层（--su-*）
    --------------------------------------------------------------------------
-   为什么需要这个文件：
-   supabase-content.css / supabase-layout.css / 多个页面组件一共引用了 190+ 处
-   var(--su-*)，但整个仓库从未有任何一处定义过它们。CSS 变量未定义时
-   var() 会回退到「继承 / transparent / initial」，于是 SupabaseLayout 体系下
-   的卡片、边框、背景、次级文字全部塌掉 —— 表现为「界面被吃掉」。
+   背景：全仓库有 190+ 处引用 var(--su-*)，却从未有任何一处定义过它们。
+   CSS 变量未定义时 var() 会回退到「继承 / transparent / initial」，
+   导致卡片、边框、背景、次级文字全部塌陷（表现为「界面被吃掉」）。
+   本文件是该设计系统的唯一令牌来源。
 
-   本文件是该设计系统的唯一令牌来源，色值与 src/styles/supabase.css 的
-   --sb-* 完全同源（同一份 DESIGN-supabase.md 设计语言），只是命名不同，
-   以便两套布局（Shell 的 sb-* / Layout 的 su-*）共用同一视觉规范。
-
-   加载位置：src/layouts/SupabaseLayout.astro，在其它 CSS 之前引入。
+   设计取向：暖白画布 + 克制的翠绿强调 + 发丝线分层。
+   信息密度偏松、留白偏大，长时间阅读不累；暗色轨道同步反相。
    ========================================================================== */
 
 :root {
-	/* ---------- 品牌与强调色 ---------- */
-	--su-primary: #3ecf8e; /* 品牌翠绿，全站唯一高饱和色 */
-	--su-primary-deep: #24b47e; /* hover / active */
-	--su-emerald-deep: #24b47e; /* 兼容旧令牌名 */
-	--su-primary-foreground: #171717; /* 翠绿底上的文字用近黑，不用白 */
-	--su-primary-rgb: 62 207 142; /* 供 rgba(var(--su-primary-rgb), a) 使用 */
+	/* ---------- 品牌与强调色：翠绿是全站唯一高饱和色 ---------- */
+	--su-primary: #3ecf8e;
+	--su-primary-deep: #24b47e;
+	--su-emerald-deep: #24b47e;
+	--su-primary-soft: #e9faf2;
+	--su-primary-foreground: #0d1f17;
+	--su-primary-rgb: 62 207 142;
 
-	/* ---------- 表面 ---------- */
-	--su-background: #ffffff; /* 页面画布 */
-	--su-canvas: #ffffff; /* 兼容别名 */
-	--su-canvas-soft: #fafafa; /* 次级表面：pill、表头、行内代码 */
-	--su-muted: #fafafa; /* 兼容别名，同上 */
-	--su-card: #ffffff; /* 卡片表面 */
-	--su-accent: #f4f4f4; /* hover 背景，比 muted 再深一档 */
-	--su-canvas-night: #1c1c1c; /* tooltip / 代码块深色面 */
-	--su-on-dark: #ffffff; /* 深色面上的文字 */
+	/* ---------- 表面：暖白画布 ---------- */
+	--su-background: #fdfdfc;
+	--su-canvas: #fdfdfc;
+	--su-canvas-soft: #f6f6f4;
+	--su-muted: #f1f1ee;
+	--su-card: #ffffff;
+	--su-accent: #ededea;
+	--su-canvas-night: #1a1a19;
+	--su-on-dark: #ffffff;
+	--su-sidebar: #f8f8f6; /* 侧栏略深一档，形成纵向分区 */
 
-	/* ---------- 发丝线（灰阶） ---------- */
-	--su-border: #dfdfdf; /* 标准 1px hairline */
-	--su-hairline: #dfdfdf; /* 兼容别名 */
-	--su-sidebar-border: #ededed; /* 侧栏分隔线，比正文更淡 */
+	/* ---------- 发丝线 ---------- */
+	--su-border: #e6e5e1;
+	--su-hairline: #e6e5e1;
+	--su-hairline-strong: #d3d2cc;
+	--su-sidebar-border: #eae9e5;
 
 	/* ---------- 文本 ---------- */
-	--su-foreground: #171717; /* 主文字，近黑非纯黑 */
-	--su-ink: #171717; /* 兼容别名 */
-	--su-muted-foreground: #707070; /* 次级文字 */
-	--su-ink-mute: #707070; /* 兼容别名 */
-	--su-ink-faint: #b2b2b2; /* 三级文字：占位符、禁用态 */
+	--su-foreground: #1a1a18;
+	--su-ink: #1a1a18;
+	--su-muted-foreground: #6b6b66;
+	--su-ink-mute: #6b6b66;
+	--su-ink-faint: #a8a8a1;
 
-	/* ---------- 圆角（克制的技术感，非胶囊） ---------- */
-	--su-radius-xs: 4px;
-	--su-radius-sm: 6px;
-	--su-radius-md: 8px;
-	--su-radius-lg: 12px;
+	/* ---------- 圆角 ---------- */
+	--su-radius-xs: 5px;
+	--su-radius-sm: 7px;
+	--su-radius-md: 10px;
+	--su-radius-lg: 14px;
+	--su-radius-xl: 18px;
 	--su-radius-full: 9999px;
 
-	/* ---------- 阴影（仅交互时出现） ---------- */
-	--su-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.06);
-	--su-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.08);
+	/* ---------- 阴影：只在真正浮起时出现 ---------- */
+	--su-shadow-1: 0 1px 2px rgba(26, 26, 24, 0.04);
+	--su-shadow-2: 0 4px 16px rgba(26, 26, 24, 0.07);
+	--su-shadow-3: 0 12px 32px rgba(26, 26, 24, 0.1);
+
+	/* ---------- 布局 ---------- */
+	--su-sidebar-width: 248px;
+	--su-sidebar-width-collapsed: 64px;
+	--su-content-max: 760px;
+	--su-header-height: 60px;
 
 	/* ---------- 字体 ---------- */
 	--font-supabase:
-		"Inter", "Circular", -apple-system, BlinkMacSystemFont,
-		"Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB",
-		"Microsoft YaHei", sans-serif;
+		"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+		Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+		sans-serif;
 	--font-mono-supabase:
 		ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas,
 		"Liberation Mono", "Courier New", monospace;
 }
 
 /* ==========================================================================
-   暗色轨道：画布反转为 canvas-night
+   暗色轨道：画布反相
    ========================================================================== */
 :root.dark {
-	--su-background: #1c1c1c;
-	--su-canvas: #1c1c1c;
-	--su-canvas-soft: #202020;
-	--su-muted: #202020;
-	--su-card: #1c1c1c;
-	--su-accent: #2a2a2a;
-	--su-canvas-night: #141414;
+	--su-primary: #3ecf8e;
+	--su-primary-deep: #2fb87d;
+	--su-emerald-deep: #2fb87d;
+	--su-primary-soft: #14281f;
+	--su-primary-foreground: #0a1a13;
 
-	--su-border: #303030;
-	--su-hairline: #303030;
-	--su-sidebar-border: #2a2a2a;
+	--su-background: #131312;
+	--su-canvas: #131312;
+	--su-canvas-soft: #1c1c1a;
+	--su-muted: #232322;
+	--su-card: #1a1a19;
+	--su-accent: #262624;
+	--su-canvas-night: #0e0e0d;
+	--su-sidebar: #171716;
 
-	--su-foreground: #ededed;
-	--su-ink: #ededed;
-	--su-muted-foreground: #9a9a9a;
-	--su-ink-mute: #9a9a9a;
-	--su-ink-faint: #5a5a5a;
+	--su-border: #2b2b29;
+	--su-hairline: #2b2b29;
+	--su-hairline-strong: #3d3d3a;
+	--su-sidebar-border: #242422;
 
-	--su-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.4);
-	--su-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.5);
-}
+	--su-foreground: #ececea;
+	--su-ink: #ececea;
+	--su-muted-foreground: #9a9a93;
+	--su-ink-mute: #9a9a93;
+	--su-ink-faint: #62625c;
 
-/* ==========================================================================
-   补齐 supabase-content.css 之外被页面直接使用的排版 / 组件工具类
-   （supabase-content.css 只提供了 .su-title/.su-card/.su-btn 等基础类，
-     下面这些是页面模板里已在用、但此前无对应规则的一组）
-   ========================================================================== */
-
-/* ---- 排版层级：display / heading / body / caption ---- */
-.su-display-xl {
-	font-size: 48px;
-	font-weight: 500;
-	line-height: 1.1;
-	letter-spacing: -1.44px;
-	margin: 0;
-	color: var(--su-foreground);
-}
-.su-display-lg {
-	font-size: 36px;
-	font-weight: 500;
-	line-height: 1.15;
-	letter-spacing: -0.72px;
-	margin: 0;
-	color: var(--su-foreground);
-}
-.su-display-md {
-	font-size: 28px;
-	font-weight: 500;
-	line-height: 1.2;
-	letter-spacing: -0.42px;
-	margin: 0;
-	color: var(--su-foreground);
-}
-.su-heading-lg {
-	font-size: 22px;
-	font-weight: 500;
-	line-height: 1.2;
-	margin: 0;
-	color: var(--su-foreground);
-}
-.su-heading-md {
-	font-size: 18px;
-	font-weight: 500;
-	line-height: 1.4;
-	margin: 0;
-	color: var(--su-foreground);
-}
-.su-body-lg {
-	font-size: 18px;
-	line-height: 1.55;
-	color: var(--su-foreground);
-}
-.su-body-md {
-	font-size: 16px;
-	line-height: 1.5;
-	color: var(--su-foreground);
-}
-.su-body-sm {
-	font-size: 14px;
-	line-height: 1.6;
-	color: var(--su-foreground);
-}
-.su-caption {
-	font-size: 13px;
-	line-height: 1.45;
-	color: var(--su-foreground);
-}
-
-/* ---- 文字语义色 ---- */
-.su-text-mute {
-	color: var(--su-muted-foreground);
-}
-.su-text-faint {
-	color: var(--su-ink-faint);
-}
-.su-text-primary {
-	color: var(--su-primary);
-}
-
-/* ---- 卡片修饰 ---- */
-.su-card--pad {
-	padding: var(--su-radius-lg);
-}
-.su-card--hover {
-	transition:
-		border-color 0.2s ease,
-		box-shadow 0.2s ease,
-		transform 0.2s ease;
-}
-.su-card--hover:hover {
-	border-color: var(--su-foreground);
-	box-shadow: var(--su-shadow-1);
-}
-
-/* ---- 按钮修饰 ---- */
-.su-btn--primary {
-	background-color: var(--su-primary);
-	border-color: var(--su-primary);
-	color: var(--su-primary-foreground);
-}
-.su-btn--primary:hover {
-	background-color: var(--su-primary-deep);
-	border-color: var(--su-primary-deep);
-}
-.su-btn--outline {
-	background-color: transparent;
-	border-color: var(--su-border);
-	color: var(--su-foreground);
-}
-.su-btn--outline:hover {
-	background-color: var(--su-accent);
-	border-color: var(--su-muted-foreground);
-}
-.su-btn--sm {
-	padding: 4px 10px;
-	font-size: 13px;
-	min-height: 28px;
-}
-
-/* ---- pill 修饰 ---- */
-.su-pill--outline {
-	background-color: transparent;
-	border: 1px solid var(--su-border);
-	color: var(--su-muted-foreground);
-}
-.su-pill--soft {
-	background-color: var(--su-muted);
-	color: var(--su-foreground);
-	border: 1px solid var(--su-border);
-}
-.su-pill--green {
-	background-color: var(--su-primary);
-	color: var(--su-primary-foreground);
-}
-
-/* ---- 进场动效（尊重「减少动效」） ---- */
-@keyframes su-fade-up {
-	from {
-		opacity: 0;
-		transform: translateY(12px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-.su-animate {
-	animation: su-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-@media (prefers-reduced-motion: reduce) {
-	.su-animate {
-		animation: none;
-	}
-	html {
-		scroll-behavior: auto;
-	}
-}
-
-/* ---- 页面级排版容器 ---- */
-.su-prose-page {
-	max-width: 780px;
-	margin-inline: auto;
-	padding-block: 8px 40px;
-}
-.su-page-head {
-	margin-bottom: 40px;
-	padding-bottom: 28px;
-	border-bottom: 1px solid var(--su-border);
-}
-.su-page-desc,
-.su-page-meta {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 8px;
-	font-size: 14px;
-	color: var(--su-muted-foreground);
-}
-.su-page-meta {
-	font-size: 13px;
-	margin-top: 12px;
-}
-.su-page-tabs {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	margin-top: 20px;
-}
-.su-dot {
-	color: var(--su-border);
-}
-
-/* 移动端：display 降级（DESIGN-supabase 响应式约定） */
-@media (max-width: 767px) {
-	.su-display-xl {
-		font-size: 32px;
-		letter-spacing: -0.96px;
-	}
-	.su-display-lg {
-		font-size: 26px;
-		letter-spacing: -0.52px;
-	}
+	--su-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+	--su-shadow-2: 0 4px 16px rgba(0, 0, 0, 0.5);
+	--su-shadow-3: 0 12px 32px rgba(0, 0, 0, 0.6);
 }

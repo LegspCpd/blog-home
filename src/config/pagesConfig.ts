@@ -108,6 +108,22 @@ export interface SearchPageConfig {
 export interface NotFoundPageConfig {
 	/** 404 页最多显示几个快捷入口 / Max quick links on the 404 page */
 	maxNavItems: number;
+	/** 主标题下的一句话解释 */
+	lead: string;
+	/** 常见成因列表 */
+	causes: string[];
+	/** 是否展示 Cloudflare 风格的技术诊断面板 */
+	showDiagnostics: boolean;
+	diagnostics: {
+		/** 承载平台 */
+		edge: string;
+		/** 返回的状态描述 */
+		status: string;
+		/** 自查提示 */
+		hint: string;
+	};
+	/** 底部备用链接区标题 */
+	helpfulTitle: string;
 }
 
 /** 服务条款与隐私政策页 / Privacy page (route "/privacy/") */
@@ -246,6 +262,25 @@ export const pagesConfig: PagesConfig = {
 	// ==========================================================================
 	notFound: {
 		maxNavItems: 5,
+		/** 主标题下的一句话解释 */
+		lead: "你访问的页面不存在，可能已被移动、重命名，或从未存在过。",
+		/** 常见成因，用于列表提示 */
+		causes: [
+			"链接输错了一个字符",
+			"文章被删除或改了路径",
+			"收藏的链接已经过期",
+		],
+		/** 是否展示 Cloudflare 风格的技术诊断面板 */
+		showDiagnostics: true,
+		/** 站点/边缘信息（对齐 cloudflare-error-page 的呈现思路） */
+		diagnostics: {
+			edge: "EdgeOne / Cloudflare",
+			status: "HTTP 404 · Not Found",
+			/** 提示用户如何自查 */
+			hint: "如果你确认链接无误，那大概率是服务端的问题，可以稍后重试。",
+		},
+		/** 页面底部的备用链接文案 */
+		helpfulTitle: "也许你想找这些",
 	},
 
 	// ==========================================================================

@@ -42,21 +42,21 @@ const toc = headings
 <style is:global>
   .sb-toc-rail {
     position: sticky;
-    top: calc(var(--sb-nav-height) + 32px);
+    top: calc(var(--su-header-height, 60px) + 24px);
     align-self: start;
-    max-height: calc(100vh - var(--sb-nav-height) - 64px);
+    max-height: calc(100vh - var(--su-header-height, 60px) - 48px);
     overflow-y: auto;
   }
 
   .sb-toc {
-    border-left: 1px solid var(--sb-hairline-cool);
+    border-left: 1px solid var(--su-border);
     padding-left: 16px;
   }
 
   .sb-toc__title {
     font-size: 12px;
     font-weight: 500;
-    color: var(--sb-ink);
+    color: var(--su-foreground);
     margin-bottom: 12px;
     letter-spacing: 0;
   }
@@ -71,7 +71,7 @@ const toc = headings
     display: block;
     font-size: 13px;
     line-height: 1.5;
-    color: var(--sb-ink-mute-2);
+    color: var(--su-muted-foreground);
     text-decoration: none;
     padding: 4px 0 4px 10px;
     margin-left: -17px;
@@ -80,7 +80,7 @@ const toc = headings
   }
 
   .sb-toc__item:hover {
-    color: var(--sb-ink);
+    color: var(--su-foreground);
   }
 
   .sb-toc__item--h3 {
@@ -89,9 +89,9 @@ const toc = headings
   }
 
   .sb-toc__item.is-active {
-    color: var(--sb-ink);
+    color: var(--su-foreground);
     font-weight: 500;
-    border-left-color: var(--sb-primary);
+    border-left-color: var(--su-primary);
   }
 </style>
 

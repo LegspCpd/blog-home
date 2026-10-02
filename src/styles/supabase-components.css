@@ -1,0 +1,342 @@
+/* ==========================================================================
+   Supabase 组件层（--su-* 工具类）
+   --------------------------------------------------------------------------
+   与令牌层分离：这里只放「可复用的组件类」，不放颜色定义。
+   所有颜色一律引用令牌，便于暗色模式整体反相。
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. 排版层级
+   -------------------------------------------------------------------------- */
+.su-display-xl {
+	margin: 0;
+	font-size: 44px;
+	font-weight: 600;
+	line-height: 1.12;
+	letter-spacing: -1.3px;
+	color: var(--su-foreground);
+}
+.su-display-lg {
+	margin: 0;
+	font-size: 34px;
+	font-weight: 600;
+	line-height: 1.18;
+	letter-spacing: -0.9px;
+	color: var(--su-foreground);
+}
+.su-display-md {
+	margin: 0;
+	font-size: 26px;
+	font-weight: 600;
+	line-height: 1.25;
+	letter-spacing: -0.5px;
+	color: var(--su-foreground);
+}
+.su-heading-lg {
+	margin: 0;
+	font-size: 20px;
+	font-weight: 600;
+	line-height: 1.3;
+	letter-spacing: -0.2px;
+	color: var(--su-foreground);
+}
+.su-heading-md {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.4;
+	color: var(--su-foreground);
+}
+.su-body-lg {
+	margin: 0;
+	font-size: 17px;
+	line-height: 1.65;
+	color: var(--su-foreground);
+}
+.su-body-md {
+	margin: 0;
+	font-size: 15px;
+	line-height: 1.6;
+	color: var(--su-foreground);
+}
+.su-body-sm {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.6;
+	color: var(--su-foreground);
+}
+.su-caption {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--su-muted-foreground);
+}
+.su-micro {
+	margin: 0;
+	font-size: 12px;
+	line-height: 1.5;
+	color: var(--su-muted-foreground);
+}
+
+/* ---- 语义文字色 ---- */
+.su-text-mute {
+	color: var(--su-muted-foreground);
+}
+.su-text-faint {
+	color: var(--su-ink-faint);
+}
+.su-text-primary {
+	color: var(--su-primary);
+}
+.su-mono {
+	font-family: var(--font-mono-supabase);
+	font-variant-numeric: tabular-nums;
+}
+/* 等宽数值：日期、字数、统计 */
+.su-num {
+	font-family: var(--font-mono-supabase);
+	font-variant-numeric: tabular-nums;
+	font-size: 13px;
+	color: var(--su-muted-foreground);
+}
+
+/* --------------------------------------------------------------------------
+   2. 卡片
+   -------------------------------------------------------------------------- */
+.su-card {
+	background-color: var(--su-card);
+	border: 1px solid var(--su-border);
+	border-radius: var(--su-radius-lg);
+}
+.su-card--pad {
+	padding: var(--su-radius-lg);
+}
+.su-card--hover {
+	transition:
+		border-color 0.18s ease,
+		box-shadow 0.18s ease,
+		transform 0.18s ease;
+}
+.su-card--hover:hover {
+	border-color: var(--su-hairline-strong);
+	box-shadow: var(--su-shadow-2);
+	transform: translateY(-2px);
+}
+
+/* --------------------------------------------------------------------------
+   3. 按钮
+   -------------------------------------------------------------------------- */
+.su-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 36px;
+	padding: 8px 16px;
+	border: 1px solid transparent;
+	border-radius: var(--su-radius-sm);
+	background-color: transparent;
+	font-family: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 1;
+	color: var(--su-foreground);
+	text-decoration: none;
+	cursor: pointer;
+	white-space: nowrap;
+	transition:
+		background-color 0.15s ease,
+		border-color 0.15s ease,
+		color 0.15s ease;
+}
+.su-btn:active {
+	transform: translateY(0.5px);
+}
+.su-btn[aria-disabled="true"],
+.su-btn:disabled {
+	opacity: 0.45;
+	pointer-events: none;
+}
+
+.su-btn--primary {
+	background-color: var(--su-primary);
+	border-color: var(--su-primary);
+	color: var(--su-primary-foreground);
+}
+.su-btn--primary:hover {
+	background-color: var(--su-primary-deep);
+	border-color: var(--su-primary-deep);
+}
+
+.su-btn--outline {
+	border-color: var(--su-border);
+	color: var(--su-foreground);
+}
+.su-btn--outline:hover {
+	background-color: var(--su-accent);
+	border-color: var(--su-hairline-strong);
+}
+
+.su-btn--ghost {
+	color: var(--su-muted-foreground);
+	padding: 8px 10px;
+}
+.su-btn--ghost:hover {
+	background-color: var(--su-accent);
+	color: var(--su-foreground);
+}
+
+.su-btn--sm {
+	min-height: 30px;
+	padding: 5px 11px;
+	font-size: 13px;
+	border-radius: var(--su-radius-xs);
+}
+
+/* --------------------------------------------------------------------------
+   4. 标签胶囊
+   -------------------------------------------------------------------------- */
+.su-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 3px 9px;
+	border: 1px solid transparent;
+	border-radius: var(--su-radius-full);
+	background-color: var(--su-muted);
+	font-family: var(--font-mono-supabase);
+	font-size: 12px;
+	line-height: 1.5;
+	color: var(--su-muted-foreground);
+	text-decoration: none;
+	white-space: nowrap;
+	transition:
+		background-color 0.15s ease,
+		color 0.15s ease,
+		border-color 0.15s ease;
+}
+a.su-pill:hover {
+	background-color: var(--su-accent);
+	color: var(--su-foreground);
+}
+.su-pill--outline {
+	background-color: transparent;
+	border-color: var(--su-border);
+}
+.su-pill--soft {
+	background-color: var(--su-muted);
+	border-color: var(--su-border);
+	color: var(--su-foreground);
+}
+.su-pill--green {
+	background-color: var(--su-primary);
+	color: var(--su-primary-foreground);
+}
+
+/* --------------------------------------------------------------------------
+   5. 分隔与点
+   -------------------------------------------------------------------------- */
+.su-hairline {
+	width: 100%;
+	height: 1px;
+	background-color: var(--su-border);
+	border: 0;
+}
+.su-dot {
+	color: var(--su-ink-faint);
+}
+
+/* --------------------------------------------------------------------------
+   6. 链接
+   -------------------------------------------------------------------------- */
+.su-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--su-foreground);
+	text-decoration: none;
+	transition: color 0.15s ease;
+}
+.su-link:hover {
+	color: var(--su-primary);
+}
+
+/* --------------------------------------------------------------------------
+   7. 页面级容器
+   -------------------------------------------------------------------------- */
+.su-prose-page {
+	max-width: var(--su-content-max);
+	margin-inline: auto;
+}
+.su-page-head {
+	margin-bottom: 40px;
+}
+.su-page-desc,
+.su-page-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	font-size: 14px;
+	color: var(--su-muted-foreground);
+}
+.su-page-meta {
+	font-size: 13px;
+}
+.su-page-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   8. 进场动效（尊重系统「减少动效」设置）
+   -------------------------------------------------------------------------- */
+@keyframes su-fade-up {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+.su-animate {
+	animation: su-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* --------------------------------------------------------------------------
+   9. 响应式
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+	.su-display-xl {
+		font-size: 30px;
+		letter-spacing: -0.8px;
+	}
+	.su-display-lg {
+		font-size: 25px;
+		letter-spacing: -0.5px;
+	}
+	.su-display-md {
+		font-size: 21px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.su-animate {
+		animation: none;
+	}
+	html {
+		scroll-behavior: auto;
+	}
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+}

@@ -17,9 +17,8 @@ import type { SidebarNavItem } from "@/config/sidebarNav";
 import { getAmbientBackgroundStyle } from "@/utils/ambient-background";
 // 顺序要紧：令牌层必须在所有消费方之前，否则首帧 var() 解析不到会闪一下。
 import "../styles/supabase-tokens.css";
-// sb-* 工具类：SbPageHeader / SbFooter / SbPostCard 等组件依赖它。
-// SupabaseShell 会加载它，SupabaseLayout 同样需要，否则页头页脚全无样式。
-import "../styles/supabase.css";
+// 组件层：可复用的 su-* 工具类（排版层级/卡片/按钮/标签/动效等）。
+import "../styles/supabase-components.css";
 import "../styles/supabase-content.css";
 import "./supabase-layout.css";
 import Layout from "./Layout.astro";

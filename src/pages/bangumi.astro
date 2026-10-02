@@ -6,6 +6,7 @@ import { siteConfig } from "@/config";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
+import SbPageHeader from "@/components/layout/SbPageHeader.astro";
 import type {
 	UserSubjectCollection,
 	UserSubjectCollectionResponse,
@@ -205,66 +206,72 @@ const activeTab = tabs[0]?.id || "anime";
 ---
 
 <SupabaseLayout title={i18n(I18nKey.bangumi)} description={i18n(I18nKey.bangumiSubtitle)}>
-  <div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
-    <div class="card-base z-10 px-9 py-6 relative w-full">
-        <!-- 页面标题 -->
-        <div class="relative w-full mb-8">
-            <div class="mb-6">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="h-8 w-8 rounded-lg bg-(--primary) flex items-center justify-center text-white dark:text-black/70">
-                        <Icon name="material-symbols:movie" class="text-[1.5rem]"></Icon>
-                    </div>
-                    <div class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
-                        {i18n(I18nKey.bangumi)}
-                    </div>
-                </div>
-                <p class="text-base text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                    {i18n(I18nKey.bangumiSubtitle)}
-                </p>
-                <p class="text-xs text-neutral-500 dark:text-neutral-500 mt-2">
-                    {i18n(I18nKey.bangumiLastUpdated)} {buildTime}
-                </p>
-            </div>
+  <SbPageHeader
+    eyebrow="Bangumi"
+    title={i18n(I18nKey.bangumi)}
+    subtitle={i18n(I18nKey.bangumiSubtitle)}
+  >
+    <p class="su-page-meta">
+      {i18n(I18nKey.bangumiLastUpdated)} <span class="su-num">{buildTime}</span>
+    </p>
+  </SbPageHeader>
 
-      <!-- Tab 导航和内容 -->
-      {tabs.length > 0 ? (
-        <>
-          <TabNav tabs={tabs} activeTab={activeTab} />
+  {
+    tabs.length > 0 ? (
+      <>
+        <TabNav tabs={tabs} activeTab={activeTab} />
 
-          {/* 内容区域 */}
-          {tabs.map((tab) => (
-                      <BangumiSection
+        {/* 各分类内容 */}
+        {tabs.map((tab) => (
+          <BangumiSection
             sectionId={tab.id}
             items={bangumiData[tab.id] || []}
             isActive={tab.id === activeTab}
             itemsPerPage={12}
           />
-          ))}
-        </>
-      ) : (
-        <div class="text-center py-16">
-          <div class="inline-flex items-center justify-center w-16 h-16 bg-(--btn-regular-bg) rounded-full mb-6 border border-(--line-divider)">
-            <Icon name="material-symbols:settings" class="text-[2rem] text-(--btn-content)" />
-          </div>
-          <h2 class="text-xl font-semibold text-black/80 dark:text-white/80 mb-3">
-            {isUserIdConfigured ? i18n(I18nKey.bangumiEmpty) : "未配置 Bangumi 用户ID"}
-          </h2>
-          <p class="text-black/60 dark:text-white/60 mb-4 max-w-md mx-auto">
-            {isUserIdConfigured ? i18n(I18nKey.bangumiEmptyReason) : "请在 src/config/siteConfig.ts 中配置你的 Bangumi 用户ID"}
-          </p>
-        </div>
-      )}
-		</div>
-    </div>
-  </div>
+        ))}
+      </>
+    ) : (
+      <div class="su-empty">
+        <Icon name="material-symbols:settings" />
+        <h2 class="su-heading-md">
+          {isUserIdConfigured ? i18n(I18nKey.bangumiEmpty) : "未配置 Bangumi 用户ID"}
+        </h2>
+        <p class="su-body-sm">
+          {isUserIdConfigured
+            ? i18n(I18nKey.bangumiEmptyReason)
+            : "请在 src/config/siteConfig.ts 中配置你的 Bangumi 用户ID"}
+        </p>
+      </div>
+    )
+  }
 </SupabaseLayout>
 
 <style>
-  /* 自定义样式 */
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  .su-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 64px 0;
+    text-align: center;
+    color: var(--su-muted-foreground);
+  }
+
+  .su-empty :global(svg) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border: 1px solid var(--su-border);
+    border-radius: var(--su-radius-full);
+    background-color: var(--su-muted);
+    font-size: 24px;
+    color: var(--su-foreground);
+  }
+
+  .su-empty h2 {
+    color: var(--su-foreground);
   }
 </style>

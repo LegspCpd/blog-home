@@ -1,8 +1,10 @@
 ---
 /**
- * Supabase-style page header for interior pages.
- *   - Centered display-tier title, muted subtitle
- *   - Optional right-aligned action slot
+ * SbPageHeader.astro
+ * ---------------------------------------------------------------------------
+ * 内页统一页头：标题 + 副标题，底部一条发丝线分区。
+ * 已迁移到 su-* 令牌体系，不再依赖 supabase.css（--sb-*），
+ * 因此侧栏布局无需再全局加载那份 CSS。
  */
 interface Props {
 	title: string;
@@ -13,36 +15,56 @@ interface Props {
 const { title, subtitle, eyebrow } = Astro.props;
 ---
 
-<header class="sb-page-head">
-  {
-    eyebrow && (
-      <div class="sb-pill sb-pill--soft" style="margin-bottom:16px;">
-        {eyebrow}
-      </div>
-    )
-  }
-  <h1 class="sb-display-xl">{title}</h1>
-  {subtitle && <p class="sb-body-lg sb-page-head__sub">{subtitle}</p>}
-  <slot />
+<header class="su-page-header">
+	<div class="su-page-header-main">
+		{
+			eyebrow ? (
+				<span class="su-pill su-pill--outline su-page-header-eyebrow">
+					{eyebrow}
+				</span>
+			) : null
+		}
+		<h1 class="su-display-lg su-page-header-title">{title}</h1>
+		{subtitle ? <p class="su-body-md su-text-mute">{subtitle}</p> : null}
+	</div>
+	<slot />
 </header>
 
 <style>
-  .sb-page-head {
-    padding-block: 56px 40px;
-    border-bottom: 1px solid var(--sb-hairline-cool);
-    margin-bottom: 40px;
-  }
+	.su-page-header {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 16px 24px;
+		flex-wrap: wrap;
+		padding-bottom: 24px;
+		margin-bottom: 32px;
+		border-bottom: 1px solid var(--su-border);
+	}
 
-  .sb-page-head__sub {
-    color: var(--sb-ink-mute);
-    margin-top: 16px;
-    max-width: 640px;
-  }
+	.su-page-header-main {
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
 
-  @media (max-width: 767px) {
-    .sb-page-head {
-      padding-block: 32px 28px;
-      margin-bottom: 28px;
-    }
-  }
+	.su-page-header-eyebrow {
+		align-self: flex-start;
+	}
+
+	.su-page-header-title {
+		margin: 0;
+		letter-spacing: -0.6px;
+	}
+
+	@media (max-width: 640px) {
+		.su-page-header {
+			align-items: flex-start;
+			flex-direction: column;
+			gap: 16px;
+			padding-bottom: 20px;
+			margin-bottom: 24px;
+		}
+	}
 </style>
