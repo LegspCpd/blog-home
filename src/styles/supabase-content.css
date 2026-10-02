@@ -540,7 +540,12 @@
 	border: 0;
 	border-radius: 6px;
 	box-shadow: none;
-	overflow: hidden;
+	/* 必须能横向滚动：长代码行在窄屏会溢出。
+	   之前写的是 overflow: hidden，会直接裁掉溢出部分。 */
+	overflow-x: auto;
+	overflow-y: hidden;
+	/* 滚动条贴底，避免遮挡代码 */
+	scrollbar-width: thin;
 }
 
 .su-main .expressive-code .frame.is-terminal,
@@ -552,6 +557,8 @@
 	border: 0;
 	border-radius: 0;
 	padding: 16px;
+	/* 滚动时两端文字不贴边 */
+	padding-inline: 16px;
 }
 
 .su-main .expressive-code .title,
