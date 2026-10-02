@@ -1,19 +1,306 @@
 ---
-import ArchivePanel from "@components/controls/ArchivePanel.svelte";
-import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
+/**
+ * archive.astro —— 归档 / 标签 / 分类总览
+ *
+ * 实现要点：
+ *  - 纯 Astro 渲染，不依赖客户端组件。筛选靠 /tags/xxx/ 与 /categories/xxx/ 静态路由，
+ *    直链可用、首屏即正确（原来的 Svelte 面板读 window.location.search，
+ *    SSR 阶段拿不到参数，必须等 JS 跑完才出结果）。
+ *  - 按年分组，每组内按日期倒序。
+ */
+import { Icon } from "astro-icon/components";
 import SbPageHeader from "@/components/layout/SbPageHeader.astro";
 import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
-import { getSortedPostsList } from "@/utils/content-utils";
+import { getSortedPosts } from "@/utils/content-utils";
+import { formatDateToYYYYMMDD } from "@/utils/date-utils";
+import { getPostUrlBySlug, url } from "@/utils/url-utils";
 
-const sortedPostsList = await getSortedPostsList();
+const posts = await getSortedPosts();
+
+// ---- 派生统计 ----
+const tagCount = new Map<string, number>();
+const categoryCount = new Map<string, number>();
+for (const post of posts) {
+	for (const tag of post.data.tags ?? []) {
+		tagCount.set(tag, (tagCount.get(tag) ?? 0) + 1);
+	}
+	const cat = post.data.category;
+	if (cat && cat.trim()) {
+		categoryCount.set(cat, (categoryCount.get(cat) ?? 0) + 1);
+	}
+}
+
+const tags = [...tagCount.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+const categories = [...categoryCount.entries()].sort(
+	(a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+);
+
+// ---- 按年分组 ----
+const byYear = new Map<number, typeof posts>();
+for (const post of posts) {
+	const year = new Date(post.data.published).getFullYear();
+	const bucket = byYear.get(year);
+	if (bucket) bucket.push(post);
+	else byYear.set(year, [post]);
+}
+const groups = [...byYear.entries()].sort((a, b) => b[0] - a[0]);
 ---
 
-<SupabaseLayout title={i18n(I18nKey.archive)} description="博客文章归档 - 按时间线浏览所有文章，涵盖技术、生活、学习等内容">
-  <SbPageHeader
-    eyebrow="Archive"
-    title={i18n(I18nKey.archive)}
-    subtitle={`共 ${sortedPostsList.length} 篇文章，按时间线浏览。`}
-  />
-  <ArchivePanel sortedPosts={sortedPostsList} client:only="svelte" />
+<SupabaseLayout
+	title="归档"
+	description="按时间线浏览全部文章，或按标签、分类筛选。"
+>
+	<SbPageHeader
+		eyebrow="Archive"
+		title="归档"
+		subtitle={`共 ${posts.length} 篇文章 · ${tags.length} 个标签 · ${categories.length} 个分类`}
+	/>
+
+	<!-- 标签筛选 -->
+	{
+		tags.length > 0 ? (
+			<section class="ar-block" aria-labelledby="ar-tags-title">
+				<h2 id="ar-tags-title" class="ar-block-title">
+					<Icon name="material-symbols:sell-outline" />
+					标签
+				</h2>
+				<div class="ar-cloud">
+					{tags.map(([tag, count]) => (
+						<a
+							href={url(`/tags/${encodeURIComponent(tag)}/`)}
+							class="su-pill su-pill--outline"
+						>
+							#{tag}
+							<span class="ar-count">{count}</span>
+						</a>
+					))}
+				</div>
+			</section>
+		) : null
+	}
+
+	<!-- 分类 -->
+	{
+		categories.length > 0 ? (
+			<section class="ar-block" aria-labelledby="ar-cats-title">
+				<h2 id="ar-cats-title" class="ar-block-title">
+					<Icon name="material-symbols:category-outline" />
+					分类
+				</h2>
+				<div class="ar-cloud">
+					{categories.map(([cat, count]) => (
+						<a
+							href={url(`/categories/${encodeURIComponent(cat)}/`)}
+							class="su-pill su-pill--outline"
+						>
+							{cat}
+							<span class="ar-count">{count}</span>
+						</a>
+					))}
+				</div>
+			</section>
+		) : null
+	}
+
+	<!-- 时间线 -->
+	<section class="ar-block" aria-labelledby="ar-timeline-title">
+		<h2 id="ar-timeline-title" class="ar-block-title">
+			<Icon name="material-symbols:timeline-outline" />
+			时间线
+		</h2>
+
+		{
+			groups.length > 0 ? (
+				<div class="ar-timeline">
+					{groups.map(([year, entries]) => (
+						<section class="ar-year">
+							<h3 class="ar-year-label">
+								<span class="ar-year-num">{year}</span>
+								<span class="ar-year-count">{entries.length} 篇</span>
+							</h3>
+
+							<ul class="ar-list">
+								{entries.map((post) => (
+									<li>
+										<a class="ar-row" href={getPostUrlBySlug(post.id)}>
+											<time
+												class="ar-row-date su-mono"
+												datetime={post.data.published.toISOString()}
+											>
+												{formatDateToYYYYMMDD(post.data.published)}
+											</time>
+
+											<span class="ar-row-body">
+												<span class="ar-row-title">
+													{post.data.title}
+												</span>
+												{post.data.tags && post.data.tags.length > 0 ? (
+													<span class="ar-row-tags">
+														{post.data.tags.slice(0, 4).map((tag) => (
+															<span class="su-pill su-pill--outline">#{tag}</span>
+														))}
+													</span>
+												) : null}
+											</span>
+										</a>
+									</li>
+								))}
+							</ul>
+						</section>
+					))}
+				</div>
+			) : (
+				<p class="su-body-md su-text-mute">还没有文章。</p>
+			)
+		}
+	</section>
 </SupabaseLayout>
+
+<style>
+	.ar-block {
+		padding-block: 28px;
+		border-top: 1px solid var(--su-border);
+	}
+
+	.ar-block:first-of-type {
+		border-top: 0;
+		padding-top: 0;
+	}
+
+	.ar-block-title {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin: 0 0 16px;
+		font-size: 15px;
+		font-weight: 600;
+		color: var(--su-foreground);
+	}
+
+	.ar-block-title :global(svg) {
+		font-size: 18px;
+		color: var(--su-muted-foreground);
+	}
+
+	/* ---- 标签/分类云 ---- */
+	.ar-cloud {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	.ar-cloud a {
+		padding: 5px 11px;
+		font-family: var(--font-supabase);
+	}
+
+	/* 次数用更轻的灰，不与标签名抢注意力 */
+	.ar-count {
+		margin-left: 4px;
+		font-family: var(--font-mono-supabase);
+		font-size: 11px;
+		color: var(--su-ink-faint);
+	}
+
+	/* ---- 时间线 ---- */
+	.ar-timeline {
+		display: flex;
+		flex-direction: column;
+		gap: 32px;
+	}
+
+	.ar-year-label {
+		display: flex;
+		align-items: baseline;
+		gap: 10px;
+		margin: 0 0 8px;
+		padding-bottom: 8px;
+		border-bottom: 1px solid var(--su-border);
+	}
+
+	.ar-year-num {
+		font-family: var(--font-mono-supabase);
+		font-size: 20px;
+		font-weight: 600;
+		letter-spacing: -0.5px;
+		color: var(--su-foreground);
+	}
+
+	.ar-year-count {
+		font-size: 12px;
+		color: var(--su-ink-faint);
+	}
+
+	.ar-list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.ar-row {
+		display: flex;
+		align-items: baseline;
+		gap: 16px;
+		padding: 12px 4px;
+		color: inherit;
+		text-decoration: none;
+		border-radius: var(--su-radius-sm);
+		transition: background-color 0.15s ease;
+	}
+
+	.ar-row:hover {
+		background-color: var(--su-canvas-soft);
+	}
+
+	.ar-row-date {
+		flex: none;
+		width: 92px;
+		font-size: 13px;
+		color: var(--su-ink-faint);
+	}
+
+	.ar-row-body {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.ar-row-title {
+		font-size: 15px;
+		font-weight: 500;
+		line-height: 1.45;
+		color: var(--su-foreground);
+		transition: color 0.15s ease;
+	}
+
+	.ar-row:hover .ar-row-title {
+		color: var(--su-primary-deep);
+	}
+
+	.ar-row-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+
+	.ar-row-tags .su-pill {
+		font-size: 11px;
+		padding: 2px 8px;
+	}
+
+	@media (max-width: 640px) {
+		.ar-row {
+			flex-direction: column;
+			gap: 6px;
+			padding: 12px 0;
+		}
+		.ar-row-date {
+			width: auto;
+		}
+		.ar-year-num {
+			font-size: 18px;
+		}
+	}
+</style>

@@ -215,11 +215,16 @@ const showActionCard =
 
         {
           entry.data.tags && entry.data.tags.length > 0 && (
-            <div class="sb-article__tags">
+            <nav class="sb-article__tags" aria-label="文章标签">
               {entry.data.tags.map((tag) => (
-                <span class="sb-pill sb-pill--soft">#{tag.trim()}</span>
+                <a
+                  class="su-pill su-pill--soft"
+                  href={url(`/tags/${encodeURIComponent(tag.trim())}/`)}
+                >
+                  #{tag.trim()}
+                </a>
               ))}
-            </div>
+            </nav>
           )
         }
       </header>
@@ -264,7 +269,10 @@ const showActionCard =
         entry.data.tags && entry.data.tags.length > 0 && (
           <div class="sb-article__tags sb-article__tags--foot">
             {entry.data.tags.map((tag) => (
-              <a class="sb-pill sb-pill--outline" href={url("/archive/")}>
+              <a
+                class="su-pill su-pill--outline"
+                href={url(`/tags/${encodeURIComponent(tag.trim())}/`)}
+              >
                 #{tag.trim()}
               </a>
             ))}

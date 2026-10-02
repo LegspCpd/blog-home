@@ -1,0 +1,207 @@
+---
+/**
+ * categories/[category].astro —— 单个分类下的文章列表
+ *
+ * 与标签页同构：构建期枚举分类，生成静态路径，直链即正确内容。
+ */
+import { Icon } from "astro-icon/components";
+import SbPageHeader from "@/components/layout/SbPageHeader.astro";
+import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
+import { getSortedPosts } from "@/utils/content-utils";
+import { formatDateToYYYYMMDD } from "@/utils/date-utils";
+import { getPostUrlBySlug, url } from "@/utils/url-utils";
+
+export async function getStaticPaths() {
+	const all = await getSortedPosts();
+	const set = new Set<string>();
+	for (const post of all) {
+		const cat = post.data.category;
+		if (cat && cat.trim()) set.add(cat.trim());
+	}
+	return [...set].map((category) => ({ params: { category } }));
+}
+
+const { category } = Astro.params;
+const allPosts = await getSortedPosts();
+const posts = allPosts.filter(
+	(p) => (p.data.category ?? "").trim() === (category as string),
+);
+
+// 同分类下的其它分类
+const siblingCount = new Map<string, number>();
+for (const post of allPosts) {
+	const cat = post.data.category;
+	if (cat && cat.trim() && cat.trim() !== category) {
+		siblingCount.set(cat.trim(), (siblingCount.get(cat.trim()) ?? 0) + 1);
+	}
+}
+const siblings = [...siblingCount.entries()].sort((a, b) => b[1] - a[1]);
+---
+
+<SupabaseLayout
+	title={category as string}
+	description={`分类「${category}」下的全部文章，共 ${posts.length} 篇。`}
+>
+	<SbPageHeader
+		eyebrow="Category"
+		title={category as string}
+		subtitle={`共 ${posts.length} 篇文章`}
+	>
+		<a href={url("/archive/")} class="su-btn su-btn--outline su-btn--sm">
+			<Icon name="material-symbols:arrow-back" />
+			返回归档
+		</a>
+	</SbPageHeader>
+
+	{
+		siblings.length > 0 ? (
+			<nav class="cat-siblings" aria-label="其它分类">
+				{siblings.map(([c, count]) => (
+					<a
+						href={url(`/categories/${encodeURIComponent(c)}/`)}
+						class="su-pill su-pill--outline"
+					>
+						{c}
+						<span class="cat-count">{count}</span>
+					</a>
+				))}
+			</nav>
+		) : null
+	}
+
+	<ul class="cat-list">
+		{
+			posts.map((post) => (
+				<li>
+					<a class="cat-row" href={getPostUrlBySlug(post.id)}>
+						<time
+							class="cat-row-date su-mono"
+							datetime={post.data.published.toISOString()}
+						>
+							{formatDateToYYYYMMDD(post.data.published)}
+						</time>
+						<span class="cat-row-body">
+							<span class="cat-row-title">{post.data.title}</span>
+							{post.data.description ? (
+								<span class="cat-row-desc">{post.data.description}</span>
+							) : null}
+						</span>
+						<Icon name="material-symbols:chevron-right" class="cat-row-arrow" />
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</SupabaseLayout>
+
+<style>
+	.cat-siblings {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		padding-bottom: 24px;
+		margin-bottom: 8px;
+		border-bottom: 1px solid var(--su-border);
+	}
+
+	.cat-siblings a {
+		padding: 5px 11px;
+		font-family: var(--font-supabase);
+	}
+
+	.cat-count {
+		margin-left: 4px;
+		font-family: var(--font-mono-supabase);
+		font-size: 11px;
+		color: var(--su-ink-faint);
+	}
+
+	.cat-list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.cat-row {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		padding: 16px 4px;
+		color: inherit;
+		text-decoration: none;
+		border-bottom: 1px solid var(--su-border);
+		border-radius: var(--su-radius-sm);
+		transition: background-color 0.15s ease;
+	}
+
+	.cat-row:hover {
+		background-color: var(--su-canvas-soft);
+	}
+
+	.cat-row-date {
+		flex: none;
+		width: 92px;
+		font-size: 13px;
+		color: var(--su-ink-faint);
+	}
+
+	.cat-row-body {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.cat-row-title {
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 1.45;
+		color: var(--su-foreground);
+		transition: color 0.15s ease;
+	}
+
+	.cat-row:hover .cat-row-title {
+		color: var(--su-primary-deep);
+	}
+
+	.cat-row-desc {
+		font-size: 13px;
+		line-height: 1.5;
+		color: var(--su-muted-foreground);
+		display: -webkit-box;
+		-webkit-line-clamp: 1;
+		line-clamp: 1;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.cat-row-arrow {
+		flex: none;
+		font-size: 18px;
+		color: var(--su-ink-faint);
+		opacity: 0;
+		transform: translateX(-4px);
+		transition:
+			opacity 0.15s ease,
+			transform 0.15s ease;
+	}
+
+	.cat-row:hover .cat-row-arrow {
+		opacity: 1;
+		transform: translateX(0);
+	}
+
+	@media (max-width: 640px) {
+		.cat-row {
+			flex-wrap: wrap;
+			gap: 6px 12px;
+		}
+		.cat-row-date {
+			width: auto;
+		}
+		.cat-row-arrow {
+			display: none;
+		}
+	}
+</style>

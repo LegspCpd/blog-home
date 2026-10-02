@@ -151,7 +151,7 @@ const topTags = [...tagCount.entries()]
 				</h2>
 				<div class="home-tag-cloud">
 					{topTags.map((tag) => (
-						<a href={url(`/archive/?tag=${encodeURIComponent(tag)}`)} class="su-pill su-pill--outline">
+						<a href={url(`/tags/${encodeURIComponent(tag)}/`)} class="su-pill su-pill--outline">
 							#{tag}
 						</a>
 					))}
