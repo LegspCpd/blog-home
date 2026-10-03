@@ -1,0 +1,72 @@
+---
+/**
+ * CountUp.astro —— 数字滚动计数
+ *
+ * 给带 data-count 的元素做「从 0 滚到目标值」的动画。
+ * 用法：<span data-count={1234}></span>
+ *
+ * 为什么放在独立组件里：
+ * 统计页、首页统计卡都要用，逻辑只写一份。
+ *
+ * 实现要点：
+ * 1. 首屏元素立即播；滚到视口内的等 .rv-in 之后再播，和渐入对齐
+ * 2. 用 requestAnimationFrame + easeOutExpo，收尾快、起步慢，数字「跑」得起来
+ * 3. 尊重 prefers-reduced-motion，直接显示终值
+ * 4. 只播一次，回滚到顶部不重播（否则每次滚动都在跳）
+ */
+---
+
+<script is:inline>
+	(function () {
+		var reduced = window.matchMedia("(prefers-reduced-motion: reduce)")
+			.matches;
+
+		function format(n) {
+			return n.toLocaleString("zh-CN");
+		}
+
+		function run(el) {
+			if (el.dataset.counted) return;
+			el.dataset.counted = "1";
+
+			var target = Number(el.getAttribute("data-count") || 0);
+			if (reduced || target === 0) {
+				el.textContent = format(target);
+				return;
+			}
+
+			var duration = 900;
+			var start = null;
+
+			function step(ts) {
+				if (start === null) start = ts;
+				var p = Math.min((ts - start) / duration, 1);
+				// easeOutExpo：起步慢、收尾快，数字有「冲刺」的观感
+				var eased = p === 1 ? 1 : 1 - Math.pow(2, -10 * p);
+				el.textContent = format(Math.round(target * eased));
+				if (p < 1) requestAnimationFrame(step);
+			}
+
+			requestAnimationFrame(step);
+		}
+
+		function runAll() {
+			var els = document.querySelectorAll("[data-count]:not([data-counted])");
+			for (var i = 0; i < els.length; i++) run(els[i]);
+		}
+
+		if (reduced) {
+			runAll();
+			return;
+		}
+
+		// 首屏立即开始
+		runAll();
+
+		// 懒加载的内容（swup 切页后）也要处理
+		document.addEventListener("astro:page-load", function () {
+			// 等 .rv-in 的过渡结束再播，让「淡入 + 数字滚动」看起来是一体的
+			setTimeout(runAll, 260);
+		});
+	})();
+</script>

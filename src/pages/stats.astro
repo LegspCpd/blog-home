@@ -97,22 +97,22 @@ const fmt = (n: number) => n.toLocaleString("zh-CN");
 	<dl class="st-overview">
 		<div class="st-metric rv">
 			<dt>文章</dt>
-			<dd class="su-mono">{fmt(posts.length)}</dd>
+			<dd class="su-mono" data-count={posts.length}>{fmt(posts.length)}</dd>
 			<span>篇</span>
 		</div>
 		<div class="st-metric rv" style="--rv-d:60ms">
 			<dt>总字数</dt>
-			<dd class="su-mono">{fmt(totalWords)}</dd>
+			<dd class="su-mono" data-count={totalWords}>{fmt(totalWords)}</dd>
 			<span>字</span>
 		</div>
 		<div class="st-metric rv" style="--rv-d:120ms">
 			<dt>总阅读</dt>
-			<dd class="su-mono">{fmt(totalMinutes)}</dd>
+			<dd class="su-mono" data-count={totalMinutes}>{fmt(totalMinutes)}</dd>
 			<span>分钟</span>
 		</div>
 		<div class="st-metric rv" style="--rv-d:180ms">
 			<dt>标签</dt>
-			<dd class="su-mono">{fmt(topTags.length)}</dd>
+			<dd class="su-mono" data-count={topTags.length}>{fmt(topTags.length)}</dd>
 			<span>个</span>
 		</div>
 	</dl>

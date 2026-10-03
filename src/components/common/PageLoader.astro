@@ -57,7 +57,7 @@ const loaderStyle = [
 			let delayTimer = 0;
 			let hideTimer = 0;
 
-			const setActive = (active: boolean) => {
+			const setActive = (active) => {
 				el.classList.toggle("is-active", active);
 				el.setAttribute("aria-hidden", active ? "false" : "true");
 			};
@@ -79,7 +79,7 @@ const loaderStyle = [
 			};
 
 			/** 延迟 delayMs 后才出现；期间如果已经 hide() 掉，就永远不会出现 */
-			const showAfter = (delayMs: number) => {
+			const showAfter = (delayMs) => {
 				clearTimeout(delayTimer);
 				clearTimeout(hideTimer);
 
@@ -106,15 +106,14 @@ const loaderStyle = [
 
 			// ---------- 站内 SPA 跳转 ----------
 			const bindSwup = () => {
-				const swup = (window as unknown as { swup?: { hooks?: { on: (e: string, cb: () => void) => void } } })
-					.swup;
-				if (!swup?.hooks) return;
+				const swup = window.swup;
+				if (!swup || !swup.hooks) return;
 
 				swup.hooks.on("visit:start", () => showAfter(cfg.transitionDelayMs));
 				swup.hooks.on("visit:end", hide);
 			};
 
-			if ((window as unknown as { swup?: unknown }).swup) {
+			if (window.swup) {
 				bindSwup();
 			} else {
 				document.addEventListener("swup:enable", bindSwup, { once: true });

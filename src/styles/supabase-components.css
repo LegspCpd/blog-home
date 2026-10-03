@@ -346,21 +346,12 @@ a.su-pill:hover {
 }
 
 /* --------------------------------------------------------------------------
-   8. 进场动效
+   8. 动效与响应式
+   --------------------------------------------------------------------------
+   动画定义（@keyframes、缓动曲线、prefers-reduced-motion 降级）
+   已统一收敛到 supabase-motion.css，这里不再重复定义 ——
+   否则同类动画会出现两套时长/曲线，看起来不干净。
    -------------------------------------------------------------------------- */
-@keyframes su-fade-up {
-	from {
-		opacity: 0;
-		transform: translateY(12px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-.su-animate {
-	animation: su-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
 
 /* --------------------------------------------------------------------------
    9. 响应式
@@ -376,20 +367,5 @@ a.su-pill:hover {
 	}
 	.su-display-md {
 		font-size: 20px;
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.su-animate {
-		animation: none;
-	}
-	html {
-		scroll-behavior: auto;
-	}
-	*,
-	*::before,
-	*::after {
-		animation-duration: 0.01ms !important;
-		transition-duration: 0.01ms !important;
 	}
 }

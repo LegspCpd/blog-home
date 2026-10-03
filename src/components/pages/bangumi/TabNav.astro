@@ -41,17 +41,18 @@ const { tabs, activeTab } = Astro.props;
 </div>
 
 <script>
+// @ts-nocheck
   function initTabNavigation() {
     const tabButtons = document.querySelectorAll('[data-tab]');
     const sections = document.querySelectorAll('[data-section]');
 
-    function hydrateVisibleImages(targetTab: string) {
+    function hydrateVisibleImages(targetTab) {
       const visibleItems = document.querySelectorAll(
         `[data-section="${targetTab}"] [data-item-section="${targetTab}"]:not(.hidden)`
       );
 
       visibleItems.forEach((item) => {
-        const htmlItem = item as HTMLElement;
+        const htmlItem = item;
         if (htmlItem.style.display === 'none') {
           return;
         }
@@ -67,7 +68,7 @@ const { tabs, activeTab } = Astro.props;
       });
     }
 
-    function activateTab(targetTab: string, shouldSyncHash = true) {
+    function activateTab(targetTab, shouldSyncHash = true) {
       if (!targetTab) {
         return;
       }
@@ -91,7 +92,7 @@ const { tabs, activeTab } = Astro.props;
 
       // Show/hide sections
       sections.forEach(section => {
-        const htmlSection = section as HTMLElement;
+        const htmlSection = section;
         if (htmlSection.dataset.section === targetTab) {
           htmlSection.classList.remove('hidden');
         } else {

@@ -87,6 +87,78 @@
 	color: var(--su-ink-faint);
 }
 
+/* ---- 导航项：入场级联 ----
+   侧栏在首屏一次性出现，导航项逐条淡入会让「页面在加载」这件事被感知到，
+   但节奏必须快（每条 28ms，总时长约 250ms），否则会显得拖沓。
+   只在首次加载播放：折叠/展开不重播，避免反复闪。 */
+.su-scope [data-slot="sidebar"] .su-nav-enter {
+	animation: su-in-left 340ms var(--su-ease-out) both;
+}
+
+.su-scope [data-slot="sidebar"] .su-nav-enter:nth-child(1) {
+	animation-delay: 60ms;
+}
+.su-scope [data-slot="sidebar"] .su-nav-enter:nth-child(2) {
+	animation-delay: 88ms;
+}
+.su-scope [data-slot="sidebar"] .su-nav-enter:nth-child(3) {
+	animation-delay: 116ms;
+}
+.su-scope [data-slot="sidebar"] .su-nav-enter:nth-child(4) {
+	animation-delay: 144ms;
+}
+.su-scope [data-slot="sidebar"] .su-nav-enter:nth-child(5) {
+	animation-delay: 172ms;
+}
+.su-scope [data-slot="sidebar"] .su-nav-enter:nth-child(6) {
+	animation-delay: 200ms;
+}
+.su-scope [data-slot="sidebar"] .su-nav-enter:nth-child(7) {
+	animation-delay: 228ms;
+}
+.su-scope [data-slot="sidebar"] .su-nav-enter:nth-child(8) {
+	animation-delay: 256ms;
+}
+.su-scope [data-slot="sidebar"] .su-nav-enter:nth-child(n + 9) {
+	animation-delay: 280ms;
+}
+
+/* ---- 当前项指示条：图标左侧的竖条，悬停时淡入 ---- */
+.su-scope [data-sidebar="menu-button"] {
+	position: relative;
+}
+
+.su-scope [data-sidebar="menu-button"]::before {
+	content: "";
+	position: absolute;
+	left: -8px;
+	top: 50%;
+	width: 2px;
+	height: 0;
+	border-radius: var(--su-radius-full);
+	background: var(--su-primary);
+	transform: translateY(-50%);
+	transition:
+		height var(--su-dur-base) var(--su-ease-out),
+		opacity var(--su-dur-base) var(--su-ease-out);
+	opacity: 0;
+}
+
+.su-scope [data-sidebar="menu-button"]:hover::before {
+	height: 14px;
+	opacity: 0.5;
+}
+
+.su-scope [data-sidebar="menu-button"][data-active="true"]::before {
+	height: 18px;
+	opacity: 1;
+}
+
+/* 折叠态下指示条不显示，避免在 68px 轨道里挤占空间 */
+.su-scope [data-state="collapsed"] [data-sidebar="menu-button"]::before {
+	display: none;
+}
+
 /* ---- 内容区 ---- */
 .su-scope [data-slot="sidebar-content"] {
 	padding: var(--su-space-md) var(--su-space-sm);

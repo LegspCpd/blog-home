@@ -83,11 +83,15 @@ const randomPool = posts.map((p) => getPostUrlBySlug(p.id));
 		<!-- 统计：做成竖排卡片，给 Hero 右侧一点重量 -->
 		<aside class="home-hero-side" aria-label="站点概览">
 			<div class="home-stat">
-				<span class="home-stat-num su-mono">{totalPosts}</span>
+				<span class="home-stat-num su-mono" data-count={totalPosts}>
+					{totalPosts}
+				</span>
 				<span class="home-stat-label">篇文章</span>
 			</div>
 			<div class="home-stat">
-				<span class="home-stat-num su-mono">{tagCount.size}</span>
+				<span class="home-stat-num su-mono" data-count={tagCount.size}>
+					{tagCount.size}
+				</span>
 				<span class="home-stat-label">个标签</span>
 			</div>
 			<div class="home-stat">

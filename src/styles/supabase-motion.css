@@ -1,0 +1,300 @@
+/* ==========================================================================
+   Supabase 动效层
+   --------------------------------------------------------------------------
+   为什么要单独一个文件：
+   动画定义原先散落在十几个文件里（首页、卡片、目录、进度条…），
+   各自定义 keyframes、各自处理 reduced-motion，导致：
+     - 同类动画的时长/曲线不一致，看起来「不干净」
+     - 关掉动画时要改很多处，容易漏
+     - 不好统一调参
+
+   这里把「动效令牌」与「可复用动画」集中一处，页面只引用类名，
+   想调手感只改这一个文件。
+
+   三条原则：
+   1. 克制 —— 动效服务于「引导视线」，不是表演
+   2. 一次性 —— 入场动效只播一次，滚动回到顶部不重播
+   3. 可关闭 —— 尊重 prefers-reduced-motion，且降级后内容依然完整可见
+   ========================================================================== */
+
+:root {
+	/* ---- 动效令牌 ---- */
+	--su-ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* 主曲线：快出慢收 */
+	--su-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+	--su-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* 轻微回弹 */
+
+	--su-dur-fast: 140ms; /* 悬停、颜色变化 */
+	--su-dur-base: 260ms; /* 小幅位移 */
+	--su-dur-slow: 520ms; /* 入场 */
+
+	/* 入场级联的步长 */
+	--su-stagger: 45ms;
+}
+
+/* ==========================================================================
+   1. 入场动画
+   ========================================================================== */
+
+/* 淡入 + 上浮：最基础的一个，全站主要用它 */
+@keyframes su-in-up {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* 淡入 + 左移：从左侧进入，适合导航类元素 */
+@keyframes su-in-left {
+	from {
+		opacity: 0;
+		transform: translateX(-12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+/* 淡入 + 缩放：适合徽章、小元素 */
+@keyframes su-in-scale {
+	from {
+		opacity: 0;
+		transform: scale(0.92);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+/* 擦除进入：横向展开，适合分隔线、进度条 */
+@keyframes su-wipe {
+	from {
+		transform: scaleX(0);
+	}
+	to {
+		transform: scaleX(1);
+	}
+}
+
+/* 打字机光标 */
+@keyframes su-blink {
+	0%,
+	49% {
+		opacity: 1;
+	}
+	50%,
+	100% {
+		opacity: 0;
+	}
+}
+
+/* ==========================================================================
+   2. 可复用的动画类
+   ========================================================================== */
+
+/* 通用入场 */
+.su-animate {
+	animation: su-in-up var(--su-dur-slow) var(--su-ease-out) both;
+}
+
+.su-animate-left {
+	animation: su-in-left var(--su-dur-slow) var(--su-ease-out) both;
+}
+
+.su-animate-scale {
+	animation: su-in-scale 380ms var(--su-ease-spring) both;
+}
+
+/* 延迟：用 --su-d 覆盖步长 */
+.su-d1 {
+	animation-delay: calc(var(--su-stagger) * 1);
+}
+.su-d2 {
+	animation-delay: calc(var(--su-stagger) * 2);
+}
+.su-d3 {
+	animation-delay: calc(var(--su-stagger) * 3);
+}
+.su-d4 {
+	animation-delay: calc(var(--su-stagger) * 4);
+}
+.su-d5 {
+	animation-delay: calc(var(--su-stagger) * 5);
+}
+.su-d6 {
+	animation-delay: calc(var(--su-stagger) * 6);
+}
+.su-d7 {
+	animation-delay: calc(var(--su-stagger) * 7);
+}
+.su-d8 {
+	animation-delay: calc(var(--su-stagger) * 8);
+}
+
+/* ==========================================================================
+   3. 微交互
+   ========================================================================== */
+
+/* 卡片抬升：悬停时上浮并加深阴影 */
+.su-lift {
+	transition:
+		transform var(--su-dur-base) var(--su-ease-out),
+		box-shadow var(--su-dur-base) var(--su-ease-out),
+		border-color var(--su-dur-base) var(--su-ease-out);
+}
+
+.su-lift:hover {
+	transform: translateY(-3px);
+	box-shadow: var(--su-shadow-3);
+	border-color: var(--su-hairline-strong);
+}
+
+/* 按下反馈：模拟真实触感 */
+.su-press {
+	transition: transform 90ms var(--su-ease-out);
+}
+
+.su-press:active {
+	transform: scale(0.97);
+}
+
+/* 图标微转：悬停时轻微旋转，用于箭头类图标 */
+.su-nudge :global(svg) {
+	transition: transform var(--su-dur-base) var(--su-ease-out);
+}
+
+.su-nudge:hover :global(svg) {
+	transform: translateX(3px);
+}
+
+/* ==========================================================================
+   4. 滚动渐入（由 Reveal.astro 驱动）
+   ========================================================================== */
+
+/* 初始状态：略微透明 + 下移 */
+.rv {
+	opacity: 0;
+	transform: translateY(18px);
+	transition:
+		opacity 620ms var(--su-ease-out),
+		transform 620ms var(--su-ease-out);
+	will-change: opacity, transform;
+}
+
+/* 进入视口 */
+.rv.rv-in {
+	opacity: 1;
+	transform: translateY(0);
+	/* 播完立刻撤掉 will-change，否则元素会长期占用合成层 */
+	will-change: auto;
+}
+
+/* 视口内元素的延迟渐入 */
+.rv[style*="--rv-d"] {
+	transition-delay: var(--rv-d, 0ms);
+}
+
+/* ==========================================================================
+   5. 页面切换过渡（swup）
+   ========================================================================== */
+
+/* 切出：轻微下沉 + 淡出，暗示「离开」 */
+html.su-leaving #swup-container {
+	opacity: 0;
+	transform: translateY(-6px);
+	transition:
+		opacity 160ms var(--su-ease-in-out),
+		transform 160ms var(--su-ease-in-out);
+}
+
+/* 切入：从上方浮入 */
+html.su-entering #swup-container {
+	animation: su-in-up 320ms var(--su-ease-out) both;
+}
+
+#swup-container {
+	transition:
+		opacity 200ms var(--su-ease-in-out),
+		transform 200ms var(--su-ease-in-out);
+}
+
+/* ==========================================================================
+   6. 主题切换过渡
+   ========================================================================== */
+
+/* 切换过程中给 html 加这个类，让颜色变化变成「渐变」而不是「瞬变」 */
+html.su-theme-shift,
+html.su-theme-shift body,
+html.su-theme-shift .su-card,
+html.su-theme-shift .su-btn,
+html.su-theme-shift .su-pill,
+html.su-theme-shift .su-main,
+html.su-theme-shift .su-sidebar,
+html.su-theme-shift [data-slot="sidebar"] {
+	transition:
+		background-color 320ms var(--su-ease-in-out),
+		border-color 320ms var(--su-ease-in-out),
+		color 320ms var(--su-ease-in-out) !important;
+}
+
+/* ==========================================================================
+   7. 阅读进度（文章页）
+   ========================================================================== */
+
+@keyframes su-progress-shrink {
+	from {
+		transform: scaleX(1);
+	}
+	to {
+		transform: scaleX(0);
+	}
+}
+
+/* ==========================================================================
+   8. 尊重系统的「减少动效」
+   --------------------------------------------------------------------------
+   一次性把所有动画压掉，只保留必要的状态变化。
+   注意不能用 `animation: none !important` 一刀切 —— 那样连
+   「按钮按下」这类功能性反馈也会消失。
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		transition-delay: 0ms !important;
+		scroll-behavior: auto !important;
+	}
+
+	/* 入场类直接落到终态，绝不能停留在 opacity: 0 */
+	.su-animate,
+	.su-animate-left,
+	.su-animate-scale,
+	.rv {
+		opacity: 1 !important;
+		transform: none !important;
+	}
+
+	/* 页面切换不做位移，直接换内容 */
+	html.su-leaving #swup-container {
+		opacity: 1;
+		transform: none;
+	}
+
+	html.su-entering #swup-container {
+		animation: none;
+	}
+
+	/* 悬停抬升改为只变色 */
+	.su-lift:hover,
+	.su-card--hover:hover {
+		transform: none;
+	}
+}

@@ -13,6 +13,7 @@
 import AppSidebar from "@components/layout/AppSidebar.astro";
 import CommandPalette from "@/components/layout/CommandPalette.astro";
 import Reveal from "@/components/common/Reveal.astro";
+import CountUp from "@/components/common/CountUp.astro";
 import SbFooter from "@/components/layout/SbFooter.astro";
 import { backgroundAtmosphere } from "@/config/backgroundAtmosphere";
 import { defaultNavItems as navDefaults } from "@/config/sidebarNav";
@@ -24,6 +25,8 @@ import { url } from "@/utils/url-utils";
 import "../styles/supabase-tokens.css";
 // 组件层：可复用的 su-* 工具类（排版层级/卡片/按钮/标签/动效等）。
 import "../styles/supabase-components.css";
+// 动效层：统一管理所有 keyframes、缓动曲线与 reduced-motion 降级。
+import "../styles/supabase-motion.css";
 import "../styles/supabase-content.css";
 import "./supabase-layout.css";
 import Layout from "./Layout.astro";
@@ -77,6 +80,9 @@ const ambientStyle = getAmbientBackgroundStyle();
   <!-- 滚动渐入动效：只注册一次观察器，切页自动接管新元素 -->
   <Reveal />
 
+  <!-- 数字滚动计数：统计页 / 首页统计卡共用一份逻辑 -->
+  <CountUp />
+
   <!-- 移动端顶栏：侧栏在窄屏收成抽屉，这里补一条固定顶栏，
        承载站点名 + 导航入口。
        放在 #swup-container 之外，跨页保持同一实例，不会重复挂载。
@@ -113,4 +119,40 @@ const ambientStyle = getAmbientBackgroundStyle();
 
   <!-- 页脚：放在 main 之外，与内容一同随页面切换 -->
   <SbFooter />
+  <!--
+    页面切换过渡：给 <html> 加类名，动画定义在 supabase-motion.css。
+    用 setTimeout 而不是等 swup 的事件 —— swup 在部分版本下
+    animation:out:start 与实际 DOM 移除之间存在一帧延迟，
+    提前一帧加类才能看到「淡出」。
+  -->
+  <script is:inline>
+    (function () {
+      var reduced = window.matchMedia("(prefers-reduced-motion: reduce)")
+        .matches;
+      if (reduced || !window.swup) return;
+
+      var html = document.documentElement;
+
+      window.swup.hooks.on("animation:out:start", function () {
+        html.classList.add("su-leaving");
+      });
+
+      window.swup.hooks.on("page:view", function () {
+        html.classList.remove("su-leaving");
+        // 重新触发一次入场动画
+        html.classList.remove("su-entering");
+        void html.offsetWidth; // 强制 reflow，让动画能再次播放
+        html.classList.add("su-entering");
+        setTimeout(function () {
+          html.classList.remove("su-entering");
+        }, 360);
+      });
+
+      // 首屏也播一次入场
+      html.classList.add("su-entering");
+      setTimeout(function () {
+        html.classList.remove("su-entering");
+      }, 360);
+    })();
+  </script>
 </Layout>

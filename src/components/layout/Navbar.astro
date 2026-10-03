@@ -230,6 +230,8 @@ loadButtonScript();
 function initSemifullScrollDetection() {
     const navbar = document.getElementById('navbar');
     if (!navbar) return;
+    // 赋给常量：TS 无法在下面的闭包里保持对 getElementById 结果的收窄
+    const navEl = navbar;
 
     const transparentMode = navbar.getAttribute('data-transparent-mode');
     if (transparentMode !== 'semifull') return;
@@ -248,7 +250,7 @@ function initSemifullScrollDetection() {
 
     function updateNavbarState() {
         if (document.documentElement.classList.contains('is-page-transitioning')) {
-            navbar!.classList.remove('scrolled');
+            navEl.classList.remove('scrolled');
             ticking = false;
             return;
         }
@@ -257,9 +259,9 @@ function initSemifullScrollDetection() {
         const threshold = 50; // 滚动阈值，可以根据需要调整
         // 使用批量DOM操作优化性能
         if (scrollTop > threshold) {
-            navbar!.classList.add('scrolled');
+            navEl.classList.add('scrolled');
         } else {
-            navbar!.classList.remove('scrolled');
+            navEl.classList.remove('scrolled');
         }
 
         ticking = false;
@@ -278,7 +280,7 @@ function initSemifullScrollDetection() {
     }
 
     // 保存新的事件处理器引用
-    window.semifullScrollHandler = requestTick as unknown as (() => void);
+    window.semifullScrollHandler = requestTick;
 
     // 监听滚动事件
     window.addEventListener('scroll', requestTick, { passive: true });

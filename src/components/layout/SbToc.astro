@@ -46,7 +46,7 @@ const tocId = `toc-${toc.map((h) => h.slug).join("-").slice(0, 24)}`;
 			</aside>
 
 			{/* 窄屏抽屉：默认隐藏，由 [data-toc-open] 唤起 */}
-			<div class="toc-sheet" data-toc-sheet hidden>
+			<div class="toc-sheet" data-toc-sheet>
 				<button
 					type="button"
 					class="toc-sheet-backdrop"
@@ -101,8 +101,39 @@ const tocId = `toc-${toc.map((h) => h.slug).join("-").slice(0, 24)}`;
 	}
 
 	.sb-toc {
+		position: relative;
 		border-left: 1px solid var(--su-border);
 		padding-left: 16px;
+	}
+
+	/*
+	  高亮指示条：绝对定位的小竖条，位置由 JS 写入 CSS 变量。
+	  用 transform: translateY() 而不是 top —— top 过渡每帧都触发布局计算，
+	  translateY 走合成层，滑动更顺。
+	*/
+	.sb-toc::before {
+		content: "";
+		position: absolute;
+		left: -1px;
+		top: 0;
+		width: 2px;
+		height: var(--toc-indicator-height, 0px);
+		border-radius: var(--su-radius-full);
+		background: var(--su-primary);
+		opacity: var(--toc-indicator-opacity, 0);
+		transform: translateY(var(--toc-indicator-y, 0px));
+		transition:
+			transform 340ms var(--su-ease-out),
+			height 260ms var(--su-ease-out),
+			opacity 220ms var(--su-ease-out);
+		will-change: transform;
+	}
+
+	/* 窄屏不需要指示条（抽屉里的高亮用底色表示） */
+	@media (max-width: 1023px) {
+		.sb-toc::before {
+			display: none;
+		}
 	}
 
 	.sb-toc__title {
@@ -120,32 +151,32 @@ const tocId = `toc-${toc.map((h) => h.slug).join("-").slice(0, 24)}`;
 
 	.sb-toc__item {
 		display: block;
-		padding: 5px 0;
+		padding: 5px 8px;
 		font-size: 12.5px;
 		line-height: 1.5;
 		color: var(--su-muted-foreground);
 		text-decoration: none;
-		border-left: 2px solid transparent;
-		padding-left: 10px;
-		margin-left: -11px;
+		border-radius: var(--su-radius-xs);
 		transition:
-			color 0.15s ease,
-			border-color 0.15s ease;
+			color var(--su-dur-fast) var(--su-ease-out),
+			background-color var(--su-dur-fast) var(--su-ease-out);
 	}
 
 	.sb-toc__item:hover {
 		color: var(--su-foreground);
+		background-color: var(--su-canvas-soft);
 	}
 
 	.sb-toc__item--h3 {
-		padding-left: 22px;
+		padding-left: 20px;
 		font-size: 12px;
 	}
 
+	/* 高亮不再靠自身描边（指示条已接管），用底色 + 字重表示 */
 	.sb-toc__item.is-active {
 		color: var(--su-foreground);
-		font-weight: 500;
-		border-left-color: var(--su-accent-text);
+		font-weight: 600;
+		background-color: var(--su-primary-soft);
 	}
 
 	/* ---------- 窄屏：底部抽屉 ---------- */
@@ -160,14 +191,15 @@ const tocId = `toc-${toc.map((h) => h.slug).join("-").slice(0, 24)}`;
 		}
 
 		.toc-sheet {
-			display: block;
+			display: none;
 			position: fixed;
 			inset: 0;
 			z-index: 80;
 		}
 
-		.toc-sheet[hidden] {
-			display: none;
+		/* 未唤起时整体隐藏（脚本加 .is-shown 后才出现） */
+		.toc-sheet.is-shown {
+			display: block;
 		}
 
 		.toc-sheet-backdrop {
@@ -284,21 +316,37 @@ const tocId = `toc-${toc.map((h) => h.slug).join("-").slice(0, 24)}`;
 	}
 </style>
 
+<!--
+  客户端脚本说明（踩过坑才写下来的）：
+
+  1. 这里必须写纯 JS，不能有 TS 标注。
+     Astro 把「带属性的 <script>」（例如 <script lang="ts">）当成 is:inline，
+     完全跳过处理，类型标注不会被转译，浏览器执行时直接 SyntaxError。
+  2. 但 astro check 仍以 TS 模式解析这个块，于是会报
+     「Property 'hidden' does not exist on type 'Element'」这类收窄错误。
+     JSDoc 也救不了（它只在 .js 文件里被识别）。
+     所以这里用 // @ts-nocheck 明确声明：本块不做类型检查。
+-->
 <script>
+// @ts-nocheck
 	/**
 	 * 窄屏目录抽屉：打开 / 关闭 / 点条目后自动收起 / Esc 关闭。
 	 * 桌面端不受影响（.toc-sheet 在 ≥1024px 时是 display:none）。
 	 */
 	(function () {
-		const el = document.querySelector<HTMLElement>("[data-toc-sheet]");
-		if (!el) return;
-		// 赋给常量后 TS 无法在闭包内保持收窄，用非空断言固定下来
-		const sheet = el;
-		let lastFocused: HTMLElement | null = null;
+		// 这里写纯 JS 而非 TS 标注，是有原因的（踩过坑才写下来的）：
+		//   1. Astro 把「带属性的 <script>」当成 is:inline（例如 <script lang="ts">），
+		//      完全跳过处理，类型标注不会被转译，浏览器执行时直接 SyntaxError。
+		//   2. astro check 又不认 lang="ts"，会把标注报成
+		//      「Type annotations can only be used in TypeScript files」。
+		// 两个方向都走不通，所以客户端脚本一律写纯 JS。
+		const sheet = document.querySelector("[data-toc-sheet]");
+		if (!sheet) return;
+		let lastFocused = null;
 
 		function open() {
-			lastFocused = document.activeElement as HTMLElement | null;
-			sheet.hidden = false;
+			lastFocused = document.activeElement;
+			sheet.classList.add("is-shown");
 			// 触发一次 reflow 让过渡生效
 			void sheet.offsetWidth;
 			sheet.classList.add("is-open");
@@ -309,14 +357,16 @@ const tocId = `toc-${toc.map((h) => h.slug).join("-").slice(0, 24)}`;
 			sheet.classList.remove("is-open");
 			document.body.style.overflow = "";
 			setTimeout(() => {
-				sheet.hidden = true;
+				sheet.classList.remove("is-shown");
 			}, 220);
-			lastFocused?.focus();
+			if (lastFocused) lastFocused.focus();
 		}
 
 		// 悬浮按钮（由文章页在窄屏时渲染）
 		document.addEventListener("click", function (e) {
-			const t = e.target as HTMLElement;
+			// instanceof Element 让类型收窄，也让非元素目标（文本节点）安全跳过
+			const t = e.target;
+			if (!(t instanceof Element)) return;
 			if (t.closest("[data-toc-open]")) {
 				e.preventDefault();
 				open();
@@ -330,9 +380,105 @@ const tocId = `toc-${toc.map((h) => h.slug).join("-").slice(0, 24)}`;
 		});
 
 		document.addEventListener("keydown", function (e) {
-			if (e.key === "Escape" && !sheet.hidden) {
+			if (e.key === "Escape" && sheet.classList.contains("is-shown")) {
 				close();
 			}
 		});
 	})();
+
+	/**
+	 * 桌面端目录滚动高亮 + 指示条滑动。
+	 *
+	 * 两个关键点：
+	 * 1. 可重复调用 —— TOC 在 #swup-container 内，swup 切页会替换这段 DOM。
+	 *    只在模块顶层绑定一次的话，第二次进文章页就失效了。
+	 * 2. 先解绑上一次的监听 —— 否则页面开久了会累积。
+	 */
+	let cleanupSpy = null;
+
+	function initTocScrollSpy() {
+		if (cleanupSpy) {
+			cleanupSpy();
+			cleanupSpy = null;
+		}
+
+		const links = document.querySelectorAll(".sb-toc__item[data-toc-link]");
+		const tocBox = document.querySelector(".sb-toc");
+		if (links.length === 0 || !tocBox) return;
+
+		const map = new Map();
+		links.forEach(function (link) {
+			map.set(link.getAttribute("data-toc-link"), link);
+		});
+
+		const targets = [];
+		map.forEach(function (_v, id) {
+			const el = document.getElementById(id);
+			if (el) targets.push(el);
+		});
+		if (targets.length === 0) return;
+
+		let ticking = false;
+
+		const update = function () {
+			ticking = false;
+			// 判定线：视口上沿往下 140px
+			const offset = 140;
+			let current = null;
+			for (const target of targets) {
+				if (target.getBoundingClientRect().top <= offset) {
+					current = target;
+				} else {
+					break;
+				}
+			}
+
+			// 滚到底部时强制高亮最后一项，否则长尾章节永远点不亮
+			const atBottom =
+				window.innerHeight + window.scrollY >=
+				document.documentElement.scrollHeight - 4;
+			if (atBottom) current = targets[targets.length - 1];
+
+			map.forEach(function (link) {
+				link.classList.remove("is-active");
+			});
+			if (!current) {
+				tocBox.style.setProperty("--toc-indicator-opacity", "0");
+				return;
+			}
+
+			const activeLink = map.get(current.id);
+			activeLink.classList.add("is-active");
+
+			// 指示条滑到当前项：用 translateY 而非 top，走合成层更顺
+			const linkRect = activeLink.getBoundingClientRect();
+			const boxRect = tocBox.getBoundingClientRect();
+			const h = Math.max(12, linkRect.height - 6);
+			tocBox.style.setProperty(
+				"--toc-indicator-y",
+				linkRect.top - boxRect.top + (linkRect.height - h) / 2 + "px",
+			);
+			tocBox.style.setProperty("--toc-indicator-height", h + "px");
+			tocBox.style.setProperty("--toc-indicator-opacity", "1");
+		};
+
+		const onScroll = function () {
+			if (!ticking) {
+				ticking = true;
+				requestAnimationFrame(update);
+			}
+		};
+
+		update();
+		window.addEventListener("scroll", onScroll, { passive: true });
+		window.addEventListener("resize", onScroll, { passive: true });
+
+		cleanupSpy = function () {
+			window.removeEventListener("scroll", onScroll);
+			window.removeEventListener("resize", onScroll);
+		};
+	}
+
+	initTocScrollSpy();
+	document.addEventListener("astro:page-load", initTocScrollSpy);
 </script>

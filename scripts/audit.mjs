@@ -107,6 +107,7 @@ const externalPrefixes = [
 	"--overlay-", // Flowbite / UI 库 overlay
 	"--default-", // Flowbite 默认值变量
 	"--hue", // 主题色相，Layout 内联脚本设置
+	"--toc-indicator-", // 目录高亮指示条位置，由 SbToc 脚本运行时写入
 	"--banner-height",
 	"--page-width",
 	"--card-transparent-opacity",
