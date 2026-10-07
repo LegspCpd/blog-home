@@ -47,12 +47,14 @@ jobs:
           echo "::notice::未配置 EDGEONE_API_TOKEN，跳过 EdgeOne 部署。配置后自动生效。"
           exit 0
 
+      # 顺序要紧：pnpm/action-setup 必须在 setup-node 之前，
+      # 否则 setup-node 的 cache: pnpm 找不到 pnpm 可执行文件而失败。
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-
-      - uses: pnpm/action-setup@v4
 
       - name: Install
         run: pnpm install --frozen-lockfile
