@@ -1,0 +1,117 @@
+# EdgeOne Pages 官方部署
+#
+# 依据腾讯云官方文档「Using Github Actions」：
+#   https://pages.edgeone.ai/document/using-github-actions
+#
+# 官方没有第三方 action，而是让 workflow 调用官方 CLI：
+#   npx edgeone makers deploy <dir> -n <project> -t <token>
+# 构建与部署都由 EdgeOne 服务执行，所以这里的失败输出即腾讯云的原始判定。
+#
+# 参数取自 `edgeone makers deploy --help`（CLI v1.6.41）实际签名：
+#   -n/--name    项目名
+#   -t/--token    API Token（CI 场景）
+#   -e/--env      production | preview
+#   --site        china | global  ← 国内站必须显式指定
+#   --json        机器可读输出，供 CI 解析
+#
+# 前置条件：仓库 Settings > Secrets and variables > Actions
+#   EDGEONE_API_TOKEN（必需）—— console.cloud.tencent.com/edgeone/makers → 项目 → API Token
+#   EDGEONE_PROJECT_NAME（可选，默认 blog-home）
+
+name: Deploy to EdgeOne Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    # 未配置 token 时跳过，而不是让主分支常红；配置后自动生效。
+    if: ${{ secrets.EDGEONE_API_TOKEN != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # 必须先构建：CLI 上传的是 ./dist 这个目录，
+      # runner 上只有源码，没有产物。
+      - name: Build
+        run: pnpm build
+
+      - name: Deploy via official EdgeOne CLI
+        id: deploy
+        env:
+          EDGEONE_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
+          PROJECT_NAME: ${{ secrets.EDGEONE_PROJECT_NAME || 'blog-home' }}
+        run: |
+          set -euo pipefail
+          # 标记为 skill/CI 场景触发
+          export PAGES_SOURCE=skills
+
+          # --json 让 CLI 直接输出单行 JSON，比 grep 解析日志可靠
+          npx --yes edgeone@latest makers deploy ./dist \
+            -n "$PROJECT_NAME" \
+            -t "$EDGEONE_API_TOKEN" \
+            --site china \
+            --env production \
+            --json > deploy.json 2> deploy.err || {
+              echo "::group::EdgeOne 官方输出"
+              cat deploy.err deploy.json 2>/dev/null || true
+              echo "::endgroup::"
+              echo "::error::EdgeOne 部署失败，上方为腾讯云原始输出"
+              exit 1
+            }
+
+          cat deploy.json
+
+          URL=$(node -e "try{const d=require('./deploy.json');process.stdout.write(d.deployUrl||d.EDGEONE_DEPLOY_URL||'')}catch(e){}")
+          PID=$(node -e "try{const d=require('./deploy.json');process.stdout.write(String(d.projectId||d.EDGEONE_PROJECT_ID||''))}catch(e){}")
+          {
+            echo "deploy_url=$URL"
+            echo "project_id=$PID"
+            echo "deploy_end=$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### 🚀 EdgeOne Pages 部署完成"
+            echo ""
+            echo "| 项目 | 值 |"
+            echo "| --- | --- |"
+            echo "| 仓库 | ${{ github.event.repository.name }} |"
+            echo "| 预览 | $URL |"
+            echo "| 项目 ID | $PID |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify SEO artifacts on the deployed site
+        if: steps.deploy.outputs.deploy_url != ''
+        run: |
+          set -euo pipefail
+          BASE="${{ steps.deploy.outputs.deploy_url }}"
+          fail() { echo "::error::$1"; exit 1; }
+
+          # 预览链接带鉴权 query，整体引用
+          curl -fsSL "$BASE/sitemap-index.xml" -o /tmp/smi.xml || fail "sitemap-index.xml 不可访问"
+          grep -q "legspcpd.asia" /tmp/smi.xml || fail "sitemap 未指向 legspcpd.asia"
+
+          curl -fsSL "$BASE/rss.xml" -o /tmp/rss.xml || fail "rss.xml 不可访问"
+          grep -q "<item>" /tmp/rss.xml || fail "RSS 无条目"
+
+          curl -fsSL "$BASE/robots.txt" -o /tmp/robots.txt || fail "robots.txt 不可访问"
+          grep -q "Sitemap: https://legspcpd.asia/sitemap-index.xml" /tmp/robots.txt \
+            || fail "robots.txt 的 Sitemap 行不正确"
+
+          echo "线上校验通过：sitemap / rss / robots 均可访问且域名正确"
