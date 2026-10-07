@@ -1,5 +1,6 @@
 ---
 import { SITE, NAV } from "../../config/site";
+import { DEFAULT_THEME } from "../../lib/theme/tokens";
 
 const current = Astro.url.pathname;
 ---
@@ -25,15 +26,20 @@ const current = Astro.url.pathname;
       }
     </nav>
 
-    <button
+    <!--
+      真正的 Fluent Web Component。checked 初始值由 SSR 时的默认主题决定，
+      避免升级瞬间出现状态跳变。
+    -->
+    <fluent-switch
       id="theme-toggle"
-      class="theme-btn"
-      type="button"
-      aria-label="切换明暗主题"
+      class="theme-switch"
+      checked={DEFAULT_THEME === "dark"}
+      aria-label="暗色模式"
       title="切换明暗主题"
     >
-      <span class="theme-icon" aria-hidden="true"></span>
-    </button>
+      <span slot="checked-content" aria-hidden="true">暗</span>
+      <span slot="unchecked-content" aria-hidden="true">亮</span>
+    </fluent-switch>
   </div>
 </header>
 
@@ -97,41 +103,24 @@ const current = Astro.url.pathname;
     color: var(--colorNeutralForeground1);
   }
 
-  /* 主题切换按钮 */
-  .theme-btn {
-    display: grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border: none;
-    border-radius: var(--borderRadiusMedium);
-    background: transparent;
-    color: var(--colorNeutralForeground2);
-    cursor: pointer;
-    transition: background-color var(--durationFast) var(--curveEasyEase);
+  /* 主题切换：真正的 Fluent Web Component。
+     custom element 在升级前是未定义的，行内元素会挤在一起，
+     所以先给出 block 布局与最小宽度，避免布局跳动。 */
+  .theme-switch {
+    display: block;
+    flex-shrink: 0;
+    min-width: 52px;
   }
-  .theme-btn:hover { background: var(--colorSubtleBackgroundHover); }
-
-  /* 太阳/月亮用纯 CSS 绘制，不引入图标依赖 */
-  .theme-icon {
-    position: relative;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: currentColor;
-    transition: transform var(--durationNormal) var(--curveEasyEase);
-  }
-  :global(html[data-theme="light"]) .theme-icon {
-    background: transparent;
-    box-shadow: inset -2px -2px 0 0 currentColor;
-  }
-  :global(html[data-theme="dark"]) .theme-icon::after {
-    content: "";
-    position: absolute;
-    inset: -3px -3px -3px 2px;
-    border-radius: 50%;
-    background: var(--colorNeutralBackground2);
+  /* 未升级（JS 未执行）时的降级外观：JS 就绪后由 Fluent 接管 */
+  .theme-switch:not(:defined) {
+    height: 20px;
+    border-radius: var(--borderRadiusCircular);
+    background: var(--colorNeutralBackground4);
+    border: 1px solid var(--colorNeutralStroke1);
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+    color: var(--colorNeutralForeground3);
   }
 
   @media (max-width: 640px) {
@@ -141,7 +130,35 @@ const current = Astro.url.pathname;
 </style>
 
 <script>
-  document.getElementById("theme-toggle")?.addEventListener("click", () => {
-    (window as unknown as { __toggleTheme?: () => void }).__toggleTheme?.();
-  });
+  // fluent-switch 发 change 事件（不是 click），且 checked 由 SSR 的默认主题写入。
+  // 用户实际偏好可能与默认不同，所以挂载时要先对齐一次真实主题。
+  const sw = document.getElementById("theme-toggle") as
+    | (HTMLElement & { checked: boolean })
+    | null;
+
+  const isDark = () =>
+    document.documentElement.getAttribute("data-theme") === "dark";
+
+  // 首次对齐
+  if (sw) {
+    const sync = () => {
+      sw.checked = isDark();
+    };
+    // 等待 custom element 升级完再设，否则升级过程会覆盖
+    if (sw.matches(":not(:defined)")) {
+      customElements.whenDefined("fluent-switch").then(sync).catch(sync);
+    } else {
+      sync();
+    }
+
+    sw.addEventListener("change", () => {
+      const api = (
+        window as unknown as {
+          __applyTheme?: (t: "dark" | "light") => void;
+        }
+      ).__applyTheme;
+      // 以开关当前状态为准，避免再取一次当前主题导致来回翻转
+      api?.(sw.checked ? "dark" : "light");
+    });
+  }
 </script>

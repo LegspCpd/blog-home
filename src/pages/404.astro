@@ -1,4 +1,4 @@
-﻿---
+---
 import Base from "../layouts/Base.astro";
 ---
 
@@ -7,7 +7,8 @@ import Base from "../layouts/Base.astro";
     <p class="code">404</p>
     <h1>页面不存在</h1>
     <p class="hint">你访问的页面可能已被移动或删除。</p>
-    <a class="home" href="/">返回首页</a>
+    <!-- 真正的 Fluent Web Component；未升级时靠下方 :not(:defined) 兜底 -->
+    <fluent-button class="home" appearance="accent" href="/">返回首页</fluent-button>
   </div>
 </Base>
 
@@ -22,6 +23,8 @@ import Base from "../layouts/Base.astro";
   }
   h1 { margin: 12px 0 8px; font-size: var(--fontSizeBase500); }
   .hint { margin: 0 0 28px; color: var(--colorNeutralForeground3); }
+
+  /* 升级前：custom element 是未定义的，给出接近最终态的降级外观 */
   .home {
     display: inline-block;
     padding: 8px 20px;
