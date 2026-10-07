@@ -65,6 +65,10 @@ jobs:
       - name: Accessibility
         run: node scripts/a11y-check.mjs
 
+      # ---- sitemap 可达性：格式对但指向 404 同样是负信号 ----
+      - name: Sitemap links resolve
+        run: node scripts/check-sitemap-links.mjs
+
       # ---- SEO 断言：构建通过不等于产物正确 ----
       - name: Verify sitemap + RSS + domain
         run: |
