@@ -1,4 +1,4 @@
-﻿name: Build Check
+name: Build Check
 
 # 每次推送 main 与 PR 都必须构建通过。
 # 上一代 workflow 监听的是 master（仓库实际用 main），等于从未生效——
@@ -20,13 +20,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 不声明 version —— action 会读 package.json 的 packageManager 字段。
+      # 两处同时声明会直接报 "Multiple versions of pnpm specified"。
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
+      # 必须 >= 22.12.0，与 package.json 的 engines 保持一致
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Install
