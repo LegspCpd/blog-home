@@ -29,6 +29,12 @@ const dateFmt = new Intl.DateTimeFormat("zh-CN", {
   ogImage={data.image || undefined}
   type="article"
   publishedTime={data.published.toISOString()}
+  modifiedTime={
+    data.updated && data.updated.getTime() !== data.published.getTime()
+      ? data.updated.toISOString()
+      : undefined
+  }
+  tags={data.tags}
 >
   <article class="post">
     <header class="post-head">

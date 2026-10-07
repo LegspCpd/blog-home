@@ -26,6 +26,8 @@ interface Props {
   ogImage?: string;
   type?: "website" | "article";
   publishedTime?: string;
+  modifiedTime?: string;
+  tags?: string[];
 }
 
 const {
@@ -35,34 +37,58 @@ const {
   ogImage,
   type = "website",
   publishedTime,
+  modifiedTime,
+  tags = [],
 } = Astro.props;
 
 const pageTitle = title ? `${title} | ${SITE.title}` : `${SITE.title} — ${SITE.subtitle}`;
 const canonical = abs(path);
 
-// JSON-LD：WebSite + WebPage，统一从 SITE 派生，杜绝手写域名出错
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "WebSite",
-      "@id": `${SITE.url}/#website`,
+// JSON-LD：统一从 SITE 派生，杜绝手写域名出错。
+// 文章页额外给 BlogPosting —— 少了它就没有作者信息与文章富媒体摘要。
+const graph = [
+  {
+    "@type": "WebSite",
+    "@id": `${SITE.url}/#website`,
+    url: SITE.url,
+    name: SITE.title,
+    description: SITE.description,
+    inLanguage: SITE.lang,
+  },
+  {
+    "@type": "WebPage",
+    "@id": `${canonical}#webpage`,
+    url: canonical,
+    name: pageTitle,
+    description,
+    isPartOf: { "@id": `${SITE.url}/#website` },
+    inLanguage: SITE.lang,
+  },
+];
+
+if (type === "article" && publishedTime) {
+  graph.push({
+    "@type": "BlogPosting",
+    "@id": `${canonical}#article`,
+    url: canonical,
+    headline: title ?? pageTitle,
+    description,
+    datePublished: publishedTime,
+    ...(modifiedTime ? { dateModified: modifiedTime } : {}),
+    inLanguage: SITE.lang,
+    author: {
+      "@type": "Person",
+      name: SITE.author,
       url: SITE.url,
-      name: SITE.title,
-      description: SITE.description,
-      inLanguage: SITE.lang,
     },
-    {
-      "@type": "WebPage",
-      "@id": `${canonical}#webpage`,
-      url: canonical,
-      name: pageTitle,
-      description,
-      isPartOf: { "@id": `${SITE.url}/#website` },
-      inLanguage: SITE.lang,
-    },
-  ],
-};
+    publisher: { "@id": `${SITE.url}/#website` },
+    isPartOf: { "@id": `${canonical}#webpage` },
+    ...(ogImage ? { image: [ogImage] } : {}),
+    ...(tags.length ? { keywords: tags.join(", ") } : {}),
+  });
+}
+
+const jsonLd = { "@context": "https://schema.org", "@graph": graph };
 ---
 
 <!doctype html>
