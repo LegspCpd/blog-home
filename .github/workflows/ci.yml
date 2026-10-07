@@ -61,6 +61,10 @@ jobs:
           fi
           echo "OK: fluent markup present, runtime bundled ($(wc -c <"$JS") bytes)"
 
+      # ---- 无障碍：对比度 / 语义结构 / 跳过导航链接 ----
+      - name: Accessibility
+        run: node scripts/a11y-check.mjs
+
       # ---- SEO 断言：构建通过不等于产物正确 ----
       - name: Verify sitemap + RSS + domain
         run: |

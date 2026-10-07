@@ -71,6 +71,30 @@ code, pre { font-family: var(--fontFamilyMonospace); }
   min-height: calc(100vh - 200px);
 }
 
+/* ---------- 跳到主内容（WCAG 2.4.1） ----------
+   放在全局样式里而不是组件的 <style>：skip-link 由 Base.astro 直接输出，
+   不属于任何组件，组件级 scoped 样式管不到它。 */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1000;
+  padding: 10px 16px;
+  background: var(--colorBrandBackground);
+  color: var(--colorNeutralForegroundOnBrand);
+  border-radius: 0 0 var(--borderRadiusMedium) 0;
+  text-decoration: none;
+}
+.skip-link:focus {
+  left: 0;
+  outline: 2px solid var(--colorStrokeFocus1);
+  outline-offset: -2px;
+}
+/* main 用 tabindex="-1" 承接跳转焦点，去掉浏览器默认描边 */
+.page-main:focus {
+  outline: none;
+}
+
 /* ---------- Win11 卡片 ----------
    Fluent v3 没有 card 组件，用背景层级 + 描边 + 圆角模拟 Mica 卡片 */
 .card {

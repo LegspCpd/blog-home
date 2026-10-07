@@ -125,8 +125,15 @@ const jsonLd = {
   </head>
 
   <body>
+    <!--
+      跳到主内容：键盘用户按一次 Tab 就能进入正文，
+      不用逐个穿过导航里的每个链接（WCAG 2.4.1）。
+      视觉上隐藏，聚焦时才显现。
+    -->
+    <a class="skip-link" href="#main">跳到主内容</a>
+
     <NavBar />
-    <main class="page-main">
+    <main id="main" class="page-main" tabindex="-1">
       <div class="container">
         <slot />
       </div>
