@@ -53,21 +53,26 @@ jobs:
             fail "old domain blog.legspcpd.top found in build output"
           fi
 
-          # sitemap 的每一条 loc 必须是新域名
+          # sitemap 的每一条 loc 必须是新域名（逐条列出，不用 head 截断）
           BAD=$(grep -o '<loc>[^<]*</loc>' dist/sitemap-0.xml \
-                | grep -v "$SITE" | head -n 5 || true)
+                | grep -v "$SITE" || true)
           [ -z "$BAD" ] || fail "sitemap contains wrong-domain URLs: $BAD"
 
           # 文章必须带 lastmod（内容新鲜度信号）
-          POSTS=$(grep -c '<loc>.*/posts/' dist/sitemap-0.xml || true)
-          LASTMOD=$(grep -c '<lastmod>' dist/sitemap-0.xml || true)
+          # 注意：sitemap 是单行 XML，必须用 grep -o | wc -l 数"出现次数"，
+          # 用 grep -c 数的是"匹配行数"，单行文件永远返回 1 —— 那是假绿。
+          POSTS=$(grep -o '<loc>[^<]*/posts/[^<]*</loc>' dist/sitemap-0.xml | wc -l)
+          LASTMOD=$(grep -o '<lastmod>' dist/sitemap-0.xml | wc -l)
           [ "$POSTS" -gt 0 ] || fail "no post URLs in sitemap"
+          [ "$POSTS" -ge 10 ] || fail "expected 16 posts, got $POSTS"
           [ "$LASTMOD" -ge "$POSTS" ] \
             || fail "only $LASTMOD lastmod for $POSTS posts"
 
           # RSS 必须有条目且指向新域名
-          ITEMS=$(grep -c '<item>' dist/rss.xml || true)
+          ITEMS=$(grep -o '<item>' dist/rss.xml | wc -l)
           [ "$ITEMS" -gt 0 ] || fail "rss.xml has no items"
+          [ "$ITEMS" -eq "$POSTS" ] \
+            || fail "rss items ($ITEMS) != post count ($POSTS)"
           grep -q "$SITE" dist/rss.xml || fail "rss.xml missing site domain"
 
           # robots 必须声明 sitemap
