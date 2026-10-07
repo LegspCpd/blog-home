@@ -31,11 +31,21 @@ concurrency:
 
 jobs:
   deploy:
-    # 未配置 token 时跳过，而不是让主分支常红；配置后自动生效。
-    if: ${{ secrets.EDGEONE_API_TOKEN != '' }}
     runs-on: ubuntu-latest
+    env:
+      # secrets 不能直接用在 job 级 if（actionlint: allowed contexts are
+      # github/inputs/needs/vars），所以先注入 env，再在 step 里判断。
+      EDGEONE_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
+      PROJECT_NAME: ${{ secrets.EDGEONE_PROJECT_NAME || 'blog-home' }}
     steps:
       - uses: actions/checkout@v4
+
+      # 未配置 token 时直接结束，保持主分支绿色
+      - name: Check token
+        if: env.EDGEONE_API_TOKEN == ''
+        run: |
+          echo "::notice::未配置 EDGEONE_API_TOKEN，跳过 EdgeOne 部署。配置后自动生效。"
+          exit 0
 
       - uses: actions/setup-node@v4
         with:
@@ -47,16 +57,13 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      # 必须先构建：CLI 上传的是 ./dist 这个目录，
-      # runner 上只有源码，没有产物。
+      # 必须先构建：CLI 上传的是 ./dist，runner 上只有源码
       - name: Build
         run: pnpm build
 
       - name: Deploy via official EdgeOne CLI
+        if: env.EDGEONE_API_TOKEN != ''
         id: deploy
-        env:
-          EDGEONE_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
-          PROJECT_NAME: ${{ secrets.EDGEONE_PROJECT_NAME || 'blog-home' }}
         run: |
           set -euo pipefail
           # 标记为 skill/CI 场景触发
