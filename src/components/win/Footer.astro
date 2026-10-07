@@ -1,0 +1,58 @@
+---
+import { SITE } from "../../config/site";
+
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <nav class="footer-links" aria-label="页脚导航">
+      <a href="/">首页</a>
+      <a href="/posts/">文章</a>
+      <a href="/archive/">归档</a>
+      <a href="/tags/">标签</a>
+      <a href="/rss.xml">RSS</a>
+      <a href={SITE.links.github} rel="noopener noreferrer" target="_blank">GitHub</a>
+    </nav>
+    <p class="copyright">
+      © {year} {SITE.title} ·{" "}
+      <a href={SITE.url}>{SITE.url.replace(/^https?:\/\//, "")}</a>
+    </p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    margin-top: auto;
+    border-top: 1px solid var(--colorNeutralStroke1);
+    background: var(--colorNeutralBackground2);
+    padding-block: var(--spacingHorizontalXL);
+  }
+
+  .footer-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacingHorizontalM);
+  }
+
+  .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--spacingHorizontalL);
+  }
+
+  .footer-links a {
+    color: var(--colorNeutralForeground3);
+    font-size: var(--fontSizeBase200);
+    text-decoration: none;
+  }
+  .footer-links a:hover { color: var(--colorNeutralForeground1); }
+
+  .copyright {
+    margin: 0;
+    color: var(--colorNeutralForeground4);
+    font-size: var(--fontSizeBase100);
+  }
+</style>

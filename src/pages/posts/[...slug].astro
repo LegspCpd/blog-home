@@ -1,1089 +1,143 @@
 ---
-/**
- * Supabase-styled blog post page.
- * ---------------------------------------------------------------------------
- * Preserves the Firefly content pipeline (markdown, KaTeX, TOC, comments,
- * licensing, related posts, encrypted posts) while rendering it inside the
- * Supabase design language:
- *   - Centered reading column on white canvas
- *   - Flat meta row (no icon chips), display-tier title
- *   - Hairline-separated prev/next navigation
- */
-import { render } from "astro:content";
-import * as path from "node:path";
-import Comment from "@components/comment/index.astro";
-import Markdown from "@components/common/Markdown.astro";
-import EncryptedPost from "@components/features/EncryptedPost.astro";
-import KatexManager from "@components/features/KatexManager.astro";
-import License from "@components/misc/License.astro";
-import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
-import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
-import { getRelatedPosts, getSortedPosts } from "@utils/content-utils";
-import {
-	getFileDirFromPath,
-	getPostUrlBySlug,
-	removeFileExtension,
-} from "@utils/url-utils";
-import { Icon } from "astro-icon/components";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import CoverImage from "@/components/common/CoverImage.astro";
-import SbPostCard from "@/components/layout/SbPostCard.astro";
-import SbToc from "@/components/layout/SbToc.astro";
-import SharePoster from "@/components/misc/SharePoster.svelte";
-import { coverImageConfig } from "@/config/coverImageConfig";
-import { licenseConfig } from "@/config/licenseConfig";
-import { profileConfig } from "@/config/profileConfig";
-import { siteConfig } from "@/config/siteConfig";
-import { sponsorConfig } from "@/config/sponsorConfig";
-import { formatDateToYYYYMMDD } from "@/utils/date-utils";
-import { getBlogPostStructuredData } from "@/lib/seo/json-ld";
-import { getApiUrlList, processCoverImageSync } from "@/utils/image-utils";
-import { url } from "@/utils/url-utils";
+import { getCollection, render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import { SITE } from "../../config/site";
 
 export async function getStaticPaths() {
-	const blogEntries = await getSortedPosts();
-	return blogEntries.map((entry) => ({
-		params: { slug: removeFileExtension(entry.id) },
-		props: { entry },
-	}));
+  const posts = await getCollection("posts", ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
 }
 
-const { entry } = Astro.props;
-const { Content, headings } = await render(entry);
-const { remarkPluginFrontmatter } = await render(entry);
+const { post } = Astro.props;
+const { Content } = await render(post);
+const { data } = post;
 
-const processedImage = processCoverImageSync(entry.data.image, entry.id);
-const apiUrls = getApiUrlList(entry.data.image, entry.id);
-
-let posterCoverUrl = processedImage;
-if (processedImage) {
-	const isLocal = !(
-		processedImage.startsWith("/") ||
-		processedImage.startsWith("http") ||
-		processedImage.startsWith("https") ||
-		processedImage.startsWith("data:")
-	);
-	if (isLocal) {
-		const basePath = getFileDirFromPath(entry.filePath || "");
-		const files = import.meta.glob<ImageMetadata>("../../**", {
-			import: "default",
-		});
-		const normalizedPath = path
-			.normalize(path.join("../../", basePath, processedImage))
-			.replace(/\\/g, "/");
-		const file = files[normalizedPath];
-		if (file) {
-			const img = await file();
-			posterCoverUrl = img.src;
-		}
-	}
-}
-
-let posterAvatarUrl: string | null = profileConfig.avatar || null;
-if (posterAvatarUrl) {
-	const isLocalAvatar = !(
-		posterAvatarUrl.startsWith("/") ||
-		posterAvatarUrl.startsWith("http") ||
-		posterAvatarUrl.startsWith("https") ||
-		posterAvatarUrl.startsWith("data:")
-	);
-	if (isLocalAvatar) {
-		const files = import.meta.glob<ImageMetadata>("../../**", {
-			import: "default",
-		});
-		const normalizedPath = path
-			.normalize(path.join("../../", posterAvatarUrl))
-			.replace(/\\/g, "/");
-		const file = files[normalizedPath];
-		if (file) {
-			const img = await file();
-			posterAvatarUrl = img.src;
-		}
-	}
-}
-
-dayjs.extend(utc);
-
-const jsonLdRaw = getBlogPostStructuredData({
-	title: entry.data.title,
-	description:
-		entry.data.description?.trim() ||
-		remarkPluginFrontmatter.excerpt?.trim() ||
-		entry.data.title,
-	publishedDate: formatDateToYYYYMMDD(entry.data.published),
-	updatedDate: entry.data.updated
-		? formatDateToYYYYMMDD(entry.data.updated)
-		: undefined,
-	slug: entry.id,
-	tags: entry.data.tags,
-	coverImage: processedImage || undefined,
-	authorName: profileConfig.name,
-	inLanguage: entry.data.lang
-		? entry.data.lang.replace("_", "-")
-		: siteConfig.lang.replace("_", "-"),
+const dateFmt = new Intl.DateTimeFormat("zh-CN", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
 });
-
-const relatedPosts = await getRelatedPosts(entry, 3);
-
-const postDescription = (
-	entry.data.description?.trim() ||
-	remarkPluginFrontmatter.excerpt?.trim() ||
-	entry.data.title
-).slice(0, 200);
-const postOgImage = processedImage || undefined;
-
-const hasToc = headings.filter((h) => h.depth > 1 && h.depth <= 3).length > 0;
-const showActionCard =
-	siteConfig.sharePoster ||
-	(sponsorConfig.showButtonInPost && siteConfig.pages.sponsor);
-
-/**
- * 长文折叠：阅读时长超过 5 分钟才折叠。
- * 阈值定得比较高 —— 短文折叠反而碍事，只有真正长的教程才需要。
- */
-const isLongRead = (remarkPluginFrontmatter.minutes ?? 0) >= 5;
 ---
 
-<SupabaseLayout
-  title={entry.data.title}
-  description={postDescription}
-  lang={entry.data.lang}
-  setOGTypeArticle={true}
-  postSlug={entry.id}
-  ogImage={postOgImage}
+<Base
+  title={data.title}
+  description={data.description || SITE.description}
+  path={`/posts/${post.id}/`}
+  ogImage={data.image || undefined}
+  type="article"
+  publishedTime={data.published.toISOString()}
 >
-  <KatexManager slot="head" />
-  <script is:inline slot="head" type="application/ld+json" set:html={jsonLdRaw} />
-
-  <div class="sb-post-layout su-article-shell">
-    <!-- ===== Article ===== -->
-    <article class="sb-article">
-      <!-- Breadcrumb -->
-      <nav class="sb-article__crumb" aria-label="面包屑">
-        <a href={url("/")}>主页</a>
-        <span aria-hidden="true">/</span>
-        <a href={url("/archive/")}>归档</a>
+  <article class="post">
+    <header class="post-head">
+      <h1>{data.title}</h1>
+      <div class="post-meta">
+        <time datetime={data.published.toISOString()}>
+          {dateFmt.format(data.published)}
+        </time>
         {
-          entry.data.category && (
-            <>
-              <span aria-hidden="true">/</span>
-              <span>{entry.data.category}</span>
-            </>
-          )
+          data.updated &&
+            data.updated.getTime() !== data.published.getTime() && (
+              <span>· 更新于 {dateFmt.format(data.updated)}</span>
+            )
         }
-      </nav>
-
-      <!-- Title block -->
-      <header class="sb-article__head">
-        <div class="sb-article__title-row">
-          <h1 class="sb-article__title su-animate">{entry.data.title}</h1>
-
-          {/* 工具按钮：复制链接 / 分享 */}
-          <div class="sb-article__tools">
-            <button
-              type="button"
-              class="sb-tool-btn"
-              data-copy-link={Astro.url.href}
-              aria-label="复制链接"
-              title="复制链接"
-            >
-              <Icon name="material-symbols:link" />
-            </button>
-            <button
-              type="button"
-              class="sb-tool-btn"
-              data-share
-              aria-label="分享"
-              title="分享"
-              hidden
-            >
-              <Icon name="material-symbols:ios-share" />
-            </button>
-          </div>
-        </div>
-
-        <div class="sb-article__meta">
-          <span class="su-mono">{formatDateToYYYYMMDD(entry.data.published)}</span>
-          {
-            entry.data.updated && (
-              <>
-                <span class="sb-article__dot" aria-hidden="true" />
-                <span class="su-mono">
-                  更新于 {formatDateToYYYYMMDD(entry.data.updated)}
-                </span>
-              </>
-            )
-          }
-          {
-            entry.data.category && (
-              <>
-                <span class="sb-article__dot" aria-hidden="true" />
-                <span>{entry.data.category}</span>
-              </>
-            )
-          }
-          <span class="sb-article__dot" aria-hidden="true" />
-          <span>
-            {remarkPluginFrontmatter.words} 字 · {remarkPluginFrontmatter.minutes} 分钟
-          </span>
-          {
-            entry.data.password && (
-              <>
-                <span class="sb-article__dot" aria-hidden="true" />
-                <span style="display:inline-flex;align-items:center;gap:4px;">
-                  <Icon
-                    name="material-symbols:lock-outline"
-                    style="font-size:14px;"
-                  />
-                  {i18n(I18nKey.postEncrypted)}
-                </span>
-              </>
-            )
-          }
-        </div>
-
-        {
-          entry.data.tags && entry.data.tags.length > 0 && (
-            <nav class="sb-article__tags" aria-label="文章标签">
-              {entry.data.tags.map((tag) => (
-                <a
-                  class="su-pill su-pill--soft"
-                  href={url(`/tags/${encodeURIComponent(tag.trim())}/`)}
-                >
-                  #{tag.trim()}
-                </a>
-              ))}
-            </nav>
-          )
-        }
-      </header>
-
-      <!-- Cover -->
-      {
-        processedImage && coverImageConfig.enableInPost && (
-          <div class="sb-article__cover">
-            <CoverImage
-              id="post-cover"
-              src={processedImage}
-              basePath={getFileDirFromPath(entry.filePath || "")}
-              alt={`${entry.data.title} - ${siteConfig.title}`}
-              preview={false}
-              apiUrls={apiUrls}
-            />
-          </div>
-        )
-      }
-
-      <!-- Body -->
-      {
-        entry.data.password ? (
-          <EncryptedPost
-            password={entry.data.password}
-            slug={entry.id}
-            hint={entry.data.passwordHint}
-          >
-            <Markdown
-              class="markdown-content su-animate"
-              data-long-read={isLongRead ? "" : undefined}
-            >
-              <Content />
-            </Markdown>
-          </EncryptedPost>
-        ) : (
-          <Markdown
-            class="markdown-content su-animate"
-            data-long-read={isLongRead ? "" : undefined}
-          >
-            <Content />
-          </Markdown>
-        )
-      }
-
-      {/* 长文展开：默认只露出开头若干屏，展开后不再限制高度 */}
-      {
-        isLongRead ? (
-          <div class="lr-toggle" data-lr-toggle>
-            <button type="button" class="su-btn su-btn--outline lr-btn">
-              <span data-lr-label>展开全文</span>
-              <Icon name="material-symbols:expand-more" class="lr-icon" />
-            </button>
-          </div>
-        ) : null
-      }
-
-      <!-- Tags footer -->
-      {
-        entry.data.tags && entry.data.tags.length > 0 && (
-          <div class="sb-article__tags sb-article__tags--foot">
-            {entry.data.tags.map((tag) => (
-              <a
-                class="su-pill su-pill--outline"
-                href={url(`/tags/${encodeURIComponent(tag.trim())}/`)}
-              >
-                #{tag.trim()}
-              </a>
-            ))}
-          </div>
-        )
-      }
-
-      <!-- Action card -->
-      {
-        showActionCard && (
-          <div class="su-card sb-action-card">
-            <div class="sb-action-card__text">
-              <div class="su-heading-md">
-                {sponsorConfig.showButtonInPost && siteConfig.pages.sponsor
-                  ? i18n(I18nKey.sponsorButton)
-                  : i18n(I18nKey.shareOnSocial)}
-              </div>
-              <p class="su-caption su-text-mute" style="margin-top:4px;">
-                {sponsorConfig.showButtonInPost && siteConfig.pages.sponsor
-                  ? i18n(I18nKey.sponsorButtonText)
-                  : i18n(I18nKey.shareOnSocialDescription)}
-              </p>
-            </div>
-            <div class="sb-action-card__actions">
-              {
-                siteConfig.sharePoster && (
-                  <SharePoster
-                    client:visible
-                    title={entry.data.title}
-                    author={profileConfig.name}
-                    description={entry.data.description || entry.data.title}
-                    pubDate={formatDateToYYYYMMDD(entry.data.published)}
-                    coverImage={posterCoverUrl}
-                    url={Astro.url.href}
-                    siteTitle={siteConfig.title}
-                    avatar={posterAvatarUrl}
-                  />
-                )
-              }
-              {
-                sponsorConfig.showButtonInPost && siteConfig.pages.sponsor && (
-                  <a href={url("/sponsor/")} class="su-btn su-btn su-btn--primary">
-                    {i18n(I18nKey.sponsor)}
-                  </a>
-                )
-              }
-            </div>
-          </div>
-        )
-      }
-
-      <!-- License -->
-      {
-        licenseConfig.enable && (
-          <License
-            title={entry.data.title}
-            id={entry.id}
-            pubDate={entry.data.published}
-            author={entry.data.author}
-            sourceLink={entry.data.sourceLink}
-            licenseName={entry.data.licenseName}
-            licenseUrl={entry.data.licenseUrl}
-            class="license-container su-animate"
-          />
-        )
-      }
-    </article>
-
-    <!-- ===== Side rail (TOC) ===== -->
-    {hasToc && <SbToc headings={headings} />}
-  </div>
-
-  <!-- 窄屏目录入口：仅 <1024px 显示，唤起底部抽屉 -->
-  {
-    hasToc ? (
-      <button
-        type="button"
-        class="toc-fab"
-        data-fab
-        data-fab-order="3"
-        data-fab-icon-only
-        data-toc-open
-        aria-label="打开目录"
-        title="目录"
-      >
-        <Icon name="material-symbols:format-list-bulleted" />
-      </button>
-    ) : null
-  }
-
-  <!-- Prev / Next -->
-  <div class="su-article-foot">
-    <nav class="sb-prevnext" aria-label="文章导航">
-      <a
-        href={entry.data.nextSlug
-          ? getPostUrlBySlug(entry.data.nextSlug)
-          : url("/")}
-        class="su-card su-card su-card--hover sb-prevnext__item"
-      >
-        <span class="sb-prevnext__label">
-          <Icon name="material-symbols:arrow-back" style="font-size:15px;" />
-          上一篇
-        </span>
-        <span class="sb-prevnext__title">
-          {entry.data.nextTitle || i18n(I18nKey.home)}
-        </span>
-      </a>
-
-      <a
-        href={entry.data.prevSlug
-          ? getPostUrlBySlug(entry.data.prevSlug)
-          : url("/")}
-        class="su-card su-card su-card--hover sb-prevnext__item sb-prevnext__item--next"
-      >
-        <span class="sb-prevnext__label">
-          下一篇
-          <Icon name="material-symbols:arrow-forward" style="font-size:15px;" />
-        </span>
-        <span class="sb-prevnext__title">
-          {entry.data.prevTitle || i18n(I18nKey.home)}
-        </span>
-      </a>
-    </nav>
-  </div>
-
-  <!-- Related -->
-  {
-    relatedPosts.length > 0 && (
-      <section class="su-section-sm">
-        <div class="su-article-related">
-          <h2 class="su-display-md" style="margin-bottom:24px;">
-            相关文章
-          </h2>
-          <div class="sb-related-grid">
-            {relatedPosts.map((post) => (
-              <SbPostCard
-                entry={post}
-                title={post.data.title}
-                url={getPostUrlBySlug(post.id)}
-                published={post.data.published}
-                updated={post.data.updated}
-                tags={post.data.tags}
-                category={post.data.category}
-                description={post.data.description}
-                pinned={post.data.pinned}
-                password={!!post.data.password}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  <!-- Comments -->
-  {
-    entry.data.comment && !entry.data.password && (
-      <div class="su-article-comments">
-        <Comment post={entry} />
+        {data.category && <span class="badge">{data.category}</span>}
       </div>
-    )
-  }
-</SupabaseLayout>
+      {data.tags.length > 0 && (
+        <ul class="tags">
+          {data.tags.map((tag) => (
+            <li><a href={`/tags/${encodeURIComponent(tag)}/`}>#{tag}</a></li>
+          ))}
+        </ul>
+      )}
+    </header>
 
-<style is:global>
-  /* ---- 容器 ----
-     原 SupabaseShell 用 sb-container 做居中；迁到侧栏布局后由
-     supabase-layout.css 的 .su-main > * 统一控制宽度，这里只管阅读区。 */
-  .su-article-shell {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 220px;
-    gap: 48px;
-    align-items: start;
-    padding-top: 40px;
-    max-width: 1000px;
-    margin-inline: auto;
-  }
-
-  /* ---- 长文折叠 ----
-     只限制正文高度并在底部渐隐，按钮浮在渐变之上。
-     展开后由 JS 移除 data-long-read，max-height 限制随之失效。 */
-  .sb-article [data-long-read] {
-    position: relative;
-    max-height: 70vh;
-    overflow: hidden;
-  }
-
-  .lr-toggle {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-  }
-
-  .lr-btn {
-    gap: 6px;
-  }
-
-  .lr-icon {
-    font-size: 18px;
-    transition: transform 0.2s ease;
-  }
-
-  /* 展开后按钮淡出，避免占位 */
-  .lr-toggle.is-expanded {
-    display: none;
-  }
-
-  /* 折叠状态下的底部渐隐，暗示「下面还有」 */
-  .sb-article [data-long-read]::after {
-    content: "";
-    position: absolute;
-    inset: auto 0 0 0;
-    height: 120px;
-    pointer-events: none;
-    background: linear-gradient(
-      to bottom,
-      transparent,
-      var(--su-background)
-    );
-  }
-
-  /* 展开后移除渐变 */
-  .sb-article [data-long-read].is-expanded {
-    max-height: none;
-    overflow: visible;
-  }
-
-  .sb-article [data-long-read].is-expanded::after {
-    display: none;
-  }
-
-  /* ---- 标题区工具按钮 ---- */
-  .sb-article__title-row {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-  }
-
-  .sb-article__title-row .sb-article__title {
-    min-width: 0;
-  }
-
-  .sb-article__tools {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex: none;
-    /* 默认低调，悬停标题区时才完全显形 */
-    opacity: 0.55;
-    transition: opacity 0.15s ease;
-  }
-
-  .sb-article__title-row:hover .sb-article__tools,
-  .sb-article__tools:focus-within {
-    opacity: 1;
-  }
-
-  .sb-tool-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--su-border);
-    border-radius: var(--su-radius-sm);
-    background-color: var(--su-card);
-    color: var(--su-muted-foreground);
-    font-size: 17px;
-    cursor: pointer;
-    transition:
-      border-color 0.15s ease,
-      color 0.15s ease,
-      background-color 0.15s ease;
-  }
-
-  .sb-tool-btn:hover {
-    border-color: var(--su-accent-text);
-    color: var(--su-accent-text);
-  }
-
-  /* 复制成功后的短暂确认 */
-  .sb-tool-btn.is-ok {
-    border-color: var(--su-accent-text);
-    color: var(--su-accent-text);
-    background-color: var(--su-primary-soft);
-  }
-
-  /* 窄屏没有 hover，始终显形 */
-  @media (max-width: 767px) {
-    .sb-article__tools {
-      opacity: 1;
-    }
-  }
-
-  /* 上下篇、相关文章：与正文左边缘对齐，跟随同一栅格。
-     评论区自带宽度约束（见 comment/index.astro），这里不再重复限宽。 */
-  .su-article-foot,
-  .su-article-related {
-    max-width: 720px;
-    margin-inline: auto;
-    padding-inline: 0;
-  }
-
-  .su-article-comments {
-    padding-bottom: 32px;
-  }
-
-  .sb-post-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 220px;
-    gap: 48px;
-    align-items: start;
-    padding-top: 40px;
-  }
-
-  .sb-article {
-    min-width: 0;
-    max-width: 720px;
-  }
-
-  .sb-article__crumb {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--su-ink-faint);
-    margin-bottom: 20px;
-  }
-
-  .sb-article__crumb a {
-    color: var(--su-muted-foreground);
-    text-decoration: none;
-  }
-
-  .sb-article__crumb a:hover {
-    color: var(--su-foreground);
-  }
-
-  .sb-article__head {
-    margin-bottom: 32px;
-  }
-
-  .sb-article__title {
-    font-size: 48px;
-    font-weight: 500;
-    line-height: 1.1;
-    letter-spacing: -1.44px;
-    margin: 0 0 20px;
-    color: var(--su-foreground);
-  }
-
-  .sb-article__meta {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    font-size: 13px;
-    color: var(--su-muted-foreground);
-    margin-bottom: 20px;
-  }
-
-  .sb-article__dot {
-    width: 3px;
-    height: 3px;
-    border-radius: var(--su-radius-full);
-    background: var(--su-hairline-strong);
-  }
-
-  .sb-article__tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .sb-article__tags--foot {
-    margin-top: 40px;
-    padding-top: 24px;
-    border-top: 1px solid var(--su-border);
-  }
-
-  .sb-article__cover {
-    margin-bottom: 32px;
-    border-radius: var(--su-radius-lg);
-    overflow: hidden;
-    border: 1px solid var(--su-border);
-  }
-
-  .sb-action-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    flex-wrap: wrap;
-    padding: 20px 24px;
-    margin-top: 32px;
-    background: var(--su-canvas-soft);
-  }
-
-  .sb-action-card__actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .sb-prevnext {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-top: 32px;
-  }
-
-  .sb-prevnext__item {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 20px;
-    text-decoration: none;
-    min-width: 0;
-  }
-
-  .sb-prevnext__item--next {
-    text-align: right;
-    align-items: flex-end;
-  }
-
-  .sb-prevnext__label {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--su-ink-faint);
-  }
-
-  .sb-prevnext__title {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--su-foreground);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100%;
-  }
-
-  .sb-prevnext__item:hover .sb-prevnext__title {
-    color: var(--su-primary-deep);
-  }
-
-  .sb-related-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px;
-  }
-
-  @media (max-width: 1199px) {
-    .sb-post-layout {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    /* .sb-toc-rail 的隐藏已移到 SbToc 组件内部，
-       那里同时把窄屏目录做成了底部抽屉 */
-  }
-
-  @media (max-width: 1023px) {
-    .sb-article__title {
-      font-size: 36px;
-      letter-spacing: -0.72px;
-    }
-    .sb-related-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 640px) {
-    .sb-post-layout {
-      padding-top: 32px;
-      gap: 32px;
-    }
-    .sb-article__title {
-      font-size: 28px;
-      letter-spacing: -0.42px;
-    }
-    .sb-prevnext {
-      grid-template-columns: 1fr;
-    }
-    .sb-prevnext__item--next {
-      text-align: left;
-      align-items: flex-start;
-    }
-    .sb-related-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
-
-<!-- 阅读进度条：长文很有必要，纯 CSS 变量驱动，零 JS 依赖阅读本身 -->
-<div class="rd-progress" aria-hidden="true">
-  <span class="rd-progress-bar"></span>
-</div>
-
-<!-- 返回顶部：滚动超过一屏后出现。
-     用统一的 [data-fab] 浮动控件体系，避免与命令面板按钮重叠。 -->
-<button
-  type="button"
-  data-fab
-  data-fab-order="1"
-  data-fab-icon-only
-  class="rd-top"
-  data-rd-top
-  aria-label="返回顶部"
-  title="返回顶部"
->
-  <Icon name="material-symbols:keyboard-arrow-up" />
-</button>
-
-<style is:global>
-  /* 进度条固定在顶部，宽度由 JS 写入 --rd-progress */
-  .rd-progress {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    z-index: 60;
-    pointer-events: none;
-    background-color: transparent;
-  }
-
-  .rd-progress-bar {
-    display: block;
-    height: 100%;
-    width: var(--rd-progress, 0%);
-    background-color: var(--su-accent-text);
-    transition: width 0.1s linear;
-  }
-
-  /* 返回顶部按钮的定位、边框、阴影等已由布局的 [data-fab] 统一提供，
-     这里只负责显隐状态。 */
-
-  .rd-top.is-visible {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-  }
-
-  /* 窄屏目录入口：桌面端有右侧目录栏，不需要这个按钮 */
-  .toc-fab {
-    display: none;
-  }
-
-  @media (max-width: 1023px) {
-    .toc-fab {
-      display: inline-flex;
-    }
-  }
-</style>
-
-<script>
-  // 复制链接 / 分享。
-  (function () {
-    const copyBtn = document.querySelector<HTMLButtonElement>("[data-copy-link]");
-    const shareBtn = document.querySelector<HTMLButtonElement>("[data-share]");
-
-    const flash = (btn: HTMLElement | null) => {
-      if (!btn) return;
-      btn.classList.add("is-ok");
-      setTimeout(() => btn.classList.remove("is-ok"), 1500);
-    };
-
-    const copyText = (text: string): Promise<boolean> => {
-      if (navigator.clipboard && window.isSecureContext) {
-        return navigator.clipboard.writeText(text).then(
-          () => true,
-          () => false,
-        );
-      }
-      // 非安全上下文（http 访问）退回 execCommand
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.setAttribute("readonly", "");
-        ta.style.position = "fixed";
-        ta.style.top = "-1000px";
-        document.body.appendChild(ta);
-        ta.select();
-        const ok = document.execCommand("copy");
-        document.body.removeChild(ta);
-        return Promise.resolve(ok);
-      } catch {
-        return Promise.resolve(false);
-      }
-    };
-
-    copyBtn?.addEventListener("click", () => {
-      const link = copyBtn.getAttribute("data-copy-link") || location.href;
-      copyText(link).then((ok) => {
-        flash(ok ? copyBtn : null);
-        if (!ok) copyBtn.setAttribute("aria-label", "复制失败");
-      });
-    });
-
-    // 原生分享仅在支持的浏览器上显示，避免给不支持的人一个死按钮
-    if (shareBtn && typeof navigator.share === "function") {
-      shareBtn.hidden = false;
-      shareBtn.addEventListener("click", () => {
-        navigator
-          .share({
-            title: document.title,
-            url: location.href,
-          })
-          .catch(() => {
-            /* 用户取消分享，不做处理 */
-          });
-      });
-    }
-  })();
-
-  // expressive-code 的复制按钮由第三方生成，只有 title 没有 aria-label，
-  // 读屏软件读不到中文语义。这里补上，并顺手把 title 也本地化。
-  // swup 切页后代码块会被替换，因此监听 astro:page-load 重新处理。
-  function localizeCopyButtons() {
-    document
-      .querySelectorAll<HTMLButtonElement>(
-        ".expressive-code .copy button:not([data-zh])",
+    {
+      data.image && (
+        <img class="cover" src={data.image} alt="" loading="eager" decoding="async" />
       )
-      .forEach((btn) => {
-        btn.dataset.zh = "1";
-        btn.setAttribute("aria-label", "复制代码");
-        btn.title = "复制代码";
-      });
+    }
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    <footer class="post-foot">
+      <a class="back" href="/posts/">← 返回文章列表</a>
+    </footer>
+  </article>
+</Base>
+
+<style>
+  .post { max-width: 760px; margin-inline: auto; }
+
+  .post-head {
+    margin-bottom: var(--spacingHorizontalXL);
+    padding-bottom: var(--spacingHorizontalL);
+    border-bottom: 1px solid var(--colorNeutralStroke1);
   }
-  localizeCopyButtons();
-  document.addEventListener("astro:page-load", localizeCopyButtons);
 
-  // 长文展开 / 收起。
-  // 只对带 data-long-read 的正文生效（服务端按阅读时长 ≥5 分钟标记）。
-  (function () {
-    const body = document.querySelector<HTMLElement>("[data-long-read]");
-    const toggle = document.querySelector<HTMLElement>("[data-lr-toggle]");
-    const btn = toggle?.querySelector("button");
-    const label = toggle?.querySelector("[data-lr-label]");
-    if (!body || !btn || !label) return;
+  .post-head h1 {
+    margin-bottom: 10px;
+    font-size: var(--fontSizeBase600);
+    line-height: 1.3;
+  }
 
-    let expanded = false;
+  .post-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    color: var(--colorNeutralForeground4);
+    font-size: var(--fontSizeBase200);
+  }
 
-    btn.addEventListener("click", function () {
-      expanded = !expanded;
-      body.classList.toggle("is-expanded", expanded);
-      toggle?.classList.toggle("is-expanded", expanded);
-      label.textContent = expanded ? "收起全文" : "展开全文";
-      btn.setAttribute("aria-expanded", expanded ? "true" : "false");
+  .badge {
+    padding: 1px 8px;
+    border-radius: var(--borderRadiusCircular);
+    background: var(--colorSubtleBackground);
+    color: var(--colorBrandForeground1);
+  }
 
-      // 展开时把焦点移到正文开头，否则键盘用户会「丢失焦点」
-      if (expanded) {
-        body.scrollIntoView({ behavior: "smooth", block: "start" });
-        body.setAttribute("tabindex", "-1");
-        body.focus({ preventScroll: true });
-      }
-    });
-  })();
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tags a {
+    padding: 1px 8px;
+    border-radius: var(--borderRadiusCircular);
+    border: 1px solid var(--colorNeutralStroke1);
+    color: var(--colorNeutralForeground3);
+    font-size: var(--fontSizeBase100);
+    text-decoration: none;
+  }
+  .tags a:hover {
+    background: var(--colorSubtleBackgroundHover);
+    color: var(--colorNeutralForeground1);
+  }
 
-  // 阅读进度 + 返回顶部。
-  // 用 requestAnimationFrame 节流，避免滚动时高频触发布局计算。
-  (function () {
-    const bar = document.querySelector<HTMLElement>(".rd-progress-bar");
-    const top = document.querySelector<HTMLButtonElement>("[data-rd-top]");
-    const article = document.querySelector<HTMLElement>(".sb-article");
-    if (!bar || !article) return;
+  .cover {
+    width: 100%;
+    border-radius: var(--borderRadiusXLarge);
+    margin-bottom: var(--spacingHorizontalXL);
+  }
 
-    let ticking = false;
+  .post-foot {
+    margin-top: 48px;
+    padding-top: var(--spacingHorizontalL);
+    border-top: 1px solid var(--colorNeutralStroke1);
+  }
 
-    const update = () => {
-      ticking = false;
-      const rect = article.getBoundingClientRect();
-      const total = rect.height - window.innerHeight;
-      // 文章可能不满一屏，此时进度直接给满，避免出现负值
-      const scrolled =
-        total > 0 ? Math.min(Math.max(-rect.top / total, 0), 1) : 1;
-      bar.style.setProperty("--rd-progress", `${(scrolled * 100).toFixed(2)}%`);
-
-      if (top) {
-        top.classList.toggle("is-visible", window.scrollY > window.innerHeight * 0.6);
-      }
-    };
-
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(update);
-    };
-
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
-
-    top?.addEventListener("click", () => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-
-    // swup 切页后重新绑定（astro:page-load 由 swup 派发）
-    document.addEventListener("astro:page-load", () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      window.addEventListener("scroll", onScroll, { passive: true });
-      window.addEventListener("resize", onScroll, { passive: true });
-      update();
-    });
-  })();
-
-  // ------------------------------------------------------------
-  // 阅读位置记忆
-  // ------------------------------------------------------------
-  // 长文读到一半离开、稍后回来时，应该回到离开时的位置，
-  // 而不是从头开始。用 sessionStorage 而非 localStorage：
-  // 关掉标签页后这次「阅读会话」就结束了，下次进来从头读更自然。
-  (function () {
-    var KEY = "rd-pos:" + location.pathname;
-    var article = document.querySelector<HTMLElement>(".sb-article");
-    if (!article) return;
-
-    // 只在有一定滚动量时才记录，否则「刚进来就离开」会存下 0
-    var MIN_SAVE = 200;
-
-    var save = function () {
-      var y = window.scrollY;
-      if (y > MIN_SAVE) {
-        try {
-          sessionStorage.setItem(KEY, String(Math.round(y)));
-        } catch {
-          /* 隐私模式下 sessionStorage 可能不可写，忽略 */
-        }
-      }
-    };
-
-    // 恢复：延后一帧，等 swup 完成内容替换与布局稳定
-    var restore = function () {
-      var raw: string | null = null;
-      try {
-        raw = sessionStorage.getItem(KEY);
-      } catch {
-        return;
-      }
-      if (!raw) return;
-
-      var y = parseInt(raw, 10);
-      if (!y || y <= MIN_SAVE) return;
-
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-          window.scrollTo({ top: y, behavior: "auto" });
-          // 恢复后清掉，避免用户再次滚动时又被旧位置干扰
-          try {
-            sessionStorage.removeItem(KEY);
-          } catch {
-            /* ignore */
-          }
-        });
-      });
-    };
-
-    window.addEventListener("pagehide", save);
-    document.addEventListener("astro:page-load", restore);
-    // 首次直接打开（非 swup 切页）时也要恢复
-    restore();
-  })();
-</script>
+  .back {
+    color: var(--colorNeutralForeground3);
+    font-size: var(--fontSizeBase200);
+    text-decoration: none;
+  }
+  .back:hover { color: var(--colorBrandForeground1); }
+</style>

@@ -1,0 +1,80 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+
+const posts = (await getCollection("posts", ({ data }) => !data.draft))
+  .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
+
+// 统计每个标签的文章数，按数量降序
+const counts = new Map<string, number>();
+for (const post of posts) {
+  for (const tag of post.data.tags) {
+    counts.set(tag, (counts.get(tag) ?? 0) + 1);
+  }
+}
+const tags = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+---
+
+<Base title="标签" path="/tags/">
+  <h1 class="page-title">标签</h1>
+  <p class="total">共 {tags.length} 个标签</p>
+
+  <ul class="tag-cloud">
+    {
+      tags.map(([tag, n]) => (
+        <li>
+          <a href={`/tags/${encodeURIComponent(tag)}/`}>
+            <span class="name">#{tag}</span>
+            <span class="count">{n}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</Base>
+
+<style>
+  .page-title { margin-bottom: 4px; }
+  .total {
+    margin: 0 0 var(--spacingHorizontalXL);
+    color: var(--colorNeutralForeground4);
+    font-size: var(--fontSizeBase200);
+  }
+
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacingHorizontalM);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tag-cloud a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: var(--borderRadiusMedium);
+    border: 1px solid var(--colorNeutralStroke1);
+    background: var(--colorNeutralBackground3);
+    color: var(--colorNeutralForeground2);
+    font-size: var(--fontSizeBase200);
+    text-decoration: none;
+    transition: background-color var(--durationFast) var(--curveEasyEase);
+  }
+  .tag-cloud a:hover {
+    background: var(--colorNeutralBackground4);
+    color: var(--colorNeutralForeground1);
+    text-decoration: none;
+  }
+
+  .count {
+    padding: 0 6px;
+    border-radius: var(--borderRadiusCircular);
+    background: var(--colorSubtleBackground);
+    color: var(--colorNeutralForeground4);
+    font-size: var(--fontSizeBase100);
+    font-variant-numeric: tabular-nums;
+  }
+</style>

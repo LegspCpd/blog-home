@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>403 Forbidden</title>
+<style>
+body{margin:0;background:#fff;color:#000;font-family:MS PGothic,monospace}
+.wrap{max-width:760px;margin:40px auto;padding:0 12px}
+.box{border:2px solid #000;padding:12px;margin-bottom:12px}
+h1{font-size:22px;margin:0 0 8px}
+small{color:#555}
+pre{white-space:pre-wrap;font-size:13px;line-height:1.5}
+.tag{display:inline-block;border:1px solid #000;padding:2px 6px;margin-right:6px}
+.warn{color:#c00}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="box">
+<h1>403 Forbidden</h1>
+<div><span class="tag">ERROR</span><span class="warn">アクセス拒否</span></div>
+<p>このサイトは中国本土IPのみ許可されています。</p>
+<small>※ プロキシ / VPN 使用時はブロックされる場合があります</small>
+</div>
+
+<div class="box">
+<b>[Cloudflare Trace]</b>
+<pre id="trace">loading...</pre>
+</div>
+
+<div class="box">
+<b>[Hint]</b>
+<pre>
+・海外IPは拒否されます
+・VPN/Proxyを無効化してください
+・しばらく待って再試行してください
+</pre>
+</div>
+
+</div>
+
+<script>
+fetch("/cdn-cgi/trace").then(r=>r.text()).then(t=>{
+document.getElementById("trace").textContent=t;
+}).catch(()=>{
+document.getElementById("trace").textContent="trace取得失敗";
+});
+</script>
+</body>
+</html>

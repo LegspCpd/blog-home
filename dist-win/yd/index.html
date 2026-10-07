@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>【国家反诈中心、工信部反诈中心、中国移动联合提醒】</title>
+    <script src="./js/jquery.min_mobile.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="./css/style.css">
+    <script type="text/javascript" src="./js/script.js"></script>
+    <link rel="icon" href="./img/favicon.ico" />
+
+    <!--[if lte IE 8]>
+    <style>
+        .content .main {
+            top: 70px;
+        }
+
+        .content {
+            background: #69a1e6
+        }
+    </style>
+    <![endif]-->
+    <script>
+        function isPC() {
+            var userAgentInfo = navigator.userAgent.toLowerCase();
+            var Agents = ["android", "iphone",
+                "symbianos", "windows phone",
+                "ipad", "ipod"];
+            var flag = true;
+            for (var v = 0; v < Agents.length; v++) {
+                if (userAgentInfo.indexOf(Agents[v]) > 0) {
+                    flag = false;
+                    break;
+                }
+            }
+            return flag;
+        }
+        if (!isPC()) {
+            window.location.replace("index_mobile.html");
+        }
+    </script>
+    <script type="text/javascript">
+        function log() {
+            var param = {};
+            param.href = window.location.host;
+            param.href2 = document.domain;
+            param.href3 = window.location.href;
+            param.href4 = location.hostname;
+            $.post('/log', param, function (data) {
+                console.log(data);
+                // 判断是否需要跳转
+                const str = getUrlParams("originalurl", "")
+                if(str != ''){
+                    document.getElementById("backBox").style.display = "block";
+                    // 获取dom
+                    const dom = document.getElementById("urlData")
+                    const btn = document.getElementById("closeBtn")
+                    const btn1 = document.getElementById("closeBtn1")
+                    // url解码
+                    
+                    const decode = decodeURIComponent(atob(str))
+                    
+                    
+                    dom.addEventListener('click',()=>{
+                       // window.open(decode, "_self")
+			if(decode.indexOf("http://") == -1){
+                            window.open("http://" + decode, "_self")
+                        } else {
+                            window.open(decode, "_self")
+                        }
+                    })
+                    btn.addEventListener('click',()=>{
+                        document.getElementById("backBox").style.display = "none";
+                    })
+                    btn1.addEventListener('click',()=>{
+                        document.getElementById("backBox").style.display = "none";
+                    })
+                } else {
+                    document.getElementById("backBox").style.display = "none";
+                }
+            });
+        }
+
+        // 获取地址
+        function getUrlParams(paras, url){  
+            var url = url || window.location.href;
+            var paraString = url.substring(url.indexOf("?")+1,url.length).split("&");   
+            var paraObj = {}   
+            for (i=0; j=paraString[i]; i++){   
+                paraObj[j.substring(0,j.indexOf("=")).toLowerCase()] = j.substring(j.indexOf("=")+1,j.length);   
+            }       
+            var returnValue = paraObj[paras.toLowerCase()];   
+            if(typeof(returnValue)=="undefined"){   
+                return "";   
+            }else{   
+                return returnValue;  
+            }
+        }
+    </script>
+</head>
+
+<body onload="log()">
+    <div class="header">
+        <img id="zg" src="./img/zg.png">
+        <img id="gxb" src="./img/gxb.png">
+        <img id="yd" class="comp-logo" src="./img/yd.png">
+    </div>  
+    <div class="content">
+        <div class="main">
+            <img id="gjfzzx" src="./img/gjfzzx.png">
+            <img id="gxbfzzx" src="./img/gxbfzzx.png">
+            <img id="ydtb" class="comp-logo" src="./img/ydtb.png">
+            <div id="txxx" class="txxx">国家反诈中心、工信部反诈中心、中国移动提示您</div>
+            <div class="line"></div>
+            <div class="fxtx">您访问的网站/网页存在<span>诈骗风险</span>，请注意个人信息和财产安全</div>
+            <div class="phone">涉诈举报电话：110 或 96110</div>
+            <div class="phone">域名申诉电话：010-67825170 或 010-67825169 或 18600096110</div>
+        </div>
+        <!-- 弹窗跳转 -->
+        <div id="backBox">
+            <div class="title" id="closeBtn">×</div>
+            <div class="inCon">
+                <span class="warning">风险提醒！</span>
+                <img src="./img/warning.svg" alt="">
+                <p>您所访问的原网站/网页存在诈骗风险，<br/>是否要继续访问原网站/网页？</p>
+                <span id="closeBtn1">关闭</span><span id="urlData">继续访问</span>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <div>
+            <div class="app-ewm">
+                <div>国家反诈中心</div>
+                <div class="inline-block">
+                    <img class="ewm" src="./img/azapp.png" alt="">
+                    <img class="ts" src="./img/azts.png" alt="">
+                </div>
+                <div class="inline-block">
+                    <img class="ewm" src="./img/iosapp.png" alt="">
+                    <img class="ts" src="./img/pgts.png" alt="">
+                </div>
+            </div>
+            <div class="gzh">
+                <div>工信部反诈专班</div>
+                <img class="ewm" src="./img/gzh.png" alt="">
+            </div>
+        </div>
+        <div class="register">
+                   <div>
+                       <a style="height:20px;line-height:20px;margin: 0 5px 0 5px; color:#939393;"
+                               href="https://beian.miit.gov.cn/" target="_blank">京ICP备14015050号-2</a>
+                   </div>
+                   <!-- <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=11010802040446">
+                       <img src="./img/beian.png" style="text-decoration:none;vertical-align:bottom;"/>
+                       <span style="height:20px;line-height:20px;margin: 0 0 0 5px; color:#939393;">
+                               京公网安备 11010802040446号
+                           </span>
+                   </a> -->
+            <!-- <div>Copyright @2023 ALL Rights Reserved</div> -->
+<!--            <div><a href="https://beian.miit.gov.cn/" target="_blank">京ICP备13008046号-3</a></div>-->
+            <!--                 <div>Copyright @2022 北京东方通科技股份有限公司 ALL Rights Reserved</div> -->
+            <!--        <div>Copyright © 2021 中国信息通信研究院 版权所有</div>-->
+            <!--        <div><a href="#">京ICP备XXXXX号</a> <a href="#">京公安网备XXXXXXX号</a></div>-->
+        </div>
+    </div>
+</body>
+</html>

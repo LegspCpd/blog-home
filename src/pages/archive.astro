@@ -1,336 +1,86 @@
 ---
-/**
- * archive.astro —— 归档 / 标签 / 分类总览
- *
- * 实现要点：
- *  - 纯 Astro 渲染，不依赖客户端组件。筛选靠 /tags/xxx/ 与 /categories/xxx/ 静态路由，
- *    直链可用、首屏即正确（原来的 Svelte 面板读 window.location.search，
- *    SSR 阶段拿不到参数，必须等 JS 跑完才出结果）。
- *  - 按年分组，每组内按日期倒序。
- */
-import { Icon } from "astro-icon/components";
-import PostListRow from "@/components/layout/PostListRow.astro";
-import SbPageHeader from "@/components/layout/SbPageHeader.astro";
-import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
-import { getSortedPosts } from "@/utils/content-utils";
-import { formatDateToYYYYMMDD } from "@/utils/date-utils";
-import { getPostUrlBySlug, url } from "@/utils/url-utils";
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
 
-const posts = await getSortedPosts();
+const posts = (await getCollection("posts", ({ data }) => !data.draft))
+  .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
 
-// ---- 派生统计 ----
-const tagCount = new Map<string, number>();
-const categoryCount = new Map<string, number>();
+// 按年月分组
+const groups = new Map<string, typeof posts>();
 for (const post of posts) {
-	for (const tag of post.data.tags ?? []) {
-		tagCount.set(tag, (tagCount.get(tag) ?? 0) + 1);
-	}
-	const cat = post.data.category;
-	if (cat && cat.trim()) {
-		categoryCount.set(cat, (categoryCount.get(cat) ?? 0) + 1);
-	}
+  const d = post.data.published;
+  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  if (!groups.has(key)) groups.set(key, []);
+  groups.get(key)!.push(post);
 }
 
-const tags = [...tagCount.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-const categories = [...categoryCount.entries()].sort(
-	(a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
-);
+const months = [...groups.entries()].sort((a, b) => b[0].localeCompare(a[0]));
 
-// ---- 按年分组 ----
-const byYear = new Map<number, typeof posts>();
-for (const post of posts) {
-	const year = new Date(post.data.published).getFullYear();
-	const bucket = byYear.get(year);
-	if (bucket) bucket.push(post);
-	else byYear.set(year, [post]);
-}
-const groups = [...byYear.entries()].sort((a, b) => b[0] - a[0]);
-
-// 年度分布条形图：纯 CSS，零依赖。
-// 条宽按当年文章数 / 最多的一年的比例计算，避免除零。
-const maxPerYear = Math.max(1, ...groups.map(([, list]) => list.length));
+const fmt = new Intl.DateTimeFormat("zh-CN", { month: "2-digit", day: "2-digit" });
 ---
 
-<SupabaseLayout
-	title="归档"
-	description="按时间线浏览全部文章，或按标签、分类筛选。"
->
-	<SbPageHeader
-		eyebrow="Archive"
-		title="归档"
-		subtitle={`共 ${posts.length} 篇文章 · ${tags.length} 个标签 · ${categories.length} 个分类`}
-	/>
+<Base title="归档" path="/archive/">
+  <h1 class="page-title">归档</h1>
+  <p class="total">共 {posts.length} 篇文章</p>
 
-	<!-- 年度分布：一眼看出写作节奏 -->
-	{
-		groups.length > 1 ? (
-			<section class="su-section rv" aria-labelledby="ar-chart-title">
-				<h2 id="ar-chart-title" class="su-section-title">
-					<Icon name="material-symbols:bar-chart-outline" />
-					年度分布
-				</h2>
-				<div class="ar-chart">
-					{groups.map(([year, list]) => (
-						<a
-							class="ar-chart-col"
-							href={`#ar-y${year}`}
-							title={`${year} 年 · ${list.length} 篇`}
-						>
-							<span class="ar-chart-bar-wrap">
-								<span
-									class="ar-chart-bar"
-									style={`height:${Math.max(
-										8,
-										Math.round((list.length / maxPerYear) * 100),
-									)}%`}
-								/>
-							</span>
-							<span class="ar-chart-label su-mono">{year}</span>
-							<span class="ar-chart-num">{list.length}</span>
-						</a>
-					))}
-				</div>
-			</section>
-		) : null
-	}
-
-	<!-- 标签筛选 -->
-	{
-		tags.length > 0 ? (
-			<section class="su-section" aria-labelledby="ar-tags-title">
-				<h2 id="ar-tags-title" class="su-section-title">
-					<Icon name="material-symbols:sell-outline" />
-					标签
-				</h2>
-				<div class="ar-cloud">
-					{tags.map(([tag, count]) => (
-						<a
-							href={url(`/tags/${encodeURIComponent(tag)}/`)}
-							class="su-pill su-pill--outline"
-						>
-							#{tag}
-							<span class="ar-count">{count}</span>
-						</a>
-					))}
-				</div>
-			</section>
-		) : null
-	}
-
-	<!-- 分类 -->
-	{
-		categories.length > 0 ? (
-			<section class="su-section" aria-labelledby="ar-cats-title">
-				<h2 id="ar-cats-title" class="su-section-title">
-					<Icon name="material-symbols:category-outline" />
-					分类
-				</h2>
-				<div class="ar-cloud">
-					{categories.map(([cat, count]) => (
-						<a
-							href={url(`/categories/${encodeURIComponent(cat)}/`)}
-							class="su-pill su-pill--outline"
-						>
-							{cat}
-							<span class="ar-count">{count}</span>
-						</a>
-					))}
-				</div>
-			</section>
-		) : null
-	}
-
-	<!-- 时间线 -->
-	<section class="su-section" aria-labelledby="ar-timeline-title">
-		<h2 id="ar-timeline-title" class="su-section-title">
-			<Icon name="material-symbols:timeline-outline" />
-			时间线
-		</h2>
-
-		{
-			groups.length > 0 ? (
-				<div class="ar-timeline">
-					{groups.map(([year, entries]) => (
-						<section class="ar-year" id={`ar-y${year}`}>
-							<h3 class="ar-year-label">
-								<span class="ar-year-num">{year}</span>
-								<span class="ar-year-count">{entries.length} 篇</span>
-							</h3>
-
-							<ul class="ar-list">
-								{entries.map((post, i) => (
-									<li class="rv">
-										<PostListRow
-											rank={i + 1}
-											title={post.data.title}
-											href={getPostUrlBySlug(post.id)}
-											date={formatDateToYYYYMMDD(post.data.published)}
-											datetime={post.data.published.toISOString()}
-											category={post.data.category}
-											desc={post.data.description}
-											tags={post.data.tags ?? []}
-										/>
-									</li>
-								))}
-							</ul>
-						</section>
-					))}
-				</div>
-			) : (
-				<p class="su-body-md su-text-mute">还没有文章。</p>
-			)
-		}
-	</section>
-</SupabaseLayout>
+  {
+    months.map(([month, list]) => (
+      <section class="month-group">
+        <h2 class="month">{month}</h2>
+        <ul class="list">
+          {list.map((post) => (
+            <li>
+              <time class="day" datetime={post.data.published.toISOString()}>
+                {fmt.format(post.data.published)}
+              </time>
+              <a href={`/posts/${post.id}/`}>{post.data.title}</a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</Base>
 
 <style>
-	/* ---- 年度分布条形图 ---- */
-	.ar-chart {
-		display: flex;
-		align-items: flex-end;
-		gap: 10px;
-		height: 140px;
-	}
+  .page-title { margin-bottom: 4px; }
+  .total {
+    margin: 0 0 var(--spacingHorizontalXL);
+    color: var(--colorNeutralForeground4);
+    font-size: var(--fontSizeBase200);
+  }
 
-	.ar-chart-col {
-		flex: 1;
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 6px;
-		height: 100%;
-		text-decoration: none;
-		color: inherit;
-	}
+  .month-group { margin-bottom: var(--spacingHorizontalXL); }
 
-	/* 条形区：底部对齐，条从这里往上长 */
-	.ar-chart-bar-wrap {
-		flex: 1;
-		width: 100%;
-		display: flex;
-		align-items: flex-end;
-		justify-content: center;
-	}
+  .month {
+    margin-bottom: var(--spacingHorizontalM);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--colorNeutralStroke1);
+    font-size: var(--fontSizeBase400);
+    color: var(--colorNeutralForeground2);
+  }
 
-	.ar-chart-bar {
-		width: 100%;
-		max-width: 44px;
-		min-height: 8px;
-		border-radius: var(--su-radius-xs) var(--su-radius-xs) 0 0;
-		background-color: var(--su-muted);
-		transition:
-			background-color 0.18s ease,
-			transform 0.18s ease;
-	}
+  .list { margin: 0; padding: 0; list-style: none; }
 
-	.ar-chart-col:hover .ar-chart-bar {
-		background-color: var(--su-accent-text);
-		transform: scaleX(1.06);
-	}
+  .list li {
+    display: flex;
+    gap: var(--spacingHorizontalL);
+    padding: 7px 0;
+    border-bottom: 1px solid var(--colorNeutralStroke1);
+  }
+  .list li:last-child { border-bottom: none; }
 
-	.ar-chart-label {
-		font-size: 11px;
-		color: var(--su-muted-foreground);
-	}
+  .day {
+    flex-shrink: 0;
+    width: 48px;
+    color: var(--colorNeutralForeground4);
+    font-family: var(--fontFamilyMonospace);
+    font-size: var(--fontSizeBase200);
+  }
 
-	.ar-chart-num {
-		font-size: 12px;
-		font-weight: 500;
-		color: var(--su-foreground);
-	}
-
-	/* ---- 标签/分类云 ---- */
-	.ar-cloud {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-	}
-
-	.ar-cloud a {
-		padding: 5px 11px;
-		font-family: var(--font-supabase);
-	}
-
-	/* 次数用更轻的灰，不与标签名抢注意力 */
-	.ar-count {
-		margin-left: 4px;
-		font-family: var(--font-mono-supabase);
-		font-size: 11px;
-		color: var(--su-ink-faint);
-	}
-
-	/* ---- 时间线 ---- */
-	.ar-timeline {
-		display: flex;
-		flex-direction: column;
-		gap: 32px;
-	}
-
-	.ar-year {
-		/* 锚点跳转时不要被顶栏遮住 */
-		scroll-margin-top: calc(var(--su-header-height) + 24px);
-	}
-
-	.ar-year-label {
-		display: flex;
-		align-items: baseline;
-		gap: 10px;
-		margin: 0 0 8px;
-		padding-bottom: 8px;
-		border-bottom: 1px solid var(--su-border);
-	}
-
-	.ar-year-num {
-		font-family: var(--font-mono-supabase);
-		font-size: 20px;
-		font-weight: 600;
-		letter-spacing: -0.5px;
-		color: var(--su-foreground);
-	}
-
-	.ar-year-count {
-		font-size: 12px;
-		color: var(--su-ink-faint);
-	}
-
-	/* 列表行样式已抽到 <PostListRow> 组件，三页共用，避免各页不一致 */
-	.ar-list {
-		display: flex;
-		flex-direction: column;
-		gap: var(--su-space-2xs);
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	@media (max-width: 640px) {
-		/* 年份多时改为横向滚动，避免每根条被压得看不出高低 */
-		.ar-chart {
-			overflow-x: auto;
-			gap: 8px;
-			scrollbar-width: none;
-		}
-
-		.ar-chart::-webkit-scrollbar {
-			display: none;
-		}
-
-		.ar-chart-col {
-			flex: none;
-			width: 44px;
-		}
-
-		.ar-row {
-			flex-direction: column;
-			gap: 6px;
-			padding: 12px 0;
-		}
-		.ar-row-date {
-			width: auto;
-		}
-		.ar-year-num {
-			font-size: 18px;
-		}
-	}
+  .list a {
+    color: var(--colorNeutralForeground2);
+    text-decoration: none;
+  }
+  .list a:hover { color: var(--colorBrandForeground1); text-decoration: underline; }
 </style>

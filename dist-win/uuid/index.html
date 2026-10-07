@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>工具集</title>
+</head>
+<body>
+    <h3>UUID 生成</h3>
+    <button onclick="generateUUID()">生成 UUID</button>
+    <p>结果：<span id="uuid"></span></p>
+
+    <h3>密码生成</h3>
+    <label><input type="checkbox" id="upper" checked> 大写字母</label>
+    <label><input type="checkbox" id="lower" checked> 小写字母</label>
+    <label><input type="checkbox" id="number" checked> 数字</label>
+    <label><input type="checkbox" id="symbol" checked> 标点符号</label>
+    <br>
+    <label>长度：<input type="number" id="len" value="12" min="6" max="32"></label>
+    <button onclick="generatePwd()">生成密码</button>
+    <p>结果：<span id="pwd"></span></p>
+
+    <h3>LCmail 虚拟邮箱</h3>
+    <button onclick="createMail()">创建邮箱</button>
+    <p>地址：<span id="email"></span></p>
+    <p>ID：<span id="mailId"></span></p>
+    <button onclick="getMails()" disabled id="checkBtn">刷新收件箱</button>
+    <div id="mailBox"></div>
+
+<script>
+// 配置项
+const API_KEY = "vmail_uA9y7POGPvQZAd7U3EK21s1muv5WdBvy";
+const BASE_URL = "https://lcmail.cc.cd/api/v1";
+
+// 1. 生成 UUID (纯JS)
+function generateUUID() {
+    const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+    document.getElementById('uuid').innerText = uuid;
+}
+
+// 2. 生成自定义密码 (纯JS)
+function generatePwd() {
+    const upper = document.getElementById('upper').checked ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' : '';
+    const lower = document.getElementById('lower').checked ? 'abcdefghijklmnopqrstuvwxyz' : '';
+    const number = document.getElementById('number').checked ? '0123456789' : '';
+    const symbol = document.getElementById('symbol').checked ? '!@#$%^&*()_+-=[]{}|;:,.?~' : '';
+    
+    let chars = upper + lower + number + symbol;
+    if (!chars) { alert('至少选一种字符'); return; }
+    
+    const len = parseInt(document.getElementById('len').value);
+    let pwd = '';
+    for(let i=0; i<len; i++){
+        pwd += chars[Math.floor(Math.random() * chars.length)];
+    }
+    document.getElementById('pwd').innerText = pwd;
+}
+
+// 3. 创建虚拟邮箱 (JS Fetch API)
+async function createMail() {
+    try {
+        const res = await fetch(`${BASE_URL}/mailboxes`, {
+            method: 'POST',
+            headers: {
+                'X-API-Key': API_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ expiresIn: 86400 })
+        });
+        const data = await res.json();
+        if(data.error) { alert('创建失败：'+data.error.message); return; }
+        
+        const box = data.data;
+        document.getElementById('email').innerText = box.address;
+        document.getElementById('mailId').innerText = box.id;
+        document.getElementById('checkBtn').disabled = false;
+    } catch (e) { alert('请求失败'); }
+}
+
+// 4. 接收邮件 (JS Fetch API)
+async function getMails() {
+    const id = document.getElementById('mailId').innerText;
+    if(!id) { alert('先创建邮箱'); return; }
+    
+    try {
+        const res = await fetch(`${BASE_URL}/mailboxes/${id}/messages`, {
+            headers: { 'X-API-Key': API_KEY }
+        });
+        const data = await res.json();
+        const box = document.getElementById('mailBox');
+        box.innerHTML = '';
+        
+        if(!data.data || data.data.length === 0) {
+            box.innerHTML = '<p>暂无邮件</p>';
+            return;
+        }
+        
+        data.data.forEach(m => {
+            const div = document.createElement('div');
+            div.style.border = '1px solid #000';
+            div.style.margin = '5px';
+            div.style.padding = '5px';
+            div.innerHTML = `
+                <p>发件人：${m.from.address}</p>
+                <p>主题：${m.subject}</p>
+                <p>时间：${new Date(m.receivedAt).toLocaleString()}</p>
+                <button onclick="showMail('${id}','${m.id}')">查看内容</button>
+            `;
+            box.appendChild(div);
+        });
+    } catch (e) { alert('获取邮件失败'); }
+}
+
+// 5. 查看邮件详情 (JS Fetch API)
+async function showMail(mid, pid) {
+    try {
+        const res = await fetch(`${BASE_URL}/mailboxes/${mid}/messages/${pid}`, {
+            headers: { 'X-API-Key': API_KEY }
+        });
+        const data = await res.json();
+        const mail = data.data;
+        alert(`邮件内容：\n${mail.text || mail.html || '无内容'}`);
+    } catch (e) { alert('加载失败'); }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+﻿name: Build Check
+
+# 每次推送 main 与 PR 都必须构建通过。
+# 上一代 workflow 监听的是 master（仓库实际用 main），等于从未生效——
+# 这就是构建连续坏掉却没人发现的原因。这里监听真实分支。
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm exec astro build
+
+      # ---- SEO 断言：构建通过不等于产物正确 ----
+      - name: Verify sitemap + RSS + domain
+        run: |
+          set -euo pipefail
+          SITE="https://legspcpd.asia"
+          fail() { echo "::error::$1"; exit 1; }
+
+          [ -f dist/sitemap-index.xml ] || fail "sitemap-index.xml missing"
+          [ -f dist/sitemap-0.xml ]     || fail "sitemap-0.xml missing"
+          [ -f dist/rss.xml ]           || fail "rss.xml missing"
+          [ -f dist/robots.txt ]        || fail "robots.txt missing"
+
+          # 全站不允许出现旧域名
+          if grep -rl "blog\.legspcpd\.top" dist/ ; then
+            fail "old domain blog.legspcpd.top found in build output"
+          fi
+
+          # sitemap 的每一条 loc 必须是新域名
+          BAD=$(grep -o '<loc>[^<]*</loc>' dist/sitemap-0.xml \
+                | grep -v "$SITE" | head -n 5 || true)
+          [ -z "$BAD" ] || fail "sitemap contains wrong-domain URLs: $BAD"
+
+          # 文章必须带 lastmod（内容新鲜度信号）
+          POSTS=$(grep -c '<loc>.*/posts/' dist/sitemap-0.xml || true)
+          LASTMOD=$(grep -c '<lastmod>' dist/sitemap-0.xml || true)
+          [ "$POSTS" -gt 0 ] || fail "no post URLs in sitemap"
+          [ "$LASTMOD" -ge "$POSTS" ] \
+            || fail "only $LASTMOD lastmod for $POSTS posts"
+
+          # RSS 必须有条目且指向新域名
+          ITEMS=$(grep -c '<item>' dist/rss.xml || true)
+          [ "$ITEMS" -gt 0 ] || fail "rss.xml has no items"
+          grep -q "$SITE" dist/rss.xml || fail "rss.xml missing site domain"
+
+          # robots 必须声明 sitemap
+          grep -q "Sitemap: $SITE/sitemap-index.xml" dist/robots.txt \
+            || fail "robots.txt Sitemap line wrong"
+
+          echo "OK: posts=$POSTS lastmod=$LASTMOD rss_items=$ITEMS"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7

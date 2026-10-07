@@ -1,0 +1,163 @@
+/*
+ * Win UI 全局样式
+ *
+ * 严格规则：这里【只消费】setTheme() 写入的 CSS 自定义属性，
+ * 绝不重新声明 --colorNeutralBackground1 等同名变量。
+ * Fluent 的设计令牌一旦被 CSS 覆盖，组件会渲染错误颜色并破坏对比度。
+ * 需要改色值请改 src/lib/theme/tokens.ts。
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* 令牌在 JS 里写入；这里只做兜底，保证首帧有色 */
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--fontFamilyBase);
+  font-size: var(--fontSizeBase400);
+  line-height: var(--lineHeightBase400);
+  color: var(--colorNeutralForeground1);
+  background-color: var(--colorNeutralBackground1);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color var(--durationNormal) var(--curveEasyEase),
+    color var(--durationNormal) var(--curveEasyEase);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  color: var(--colorNeutralForeground1);
+  line-height: var(--lineHeightBase600);
+  font-weight: var(--fontWeightSemibold);
+}
+
+h1 { font-size: var(--fontSizeBase600); }
+h2 { font-size: var(--fontSizeBase500); }
+h3 { font-size: var(--fontSizeBase400); }
+
+p { margin: 0 0 1em; }
+
+a {
+  color: var(--colorBrandForeground1);
+  text-decoration: none;
+  transition: color var(--durationFast) var(--curveEasyEase);
+}
+a:hover { color: var(--colorBrandForeground2); text-decoration: underline; }
+
+code, pre { font-family: var(--fontFamilyMonospace); }
+
+/* ---------- 布局骨架 ---------- */
+.container {
+  width: 100%;
+  max-width: 1080px;
+  margin-inline: auto;
+  padding-inline: var(--spacingHorizontalXL);
+}
+
+.page-main {
+  padding-block: var(--spacingVerticalL) 64px;
+  min-height: calc(100vh - 200px);
+}
+
+/* ---------- Win11 卡片 ----------
+   Fluent v3 没有 card 组件，用背景层级 + 描边 + 圆角模拟 Mica 卡片 */
+.card {
+  background-color: var(--colorNeutralBackground3);
+  border: 1px solid var(--colorNeutralStroke1);
+  border-radius: var(--borderRadiusXLarge);
+  padding: var(--spacingHorizontalXL);
+  transition: background-color var(--durationNormal) var(--curveEasyEase),
+    border-color var(--durationNormal) var(--curveEasyEase),
+    transform var(--durationNormal) var(--curveEasyEase);
+}
+
+a.card:hover {
+  background-color: var(--colorNeutralBackground4);
+  border-color: var(--colorNeutralStroke2);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+/* ---------- 文章正文排版 ---------- */
+.prose {
+  color: var(--colorNeutralForeground2);
+  font-size: var(--fontSizeBase400);
+  line-height: 1.75;
+}
+.prose h1, .prose h2, .prose h3, .prose h4 { margin: 1.6em 0 0.6em; }
+.prose ul, .prose ol { padding-left: 1.4em; }
+.prose li { margin: 0.35em 0; }
+.prose img { max-width: 100%; height: auto; border-radius: var(--borderRadiusLarge); }
+.prose blockquote {
+  margin: 1.2em 0;
+  padding: 0.6em 1em;
+  border-left: 3px solid var(--colorBrandBackground);
+  background: var(--colorSubtleBackground);
+  border-radius: 0 var(--borderRadiusMedium) var(--borderRadiusMedium) 0;
+  color: var(--colorNeutralForeground3);
+}
+.prose pre {
+  padding: var(--spacingHorizontalL);
+  border-radius: var(--borderRadiusLarge);
+  border: 1px solid var(--colorNeutralStroke1);
+  overflow-x: auto;
+  font-size: var(--fontSizeBase200);
+  line-height: 1.6;
+}
+.prose :not(pre) > code {
+  padding: 0.15em 0.4em;
+  border-radius: var(--borderRadiusSmall);
+  background: var(--colorSubtleBackground);
+  color: var(--colorBrandForeground1);
+  font-size: 0.9em;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.2em 0;
+  font-size: var(--fontSizeBase200);
+}
+.prose th, .prose td {
+  padding: 0.6em 0.8em;
+  border: 1px solid var(--colorNeutralStroke1);
+  text-align: left;
+}
+.prose th { background: var(--colorNeutralBackground4); font-weight: var(--fontWeightSemibold); }
+
+/* 键盘可达性：统一焦点环 */
+:focus-visible {
+  outline: 2px solid var(--colorStrokeFocus1);
+  outline-offset: 2px;
+  border-radius: var(--borderRadiusSmall);
+}
+
+/* 尊重用户的减少动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Shiki 双主题：跟随 data-theme 切换代码块配色 */
+html[data-theme="dark"] .astro-code,
+html[data-theme="dark"] .astro-code span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}

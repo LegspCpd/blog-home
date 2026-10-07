@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>村规模拟器 · 清雨Tpor毁号体验</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#05050a; --bg2:#0c0c14; --bg3:#14141e;
+  --red:#e03030; --rdim:#7a1010; --red-a:rgba(224,48,48,.1);
+  --amber:#f0a000; --adim:#6a4800; --amber-a:rgba(240,160,0,.08);
+  --text:#eae5d8; --dim:#9a9488; --muted:#3e3c38;
+  --line:rgba(255,255,255,0.08); --line2:rgba(255,255,255,0.14);
+  --mono:'JetBrains Mono',monospace;
+  --serif:'Noto Serif SC',serif;
+  --sans:'Noto Sans SC',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:300;
+  line-height:1.7;min-height:100svh;display:flex;flex-direction:column;
+  align-items:center;padding-bottom:60px;overflow-x:hidden}
+
+/* flash */
+#gf{position:fixed;inset:0;background:var(--red);pointer-events:none;
+  z-index:9999;opacity:0;mix-blend-mode:multiply;transition:opacity .05s}
+#gf.on{opacity:.15}
+
+/* topbar */
+.topbar{width:100%;padding:13px 20px;display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--line);margin-bottom:22px;flex-shrink:0}
+.topbar a{font-family:var(--mono);font-size:10px;color:var(--muted);
+  letter-spacing:.14em;text-decoration:none;transition:color .2s}
+.topbar a:hover{color:var(--red)}
+.topbar-sep{color:var(--muted);font-size:10px}
+.topbar-cur{font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:.1em}
+
+/* stage */
+.stage{width:min(580px,96vw);display:flex;flex-direction:column}
+
+/* sim header */
+.sim-hd{background:var(--bg3);border:1px solid var(--line);border-bottom:none;
+  padding:16px 20px 13px}
+.sim-hd__badge{font-family:var(--mono);font-size:9px;color:var(--red);
+  letter-spacing:.24em;text-transform:uppercase;margin-bottom:5px}
+.sim-hd__title{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:2px}
+.sim-hd__sub{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.07em}
+
+/* phase bar */
+.phase-bar{display:flex;border:1px solid var(--line);border-top:none;border-bottom:none;
+  background:var(--bg3)}
+.ps{flex:1;padding:8px 3px;text-align:center;font-family:var(--mono);font-size:8px;
+  letter-spacing:.06em;color:var(--muted);border-right:1px solid var(--line);
+  transition:color .3s,background .3s;position:relative;line-height:1.3}
+.ps:last-child{border-right:none}
+.ps.active{color:var(--text);background:var(--red-a)}
+.ps.active::after,.ps.done::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.ps.active::after{background:var(--red)}
+.ps.done{color:var(--dim)}
+.ps.done::after{background:var(--muted)}
+
+/* screen */
+.sim-screen{border:1px solid var(--line);background:var(--bg2)}
+
+/* panels — normal flow */
+.panel{display:none;flex-direction:column;padding:26px 20px;
+  animation:panIn .32s ease both}
+.panel.active{display:flex}
+@keyframes panIn{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:none}}
+
+/* shared */
+.p-tag{font-family:var(--mono);font-size:9px;color:var(--red);
+  letter-spacing:.24em;text-transform:uppercase;margin-bottom:9px}
+.p-title{font-family:var(--serif);font-size:19px;font-weight:700;
+  line-height:1.3;margin-bottom:13px}
+.p-body{font-size:13px;color:var(--dim);line-height:1.85;margin-bottom:16px}
+.p-body strong{color:var(--text);font-weight:500}
+.p-body em{color:var(--red);font-style:normal;border-bottom:1px solid var(--rdim)}
+.p-quote{font-family:var(--serif);font-size:15px;font-style:italic;color:var(--red);
+  padding:11px 15px;border:1px solid var(--rdim);background:var(--red-a);
+  margin-bottom:14px;text-align:center}
+
+/* tutorial */
+.tut-steps{list-style:none;margin-bottom:18px}
+.tut-steps li{display:flex;align-items:flex-start;gap:11px;padding:11px 0;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--dim);line-height:1.65}
+.tut-steps li:last-child{border-bottom:none}
+.tut-num{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--red);
+  flex-shrink:0;width:20px;margin-top:1px}
+.tut-steps li strong{color:var(--text);font-weight:500}
+.tut-note{padding:11px 13px;background:var(--amber-a);border:1px solid var(--adim);
+  font-family:var(--mono);font-size:10px;color:var(--amber);line-height:1.7;margin-bottom:18px}
+
+/* inventory */
+.inventory{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px}
+.inv-item{padding:5px 10px;border:1px solid var(--adim);background:var(--amber-a);
+  font-family:var(--mono);font-size:11px;color:var(--amber);
+  display:flex;align-items:center;gap:5px;
+  transition:border-color .4s,color .4s,background .4s}
+.inv-item.gone{border-color:var(--muted);color:var(--muted);
+  background:transparent;text-decoration:line-through}
+.inv-value{font-size:9px;color:var(--muted);border-left:1px solid var(--line);padding-left:5px}
+
+/* ── COUNTDOWN PHASE ── */
+.cd-outer{position:relative;display:flex;flex-direction:column;gap:0}
+
+/* barrage layer */
+.barrage{position:relative;height:56px;overflow:hidden;
+  border:1px solid var(--line);background:rgba(0,0,0,.3);
+  margin-bottom:0}
+.dm{position:absolute;white-space:nowrap;font-family:var(--mono);font-size:11px;
+  letter-spacing:.06em;top:50%;transform:translateY(-50%);
+  animation:dmScroll linear forwards}
+@keyframes dmScroll{from{left:100%}to{left:-120%}}
+.dm-warn{color:var(--amber)}
+.dm-cheer{color:var(--red)}
+.dm-confuse{color:var(--dim)}
+
+/* countdown core */
+.cd-wrap{display:flex;flex-direction:column;align-items:center;
+  gap:12px;padding:20px 20px 16px;text-align:center;
+  border:1px solid var(--line);border-top:none;border-bottom:none;
+  background:var(--bg2)}
+.cd-num{font-family:var(--mono);font-weight:700;font-size:90px;
+  line-height:1;color:var(--red);letter-spacing:-.05em;
+  text-shadow:0 0 36px rgba(224,48,48,.5);transition:transform .1s}
+.cd-num.tick{transform:scale(1.1)}
+.cd-lbl{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.14em}
+.cd-warn{font-family:var(--mono);font-size:10px;color:var(--amber);
+  border:1px solid var(--adim);background:var(--amber-a);
+  padding:9px 13px;text-align:center;line-height:1.6;align-self:stretch}
+.cd-action{font-size:13px;color:var(--dim);line-height:1.7}
+.cd-action strong{color:var(--red)}
+
+/* 顶号 button area */
+.topno-zone{border:1px solid var(--line);border-top:none;border-bottom:none;
+  padding:14px 20px;background:var(--bg3);display:flex;align-items:center;gap:12px}
+.topno-hint{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.07em;flex:1}
+.topno-fail{font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:.07em;
+  opacity:0;transition:opacity .3s}
+.topno-fail.show{opacity:1}
+.cd-bottom{border:1px solid var(--line);border-top:none;background:var(--bg2);
+  padding:12px 20px}
+
+/* attempts */
+.attempt-list{list-style:none;margin-bottom:18px}
+.attempt-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--dim);line-height:1.65;
+  opacity:0;transform:translateY(5px);transition:opacity .4s,transform .4s}
+.attempt-item:last-child{border-bottom:none}
+.attempt-item.show{opacity:1;transform:none}
+.attempt-icon{flex-shrink:0;font-size:15px;margin-top:2px}
+.fail{color:var(--red)}
+
+/* result */
+.result-top{text-align:center;margin-bottom:20px}
+.result-boom{font-size:50px;margin-bottom:9px}
+.result-title{font-family:var(--serif);font-size:25px;font-weight:900;color:var(--red);margin-bottom:2px}
+.result-sub{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.14em}
+.loss-list{list-style:none;margin-bottom:16px}
+.loss-item{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:12px;opacity:0}
+.loss-item.show{animation:lossIn .35s ease both}
+.loss-name{color:var(--dim)}
+.loss-status{color:var(--red);font-weight:700}
+@keyframes lossIn{from{opacity:0;transform:translateX(-7px);text-decoration:none}
+  to{opacity:1;text-decoration:line-through;transform:none}}
+.result-quote{border-left:2px solid var(--red);padding:11px 14px;
+  background:var(--red-a);margin-bottom:14px}
+.rq-text{font-family:var(--serif);font-style:italic;font-size:14px;
+  color:var(--text);line-height:1.6;margin-bottom:5px}
+.rq-attr{font-family:var(--mono);font-size:9px;color:var(--muted)}
+.result-legal{background:var(--bg3);border:1px solid var(--line);
+  padding:13px 15px;font-size:12px;color:var(--dim);line-height:1.8;margin-bottom:18px}
+.result-legal strong{color:var(--text);font-weight:500}
+
+/* reversal phase */
+.reversal-list{list-style:none;margin-bottom:18px}
+.rv-item{display:flex;align-items:flex-start;gap:11px;padding:12px 0;
+  border-bottom:1px solid var(--line);font-size:13px;color:var(--dim);line-height:1.65;
+  opacity:0;transform:translateY(5px);transition:opacity .5s,transform .5s}
+.rv-item:last-child{border-bottom:none}
+.rv-item.show{opacity:1;transform:none}
+.rv-icon{flex-shrink:0;font-size:16px;margin-top:1px}
+.rv-item strong{color:var(--text);font-weight:500}
+.rv-item .good{color:#60c060}
+.rv-item .red{color:var(--red)}
+.rv-close{text-align:center;padding:16px 0 4px;
+  font-family:var(--serif);font-size:15px;color:var(--dim);line-height:1.7}
+.rv-close strong{color:var(--text)}
+
+/* buttons */
+.btn-row{display:flex;gap:9px;flex-wrap:wrap}
+.btn{padding:11px 20px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  border:1px solid;cursor:pointer;transition:all .2s;text-decoration:none;
+  display:inline-block;text-align:center;line-height:1.2}
+.btn-primary{background:var(--red);border-color:var(--red);color:#fff}
+.btn-primary:hover{background:#ff3838;border-color:#ff3838}
+.btn-sec{background:transparent;border-color:var(--line);color:var(--dim)}
+.btn-sec:hover{border-color:var(--text);color:var(--text)}
+.btn-amber{background:transparent;border-color:var(--adim);color:var(--amber)}
+.btn-amber:hover{background:var(--amber-a)}
+.btn-ghost{background:transparent;border-color:var(--line);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--line2);color:var(--dim)}
+
+/* footer */
+.sim-foot{margin-top:14px;text-align:center;font-family:var(--mono);
+  font-size:9px;color:var(--muted);letter-spacing:.1em;line-height:1.8}
+.sim-foot a{color:var(--muted);text-decoration:underline}
+</style>
+</head>
+<body>
+<div id="gf"></div>
+
+<div class="topbar">
+  <a href="index.html">← 返回档案</a>
+  <span class="topbar-sep">/</span>
+  <span class="topbar-cur">村规模拟器</span>
+</div>
+
+<div class="stage">
+  <div class="sim-hd">
+    <div class="sim-hd__badge">⚠ 互动模拟 · 基于真实事件还原</div>
+    <div class="sim-hd__title">村规毁号模拟器</div>
+    <div class="sim-hd__sub">清雨Tpor · 2026.03.01 · 直播现场完整还原</div>
+  </div>
+
+  <div class="phase-bar">
+    <div class="ps active" id="ps0">指引</div>
+    <div class="ps" id="ps1">扫码前</div>
+    <div class="ps" id="ps2">发现</div>
+    <div class="ps" id="ps3">倒计时</div>
+    <div class="ps" id="ps4">抢救</div>
+    <div class="ps" id="ps5">结果</div>
+    <div class="ps" id="ps6">他的结局</div>
+  </div>
+
+  <div class="sim-screen">
+
+    <!-- 0: 指引 -->
+    <div class="panel active" id="panel-0">
+      <div class="p-tag">// 开始前 · 操作指引</div>
+      <div class="p-title">你要做什么？</div>
+      <div class="p-body">这个模拟器会带你<strong>亲身经历</strong>五月食伍在2026年3月1日凌晨遭遇的一切。每一步都基于直播录像和受害者陈述。</div>
+      <ul class="tut-steps">
+        <li><span class="tut-num">01</span><span>阅读每个阶段的情境说明，了解当时发生了什么</span></li>
+        <li><span class="tut-num">02</span><span>点击<strong>底部按钮</strong>推进下一步，就像你当时做出每个操作</span></li>
+        <li><span class="tut-num">03</span><span>到了「村规倒计时」阶段，可以尝试点击<strong>「顶号」</strong>按钮——但结果你已经猜到了</span></li>
+        <li><span class="tut-num">04</span><span>「奋力抢救」阶段会<strong>自动播放</strong>五条抢救记录，等待它们逐一出现</span></li>
+        <li><span class="tut-num">05</span><span>最后还有一段<strong>施害者视角</strong>：看看清雨Tpor自己的结局</span></li>
+      </ul>
+      <div class="tut-note">⚠ 整个流程约 2 分钟。倒计时阶段自动进入下一步，无需操作。</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goPhase(1)">我明白了，开始体验 →</button>
+      </div>
+    </div>
+
+    <!-- 1: 扫码前 -->
+    <div class="panel" id="panel-1">
+      <div class="p-tag">// 阶段一 · 扫码前</div>
+      <div class="p-title">你是23级老粉，<br>长期舰长支持者</div>
+      <div class="p-body">今天是3月1日凌晨。你一年多来一直在玩《三角洲行动》，攒了满仓库的好东西。<br><br>你看到清雨Tpor今晚心情不好——连扫几个号都因为干员要求弄得他很烦。你想帮他轻松一把，<strong>提前给账号配好了6套顶配装备</strong>。<br><br>你完全不知道，你的舰长订阅在2月28日深夜因自动续费失败，<em>已经悄悄过期约2分钟了</em>。</div>
+      <div class="inventory">
+        <div class="inv-item">[ 绝版金红<span class="inv-value">×1 · 绝版</span></div>
+        <div class="inv-item">[ AW子弹<span class="inv-value">×200+ · 稀有</span></div>
+        <div class="inv-item">[ 红蛋<span class="inv-value">×16 · 稀有</span></div>
+        <div class="inv-item">[ 顶配装备<span class="inv-value">6套 · 满改</span></div>
+        <div class="inv-item">[ 游戏币<span class="inv-value">~1亿 · 积累1年+</span></div>
+        <div class="inv-item">[ 粉丝牌<span class="inv-value">23级 · 长期舰长</span></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goPhase(2)">在弹幕打出「我的号，随便玩」并扫码 →</button>
+      </div>
+    </div>
+
+    <!-- 2: 主播发现 -->
+    <div class="panel" id="panel-2">
+      <div class="p-tag">// 阶段二 · 主播发现过期</div>
+      <div class="p-title">清雨Tpor登录了<br>你的账号</div>
+      <div class="p-body">账号授权成功。清雨Tpor登录进来，<strong>第一件事就是检查你的舰长状态</strong>。<br><br>他认识你，他清楚你是谁。他看到：<em>舰长已过期</em>。<br><br>他没有发一条弹幕提醒你续费。他没有选择退出账号。他只是对着麦克风说了一句——</div>
+      <div class="p-quote">「还有神人」</div>
+      <div class="p-body" style="margin-bottom:0">然后他打开了你的仓库。</div>
+      <div style="height:18px"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goPhase(3)">看他接下来怎么做 →</button>
+      </div>
+    </div>
+
+    <!-- 3: 倒计时 + 弹幕 + 顶号 -->
+    <div class="panel" id="panel-3" style="padding:0;gap:0">
+      <!-- 弹幕层 -->
+      <div class="barrage" id="barrage"></div>
+      <!-- 主体 -->
+      <div class="cd-wrap">
+        <div class="p-quote" style="align-self:stretch;margin-bottom:0">「退游吧，别玩了，挺好的。」</div>
+        <div class="cd-lbl">村规启动 · 倒计时（故意加速）</div>
+        <div class="cd-num" id="cd-num">10</div>
+        <div class="cd-warn">! B站直播延迟约10秒<br>你看到这行字的瞬间，他早已开始动手了</div>
+        <div class="cd-action" id="cd-action">你慌忙打开手机想续费舰长……<br><strong>但倒计时没有等你</strong></div>
+      </div>
+      <!-- 顶号区 -->
+      <div class="topno-zone">
+        <span class="topno-hint">尝试登录顶掉他——</span>
+        <span class="topno-fail" id="topno-fail">失败：直播延迟10秒，指令还在传输途中，他已经动手了</span>
+        <button class="btn btn-ghost" id="topno-btn" onclick="tryTopno()">顶号</button>
+      </div>
+      <div class="cd-bottom" id="cd-bottom" style="display:none">
+        <div class="cd-action"><strong style="color:var(--red)">他的操作已经完成了。</strong><br>你的仓库，空了。</div>
+      </div>
+    </div>
+
+    <!-- 4: 奋力抢救 -->
+    <div class="panel" id="panel-4">
+      <div class="p-tag">// 阶段三 · 你的抢救尝试</div>
+      <div class="p-title">你拼命抢救，<br>但每一步都晚了</div>
+      <ul class="attempt-list" id="attempt-list">
+        <li class="attempt-item" data-delay="200"><span class="attempt-icon">◈</span><span>你在弹幕狂刷「这是我的号，我是舰长啊」——<span class="fail">没人停下来</span></span></li>
+        <li class="attempt-item" data-delay="700"><span class="attempt-icon">◈</span><span>你紧急重新充值舰长，续费成功——<span class="fail">已经太晚，毁号操作同步进行</span></span></li>
+        <li class="attempt-item" data-delay="1300"><span class="attempt-icon">◈</span><span>你打开电脑端WeGame平台，尝试挤号登录——<span class="fail">延迟让你的操作永远慢一步</span></span></li>
+        <li class="attempt-item" data-delay="2000"><span class="attempt-icon">◈</span><span>顶号成功，你登录进去了——<span class="fail">耳机里传来他在游戏里卖掉装备的音效</span></span></li>
+        <li class="attempt-item" data-delay="2800"><span class="attempt-icon">◈</span><span>你打开仓库——<span class="fail">空了</span></span></li>
+      </ul>
+      <div id="phase4-btn" style="opacity:0;pointer-events:none" class="btn-row">
+        <button class="btn btn-primary" onclick="goPhase(5)">查看损失 →</button>
+      </div>
+    </div>
+
+    <!-- 5: 结果 -->
+    <div class="panel" id="panel-5">
+      <div class="result-top">
+        <div class="result-boom">×</div>
+        <div class="result-title">账号已毁</div>
+        <div class="result-sub">30秒 · 一年心血 · 归零</div>
+      </div>
+      <ul class="loss-list" id="loss-list">
+        <li class="loss-item"><span class="loss-name">[ 绝版金红 ×1</span><span class="loss-status">已抹除</span></li>
+        <li class="loss-item"><span class="loss-name">[ AW子弹 ×200+</span><span class="loss-status">已抹除</span></li>
+        <li class="loss-item"><span class="loss-name">[ 红蛋 ×16</span><span class="loss-status">已抹除</span></li>
+        <li class="loss-item"><span class="loss-name">[ 顶配装备 6套</span><span class="loss-status">已抹除</span></li>
+        <li class="loss-item"><span class="loss-name">[ 约1亿游戏币</span><span class="loss-status">已抹除</span></li>
+        <li class="loss-item"><span class="loss-name">[ 超过一年的时间投入</span><span class="loss-status">已抹除</span></li>
+      </ul>
+      <div class="result-quote">
+        <div class="rq-text">「我知道是你的，我就是要毁啊。」<br>「不要把自己看得太重要了。」</div>
+        <div class="rq-attr">—— 清雨Tpor，毁号后的回应</div>
+      </div>
+      <div class="result-legal">
+        《民法典》第127条明确保护网络虚拟财产。清雨Tpor自设的「村规」在法律上<strong>完全无效</strong>。受害者五月食伍已<strong>正式向公安机关报案（2026年3月13日）</strong>。
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goPhase(6)">现在，看看他的结局 →</button>
+        <button class="btn btn-sec" onclick="doRestart()">↺ 重新体验</button>
+      </div>
+    </div>
+
+    <!-- 6: 施害者视角 -->
+    <div class="panel" id="panel-6">
+      <div class="p-tag">// 反转视角 · 清雨Tpor的结局</div>
+      <div class="p-title">那30秒之后，<br>他发生了什么？</div>
+      <div class="p-body">他以为「村规」是他的铠甲。结果它成了他的墓碑。</div>
+      <ul class="reversal-list" id="rv-list">
+        <li class="rv-item" data-delay="200"><span class="rv-icon">»</span><span>五月食伍发布曝光视频，评论区突破<strong>10万条</strong>——<span class="good">声讨从三角洲圈蔓延到全网</span></span></li>
+        <li class="rv-item" data-delay="700"><span class="rv-icon">×</span><span>《永劫无间》官方火速声明解除全部合作——<span class="good">品牌方不想沾这身腥</span></span></li>
+        <li class="rv-item" data-delay="1300"><span class="rv-icon">■</span><span>B站官方宣布<strong>永久封禁</strong>——<span class="red">平台内已完全无法搜索到该账号</span></span></li>
+        <li class="rv-item" data-delay="1900"><span class="rv-icon">◆</span><span>所有商业合作方、代言品牌、淘宝店铺<strong>全部解约</strong>——<span class="red">十年积累的商业价值，48小时清零</span></span></li>
+        <li class="rv-item" data-delay="2500"><span class="rv-icon">▲</span><span>愤怒的网友<strong>网购纸船花圈快递到其门口</strong>——<span class="red">他本人称已报警</span></span></li>
+        <li class="rv-item" data-delay="3100"><span class="rv-icon">◉</span><span>2026年3月13日，五月食伍在上海<strong>正式报案</strong>——<span class="good">警方已出具接报回执，定性讨论中</span></span></li>
+        <li class="rv-item" data-delay="3700"><span class="rv-icon">↑</span><span>五月食伍因此事<strong>涨粉超15万</strong>——<span class="good">远超清雨Tpor全部掉粉量的5倍</span></span></li>
+      </ul>
+      <div class="rv-close" id="rv-close" style="opacity:0;transition:opacity .8s">
+        他毁掉了五月食伍一年的心血，用了30秒。<br>
+        人民群众毁掉了他十年的直播生涯，用了<strong>48小时</strong>。
+      </div>
+      <div style="height:18px"></div>
+      <div class="btn-row">
+        <button class="btn btn-sec" onclick="doRestart()">↺ 重新体验</button>
+        <a href="index.html" class="btn btn-amber">查看完整事件档案 →</a>
+      </div>
+    </div>
+
+  </div><!-- /sim-screen -->
+
+  <div class="sim-foot">
+    本模拟器基于直播录像、受害者陈述及公开报道还原，所有细节均有据可查<br>
+    <a href="index.html">← 返回完整事件档案</a> · 清雨Tpor.wtf
+  </div>
+</div>
+
+<script>
+/* ── STATE ── */
+let cur = 0, cdTimer = null;
+const timers = [];
+const t = (fn, ms) => { const id = setTimeout(fn, ms); timers.push(id); return id; };
+const killAll = () => {
+  clearInterval(cdTimer); cdTimer = null;
+  timers.splice(0).forEach(clearTimeout);
+};
+
+/* ── WEB AUDIO ── */
+let audioCtx = null;
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playTick() {
+  try {
+    const c = getCtx(), o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.frequency.setValueAtTime(440, c.currentTime);
+    g.gain.setValueAtTime(0.18, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.12);
+    o.start(); o.stop(c.currentTime + 0.12);
+  } catch(e) {}
+}
+function playCoin() {
+  try {
+    const c = getCtx(), o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(880, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(220, c.currentTime + 0.3);
+    g.gain.setValueAtTime(0.22, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.35);
+    o.start(); o.stop(c.currentTime + 0.35);
+  } catch(e) {}
+}
+function playEmpty() {
+  try {
+    const c = getCtx(), buf = c.createBuffer(1, c.sampleRate * 0.6, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3) * 0.12;
+    const s = c.createBufferSource(); s.buffer = buf;
+    const g = c.createGain(); g.gain.value = 0.5;
+    s.connect(g); g.connect(c.destination); s.start();
+  } catch(e) {}
+}
+function playSuccess() {
+  try {
+    const c = getCtx(), freqs = [523, 659, 784];
+    freqs.forEach((f, i) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.connect(g); g.connect(c.destination);
+      o.frequency.value = f; o.type = 'sine';
+      const st = c.currentTime + i * 0.1;
+      g.gain.setValueAtTime(0, st);
+      g.gain.linearRampToValueAtTime(0.15, st + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, st + 0.4);
+      o.start(st); o.stop(st + 0.4);
+    });
+  } catch(e) {}
+}
+
+/* ── FLASH ── */
+function flash() {
+  const el = document.getElementById('gf');
+  el.classList.add('on');
+  t(() => el.classList.remove('on'), 80);
+}
+
+/* ── PHASE BAR ── */
+function updateBar(n) {
+  document.querySelectorAll('.ps').forEach((el, i) => {
+    el.classList.remove('active', 'done');
+    if (i === n) el.classList.add('active');
+    else if (i < n) el.classList.add('done');
+  });
+}
+
+/* ── GO PHASE ── */
+function goPhase(n) {
+  const prev = document.getElementById('panel-' + cur);
+  const next = document.getElementById('panel-' + n);
+  if (!next) return;
+  flash();
+  if (prev) prev.classList.remove('active');
+  t(() => {
+    next.classList.add('active');
+    cur = n; updateBar(n);
+    if (n === 3) startCountdown();
+    if (n === 4) startAttempts();
+    if (n === 5) startResult();
+    if (n === 6) startReversal();
+  }, 60);
+}
+
+/* ── BARRAGE ── */
+const dmData = [
+  { text: '舰长过期了！！', cls: 'dm-warn', speed: 8 },
+  { text: '毁！毁！毁！', cls: 'dm-cheer', speed: 6 },
+  { text: '这是谁的号', cls: 'dm-confuse', speed: 9 },
+  { text: '哥们你续费了吗', cls: 'dm-warn', speed: 7 },
+  { text: '哈哈哈还有神人', cls: 'dm-cheer', speed: 5 },
+  { text: '快顶号啊！！！', cls: 'dm-warn', speed: 8 },
+  { text: '村规村规', cls: 'dm-cheer', speed: 6 },
+  { text: '我预感到不妙', cls: 'dm-confuse', speed: 9 },
+  { text: '仓库没了', cls: 'dm-cheer', speed: 7 },
+  { text: '号主你看到了吗快上来', cls: 'dm-warn', speed: 8 },
+  { text: '好狠啊…', cls: 'dm-confuse', speed: 10 },
+  { text: '快顶快顶！', cls: 'dm-warn', speed: 6 },
+];
+let dmIdx = 0;
+function spawnBarrage() {
+  const el = document.getElementById('barrage');
+  if (!el) return;
+  const d = dmData[dmIdx % dmData.length]; dmIdx++;
+  const dm = document.createElement('div');
+  dm.className = 'dm ' + d.cls;
+  dm.textContent = d.text;
+  const top = 8 + Math.random() * 24;
+  dm.style.top = top + 'px';
+  dm.style.animationDuration = d.speed + 's';
+  el.appendChild(dm);
+  t(() => dm.remove(), d.speed * 1000 + 200);
+}
+let barrageInterval = null;
+function startBarrage() {
+  spawnBarrage();
+  barrageInterval = setInterval(spawnBarrage, 900);
+  timers.push(barrageInterval);
+}
+function stopBarrage() { clearInterval(barrageInterval); }
+
+/* ── COUNTDOWN ── */
+let topnoUsed = false;
+function tryTopno() {
+  playTick();
+  const failEl = document.getElementById('topno-fail');
+  const btn = document.getElementById('topno-btn');
+  failEl.classList.add('show');
+  btn.disabled = true;
+  btn.style.opacity = '0.4';
+  topnoUsed = true;
+}
+
+function startCountdown() {
+  let n = 10;
+  topnoUsed = false;
+  const numEl = document.getElementById('cd-num');
+  const actEl = document.getElementById('cd-action');
+  const bottomEl = document.getElementById('cd-bottom');
+  const btn = document.getElementById('topno-btn');
+  const failEl = document.getElementById('topno-fail');
+
+  // reset
+  numEl.textContent = '10'; numEl.style.color = ''; numEl.style.textShadow = '';
+  actEl.innerHTML = '你慌忙打开手机想续费舰长……<br><strong>但倒计时没有等你</strong>';
+  bottomEl.style.display = 'none';
+  btn.disabled = false; btn.style.opacity = '';
+  failEl.classList.remove('show');
+
+  startBarrage();
+
+  cdTimer = setInterval(() => {
+    n--;
+    playCoin(); // 卖装备音效
+    if (n <= 0) {
+      clearInterval(cdTimer); cdTimer = null;
+      stopBarrage();
+      numEl.textContent = '0'; numEl.style.color = 'var(--muted)'; numEl.style.textShadow = 'none';
+      actEl.innerHTML = '';
+      bottomEl.style.display = 'block';
+      playEmpty(); // 仓库清空音效
+      flash(); flash();
+      t(() => goPhase(4), 1600);
+    } else {
+      numEl.textContent = n;
+      numEl.classList.add('tick');
+      t(() => numEl.classList.remove('tick'), 110);
+      flash();
+      playTick();
+    }
+  }, 550);
+}
+
+/* ── ATTEMPTS ── */
+function startAttempts() {
+  const items = document.querySelectorAll('.attempt-item');
+  items.forEach(el => {
+    el.classList.remove('show');
+    t(() => { el.classList.add('show'); playTick(); }, parseInt(el.dataset.delay || 0));
+  });
+  const last = parseInt(items[items.length - 1]?.dataset.delay || 0);
+  const btn = document.getElementById('phase4-btn');
+  btn.style.opacity = '0'; btn.style.pointerEvents = 'none';
+  t(() => {
+    btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+    playSuccess(); flash();
+  }, last + 900);
+}
+
+/* ── RESULT ── */
+function startResult() {
+  const items = document.querySelectorAll('#loss-list .loss-item');
+  items.forEach((el, i) => {
+    el.classList.remove('show'); el.style.animationDelay = '';
+    t(() => {
+      el.style.animationDelay = (i * 0.1) + 's';
+      el.classList.add('show');
+      if (i < 5) playCoin();
+    }, i * 120);
+  });
+  t(() => playEmpty(), items.length * 120 + 200);
+}
+
+/* ── REVERSAL ── */
+function startReversal() {
+  const items = document.querySelectorAll('#rv-list .rv-item');
+  const closeEl = document.getElementById('rv-close');
+  closeEl.style.opacity = '0';
+  items.forEach(el => el.classList.remove('show'));
+
+  items.forEach((el) => {
+    const delay = parseInt(el.dataset.delay || 0);
+    t(() => { el.classList.add('show'); playTick(); }, delay);
+  });
+
+  const last = parseInt(items[items.length - 1]?.dataset.delay || 0);
+  t(() => {
+    closeEl.style.opacity = '1';
+    playSuccess();
+  }, last + 900);
+}
+
+/* ── RESTART ── */
+function doRestart() {
+  killAll(); stopBarrage();
+  document.querySelectorAll('.panel').forEach(p => {
+    p.style.animation = 'none';
+    p.classList.remove('active');
+  });
+  // reset countdown
+  const numEl = document.getElementById('cd-num');
+  if (numEl) { numEl.textContent = '10'; numEl.style.color = ''; numEl.style.textShadow = ''; }
+  const actEl = document.getElementById('cd-action');
+  if (actEl) actEl.innerHTML = '你慌忙打开手机想续费舰长……<br><strong>但倒计时没有等你</strong>';
+  const bottomEl = document.getElementById('cd-bottom');
+  if (bottomEl) bottomEl.style.display = 'none';
+  const btn = document.getElementById('topno-btn');
+  if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+  const failEl = document.getElementById('topno-fail');
+  if (failEl) failEl.classList.remove('show');
+  // reset attempts
+  document.querySelectorAll('.attempt-item').forEach(el => el.classList.remove('show'));
+  const p4btn = document.getElementById('phase4-btn');
+  if (p4btn) { p4btn.style.opacity = '0'; p4btn.style.pointerEvents = 'none'; }
+  // reset losses
+  document.querySelectorAll('#loss-list .loss-item').forEach(el => {
+    el.classList.remove('show'); el.style.animationDelay = '';
+  });
+  // reset reversal
+  document.querySelectorAll('#rv-list .rv-item').forEach(el => el.classList.remove('show'));
+  const closeEl = document.getElementById('rv-close');
+  if (closeEl) closeEl.style.opacity = '0';
+
+  cur = 0; updateBar(0);
+  t(() => {
+    document.querySelectorAll('.panel').forEach(p => p.style.animation = '');
+    document.getElementById('panel-0').classList.add('active');
+  }, 40);
+}
+</script>
+</body>
+</html>

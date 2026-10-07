@@ -1,0 +1,36 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  /* stop horizontal scroll everywhere */
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--f-sans);
+  font-weight: 300;
+  line-height: 1.7;
+  overflow-x: hidden;
+  cursor: auto;
+  transition: var(--theme-t);
+  /* prevent text size bump on iOS */
+  -webkit-text-size-adjust: 100%;
+}
+
+a       { color: inherit; text-decoration: none; }
+strong  { font-weight: 500; }
+em      { font-style: normal; }
+img     { display: block; max-width: 100%; }
+button  { font-family: inherit; cursor: pointer; }
+
+/* scrollbar */
+::-webkit-scrollbar       { width: 2px; }
+::-webkit-scrollbar-track { background: var(--c-bg); }
+::-webkit-scrollbar-thumb { background: var(--c-red2); border-radius: 1px; }

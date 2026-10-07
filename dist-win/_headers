@@ -1,0 +1,111 @@
+# Cloudflare / EdgeOne Pages 统一缓存与安全头配置
+# 与 Vercel 配置对齐，确保多平台一致性
+
+# 安全头 - 应用到所有路径
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# 根路径 - 页面缓存策略 (SWR)
+/*
+  Cache-Control: public, max-age=0, s-maxage=600, stale-while-revalidate=86400
+
+# Astro 构建资源 - 长期缓存
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 静态资源目录 - 长期缓存
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/favicon/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/gallery/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/pio/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# 其他静态资源扩展名匹配
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.woff
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.ttf
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.eot
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.svg
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.png
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.jpg
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.jpeg
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.gif
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.webp
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.avif
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.ico
+  Cache-Control: public, max-age=31536000, immutable
+
+# 字体文件
+/*.ttf
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.otf
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.xml
+  Content-Type: application/xml; charset=utf-8
+
+# Sitemap 缓存
+/sitemap-index.xml
+  Cache-Control: public, max-age=3600, s-maxage=3600
+
+/sitemap-*.xml
+  Cache-Control: public, max-age=3600, s-maxage=3600
+
+# RSS Feed 缓存
+/rss.xml
+  Content-Type: application/rss+xml; charset=utf-8
+  Cache-Control: public, max-age=1800, s-maxage=1800
+
+# noindex 路径
+/api/*
+  X-Robots-Tag: noindex, nofollow
+
+/og/*
+  X-Robots-Tag: noindex, nofollow
+
+/gh/*
+  X-Robots-Tag: noindex, nofollow
+
+/ftp/*
+  X-Robots-Tag: noindex, nofollow
+
+/search/*
+  X-Robots-Tag: noindex, nofollow

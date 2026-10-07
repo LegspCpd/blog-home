@@ -1,480 +1,102 @@
 ---
-import type { GetStaticPaths } from "astro";
-import { Icon } from "astro-icon/components";
-import SbPostCard from "@/components/layout/SbPostCard.astro";
-import { getSortedPosts } from "@/utils/content-utils";
-import { getPostUrlBySlug, url } from "@/utils/url-utils";
-import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
-import { pagesConfig, siteConfig } from "@/config";
-import { profileConfig } from "@/config/profileConfig";
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import PostCard from "../components/win/PostCard.astro";
+import { POSTS_PER_PAGE } from "../config/site";
 
-// 本页由 [...page].astro 的第 1 页渲染（首页），这里只负责兜底数据。
-export const getStaticPaths = (async () => {
-	return [
-		{
-			params: {},
-			props: {},
-		},
-	];
-}) satisfies GetStaticPaths;
+const posts = (await getCollection("posts", ({ data }) => !data.draft))
+  .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
 
-const posts = await getSortedPosts();
-const latest = posts.slice(0, 6);
+const page = Math.max(1, Number(Astro.url.searchParams.get("page")) || 1);
+const total = Math.max(1, Math.ceil(posts.length / POSTS_PER_PAGE));
+const current = Math.min(page, total);
+const slice = posts.slice((current - 1) * POSTS_PER_PAGE, current * POSTS_PER_PAGE);
 
-const home = pagesConfig.home;
-const socialLinks = profileConfig.links ?? [];
-const isExternal = (href: string) => /^(https?:|mailto:)/.test(href);
-
-const totalPosts = posts.length;
-const lastUpdated = posts[0]?.data.updated ?? posts[0]?.data.published;
-
-// 标签云：取出现频次最高的若干个
-const tagCount = new Map<string, number>();
-for (const post of posts) {
-	for (const tag of post.data.tags ?? []) {
-		tagCount.set(tag, (tagCount.get(tag) ?? 0) + 1);
-	}
-}
-const topTags = [...tagCount.entries()]
-	.sort((a, b) => b[1] - a[1])
-	.slice(0, 12)
-	.map(([tag]) => tag);
-
-// 随机一篇用：所有非草稿文章的路径列表，注入给客户端
-const randomPool = posts.map((p) => getPostUrlBySlug(p.id));
+const base = current > 1 ? `/?page=${current - 1}/` : "/";
+const next = current < total ? `/?page=${current + 1}/` : null;
 ---
 
-<SupabaseLayout>
-	<!-- ============ Hero ============ -->
-	<header class="home-hero">
-		<div class="home-hero-main">
-			<p class="su-kicker home-hero-kicker">{siteConfig.title}</p>
+<Base title={current > 1 ? `第 ${current} 页` : undefined}>
+  <h1 class="page-title">最新文章</h1>
 
-			<h1 class="home-hero-title">{profileConfig.bio}</h1>
+  {
+    slice.length === 0 ? (
+      <p class="empty">还没有文章。</p>
+    ) : (
+      <div class="post-list">
+        {slice.map((post) => (
+          <PostCard post={post} slug={post.id} />
+        ))}
+      </div>
+    )
+  }
 
-			<p class="su-body-lg su-text-mute home-hero-lead">
-				{siteConfig.description}
-			</p>
-
-			<div class="home-hero-actions">
-				{
-					home.actions.map((action, index) => (
-						<a
-							class:list={[
-								"su-btn",
-								index === 0 ? "su-btn--primary" : "su-btn--outline",
-							]}
-							href={isExternal(action.href) ? action.href : url(action.href)}
-						>
-							{action.label}
-							{action.icon ? <Icon name={action.icon} /> : null}
-						</a>
-					))
-				}
-				{randomPool.length > 1 ? (
-					<button type="button" class="su-btn su-btn--ghost" data-random-post>
-						<Icon name="material-symbols:casino-outline" />
-						随机一篇
-					</button>
-				) : null}
-			</div>
-		</div>
-
-		<!-- 统计：做成竖排卡片，给 Hero 右侧一点重量 -->
-		<aside class="home-hero-side" aria-label="站点概览">
-			<div class="home-stat">
-				<span class="home-stat-num su-mono" data-count={totalPosts}>
-					{totalPosts}
-				</span>
-				<span class="home-stat-label">篇文章</span>
-			</div>
-			<div class="home-stat">
-				<span class="home-stat-num su-mono" data-count={tagCount.size}>
-					{tagCount.size}
-				</span>
-				<span class="home-stat-label">个标签</span>
-			</div>
-			<div class="home-stat">
-				<span class="home-stat-num su-mono">
-					{lastUpdated ? new Date(lastUpdated).getFullYear() : "—"}
-				</span>
-				<span class="home-stat-label">
-					{lastUpdated ? "年更新至今" : "尚未更新"}
-				</span>
-			</div>
-		</aside>
-	</header>
-
-	<!-- ============ 最新文章 ============ -->
-	<section class="home-latest rv" aria-labelledby="home-latest-title">
-		<div class="home-section-head">
-			<h2 id="home-latest-title" class="su-heading-lg">最新文章</h2>
-			<a href={url("/posts/")} class="su-link">
-				全部文章
-				<Icon name="material-symbols:arrow-right-alt" />
-			</a>
-		</div>
-
-		<ul class="home-post-grid">
-			{
-				latest.map((post, i) => (
-					// 逐个错开 60ms，形成「依次浮现」的节奏；
-					// 上限 5 次，避免后面的卡片等太久
-					<li
-						class="rv"
-						style={i < 5 ? `--rv-d:${i * 60}ms` : undefined}
-					>
-						<SbPostCard
-							entry={post}
-							title={post.data.title}
-							url={getPostUrlBySlug(post.id)}
-							published={post.data.published}
-							updated={post.data.updated}
-							tags={post.data.tags ?? []}
-							category={post.data.category}
-							description={post.data.description ?? ""}
-							pinned={post.data.pinned}
-							password={!!post.data.password}
-						/>
-					</li>
-				))
-			}
-		</ul>
-	</section>
-
-	<!-- ============ 这个站点在做什么 ============ -->
-	<section class="home-about rv" aria-labelledby="home-about-title">
-		<h2 id="home-about-title" class="su-heading-lg">{home.highlightsTitle}</h2>
-		<p class="su-body-md su-text-mute">{home.highlightsDescription}</p>
-
-		<ul class="home-highlights">
-			{
-				home.highlights.map((item) => (
-					<li class="su-card su-card--pad">
-						<span class="home-highlight-icon">
-							<Icon name={item.icon} />
-						</span>
-						<h3 class="su-heading-md">{item.title}</h3>
-						<p class="su-body-sm su-text-mute">{item.text}</p>
-					</li>
-				))
-			}
-		</ul>
-	</section>
-
-	<!-- ============ 标签 ============ -->
-	{
-		topTags.length > 0 ? (
-			<section class="home-tags rv" aria-labelledby="home-tags-title">
-				<h2 id="home-tags-title" class="su-heading-lg">
-					常读的标签
-				</h2>
-				<div class="home-tag-cloud">
-					{topTags.map((tag) => (
-						<a href={url(`/tags/${encodeURIComponent(tag)}/`)} class="su-pill su-pill--outline">
-							#{tag}
-						</a>
-					))}
-				</div>
-			</section>
-		) : null
-	}
-
-	<!-- ============ 社交 + 页脚链接 ============ -->
-	<footer class="home-foot rv">
-		{
-			socialLinks.length > 0 ? (
-				<nav class="home-social" aria-label={home.socialTitle}>
-					<span class="su-caption su-text-faint">{home.socialTitle}</span>
-					<ul>
-						{socialLinks.map((link) => (
-							<li>
-								<a
-									class="su-pill su-pill--outline"
-									href={isExternal(link.url) ? link.url : url(link.url)}
-									target={/^https?:/.test(link.url) ? "_blank" : undefined}
-									rel={
-										/^https?:/.test(link.url)
-											? "noopener noreferrer"
-											: undefined
-									}
-								>
-									{link.icon ? <Icon name={link.icon} /> : null}
-									{link.name}
-								</a>
-							</li>
-						))}
-					</ul>
-				</nav>
-			) : null
-		}
-
-		<nav class="home-legal" aria-label="站点信息">
-			{
-				home.footerLinks.map((link, index) => (
-					<>
-						{index > 0 ? <span class="su-dot">·</span> : null}
-						<a
-							href={isExternal(link.href) ? link.href : url(link.href)}
-						>
-							{link.label}
-						</a>
-					</>
-				))
-			}
-		</nav>
-	</footer>
-</SupabaseLayout>
-
-<!-- 随机一篇：候选列表随 HTML 下发，点击时在客户端挑选 -->
-<script is:inline define:vars={{ pool: randomPool }}>
-	(function () {
-		var btn = document.querySelector("[data-random-post]");
-		if (!btn || !pool || pool.length < 2) return;
-
-		// 记住上一次随机到的那篇，尽量不重复
-		var last = -1;
-
-		btn.addEventListener("click", function () {
-			var next = Math.floor(Math.random() * pool.length);
-			if (pool.length > 1 && next === last) {
-				next = (next + 1) % pool.length;
-			}
-			last = next;
-			// 用 swup 的导航方式跳转，保持页面过渡一致
-			if (window.swup && typeof window.swup.navigate === "function") {
-				window.swup.navigate(pool[next]);
-			} else {
-				location.href = pool[next];
-			}
-		});
-	})();
-</script>
+  {
+    total > 1 && (
+      <nav class="pager" aria-label="分页导航">
+        {current > 1 ? (
+          <a class="pager-link" href={base}>← 上一页</a>
+        ) : (
+          <span class="pager-link disabled">← 上一页</span>
+        )}
+        <span class="pager-info">
+          第 {current} / {total} 页
+        </span>
+        {next ? (
+          <a class="pager-link" href={next}>下一页 →</a>
+        ) : (
+          <span class="pager-link disabled">下一页 →</span>
+        )}
+      </nav>
+    )
+  }
+</Base>
 
 <style>
-	/* ======================================================================
-	   Hero：左文右卡的经典杂志式构图
-	   左侧标题占主导，右侧统计卡片给页面一个「锚」，
-	   避免大面积文字让首屏显得空。
-	   ====================================================================== */
-	.home-hero {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
-		align-items: end;
-		gap: var(--su-space-2xl);
-		padding-block: var(--su-space-md) var(--su-space-2xl);
-	}
+  .page-title {
+    margin-bottom: var(--spacingHorizontalXL);
+    font-size: var(--fontSizeBase600);
+  }
 
-	.home-hero-main {
-		min-width: 0;
-	}
+  .post-list {
+    display: grid;
+    gap: var(--spacingHorizontalL);
+  }
 
-	.home-hero-kicker {
-		animation: su-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
-	}
+  .empty {
+    color: var(--colorNeutralForeground4);
+    text-align: center;
+    padding-block: 64px;
+  }
 
-	/* 大标题：中文长句需要更紧的字距与更高的行距 */
-	.home-hero-title {
-		margin: var(--su-space-md) 0 0;
-		max-width: 16ch;
-		font-size: 46px;
-		font-weight: 700;
-		line-height: 1.14;
-		letter-spacing: -1.6px;
-		color: var(--su-foreground);
-		animation: su-fade-up 0.55s 0.06s cubic-bezier(0.22, 1, 0.36, 1) both;
-	}
+  .pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacingHorizontalM);
+    margin-top: var(--spacingHorizontalXL);
+  }
 
-	.home-hero-lead {
-		max-width: 46ch;
-		margin-top: var(--su-space-md);
-		animation: su-fade-up 0.55s 0.12s cubic-bezier(0.22, 1, 0.36, 1) both;
-	}
+  .pager-link {
+    padding: 8px 16px;
+    border-radius: var(--borderRadiusMedium);
+    border: 1px solid var(--colorNeutralStroke1);
+    color: var(--colorNeutralForeground1);
+    font-size: var(--fontSizeBase200);
+    text-decoration: none;
+    transition: background-color var(--durationFast) var(--curveEasyEase);
+  }
+  .pager-link:hover {
+    background: var(--colorSubtleBackgroundHover);
+    text-decoration: none;
+  }
+  .pager-link.disabled {
+    color: var(--colorNeutralForegroundDisabled);
+    pointer-events: none;
+  }
 
-	.home-hero-actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--su-space-xs);
-		margin-top: var(--su-space-lg);
-		animation: su-fade-up 0.55s 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
-	}
-
-	/* ---- 右侧统计卡 ---- */
-	.home-hero-side {
-		display: flex;
-		flex-direction: column;
-		gap: var(--su-space-md);
-		min-width: 132px;
-		padding: var(--su-space-lg);
-		border: 1px solid var(--su-border);
-		border-radius: var(--su-radius-lg);
-		background-color: var(--su-card);
-		box-shadow: var(--su-shadow-1);
-		animation: su-fade-up 0.6s 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
-	}
-
-	.home-stat {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-
-	/* 统计卡之间用发丝线分隔 */
-	.home-stat + .home-stat {
-		padding-top: var(--su-space-md);
-		border-top: 1px solid var(--su-border);
-	}
-
-	.home-stat-num {
-		font-size: 26px;
-		font-weight: 700;
-		line-height: 1.1;
-		letter-spacing: -0.8px;
-		color: var(--su-foreground);
-	}
-
-	.home-stat-label {
-		font-size: 12px;
-		color: var(--su-muted-foreground);
-	}
-
-	/* ---- 区块通用 ---- */
-	.home-latest,
-	.home-about,
-	.home-tags,
-	.home-foot {
-		padding-block: 40px;
-		border-top: 1px solid var(--su-border);
-	}
-
-	.home-section-head {
-		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: 16px;
-		margin-bottom: 24px;
-	}
-
-	.home-section-head h2 {
-		margin: 0;
-	}
-
-	/* ---- 文章网格 ---- */
-	.home-post-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-		gap: 16px;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	/* ---- 这个站点在做什么 ---- */
-	.home-about > p {
-		margin-top: 10px;
-		max-width: 60ch;
-	}
-
-	.home-highlights {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-		gap: 16px;
-		margin: 28px 0 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.home-highlight-icon {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: 32px;
-		height: 32px;
-		margin-bottom: 14px;
-		border: 1px solid var(--su-border);
-		border-radius: var(--su-radius-sm);
-		background-color: var(--su-canvas-soft);
-		font-size: 17px;
-		color: var(--su-muted-foreground);
-		transition:
-			color 0.15s ease,
-			border-color 0.15s ease;
-	}
-
-	.home-highlights li:hover .home-highlight-icon {
-		color: var(--su-accent-text);
-		border-color: var(--su-accent-text);
-	}
-
-	.home-highlights h3 {
-		margin: 0 0 8px;
-	}
-
-	/* ---- 标签云 ---- */
-	.home-tag-cloud {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-		margin-top: 20px;
-	}
-
-	.home-tag-cloud a {
-		padding: 5px 11px;
-		font-family: var(--font-supabase);
-	}
-
-	/* ---- 页脚 ---- */
-	.home-social ul {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-		margin: 12px 0 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.home-social a {
-		padding: 5px 11px;
-		font-family: var(--font-supabase);
-	}
-
-	.home-legal {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 8px;
-		margin-top: 28px;
-		padding-top: 24px;
-		border-top: 1px solid var(--su-border);
-		font-size: 13px;
-	}
-
-	.home-legal a {
-		color: var(--su-muted-foreground);
-		text-decoration: none;
-		transition: color 0.15s ease;
-	}
-
-	.home-legal a:hover {
-		color: var(--su-accent-text);
-	}
-
-	/* ---- 移动端 ---- */
-	@media (max-width: 640px) {
-		.home-hero {
-			padding-block: 8px 36px;
-		}
-		.home-stats {
-			gap: 24px;
-		}
-		.home-latest,
-		.home-about,
-		.home-tags,
-		.home-foot {
-			padding-block: 32px;
-		}
-		.home-post-grid {
-			grid-template-columns: 1fr;
-		}
-	}
+  .pager-info {
+    color: var(--colorNeutralForeground4);
+    font-size: var(--fontSizeBase200);
+  }
 </style>

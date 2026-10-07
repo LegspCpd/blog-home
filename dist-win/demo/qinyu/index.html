@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>清雨Tpor毁号事件 · 完整档案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="demo/css/variables.css">
+<link rel="stylesheet" href="demo/css/reset.css">
+<link rel="stylesheet" href="demo/css/components.css">
+<link rel="stylesheet" href="demo/css/nav.css">
+<link rel="stylesheet" href="demo/css/hero.css">
+<link rel="stylesheet" href="demo/css/characters.css">
+<link rel="stylesheet" href="demo/css/timeline.css">
+<link rel="stylesheet" href="demo/css/sections.css">
+<link rel="stylesheet" href="demo/css/animations.css">
+<link rel="stylesheet" href="demo/css/responsive.css">
+</head>
+<body>
+
+<!-- utils -->
+<div id="progress"></div>
+<div id="flash"></div>
+<div id="bgc-wrap"><canvas id="bgc"></canvas></div>
+<div class="noise"></div>
+
+<!-- loader -->
+<div id="loader">
+  <div id="loader-lbl">LOADING CASE FILE</div>
+  <div id="loader-track"><div id="loader-fill"></div></div>
+  <div id="loader-pct">0%</div>
+</div>
+
+<!-- ══ NAV ══ -->
+<nav class="nav">
+  <div class="nav__logo"><span>[</span>清雨Tpor毁号事件<span>]</span></div>
+  <ul class="nav__links">
+    <li><a href="#chars">当事人</a></li>
+    <li><a href="#bg">背景</a></li>
+    <li><a href="#tl">时间线</a></li>
+    <li><a href="#quotes">原话</a></li>
+    <li><a href="#legal">法律</a></li>
+    <li><a href="#ed">定性</a></li>
+    <li><a href="#aft">后续</a></li>
+  </ul>
+  <div class="nav__right">
+    <div class="nav__status">
+      <span class="nav__dot"></span>
+      <span>LIVE ARCHIVE</span>
+    </div>
+    <div class="font-size-switcher" id="font-switcher" role="group" aria-label="字号切换">
+      <button class="fs-btn" data-size="small" aria-label="小字号">小</button>
+      <button class="fs-btn" data-size="medium" aria-label="中字号">中</button>
+      <button class="fs-btn" data-size="large" aria-label="大字号">大</button>
+    </div>
+    <button class="toggle" id="theme-btn" aria-label="切换亮暗">
+      <div class="toggle__thumb">
+        <span class="toggle__moon">🌙</span>
+        <span class="toggle__sun">☀️</span>
+      </div>
+    </button>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero" id="top">
+  <div class="hero__grid"></div>
+  <div class="hero__bar"></div>
+
+  <div class="hero__eye ru" data-d="0">
+    <span class="hero__eye-line"></span>
+    <span class="hero__eye-text">CASE FILE · 2026.03.01 · BILIBILI · 《三角洲行动》</span>
+  </div>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px" class="ru" data-d="0">
+    <span style="padding:4px 10px;background:var(--c-red-a);border:1px solid var(--c-red);color:var(--c-red);font-family:var(--f-mono);font-size:calc(11px * var(--fs-mul));letter-spacing:.05em">● 案件已移送浙江 · 民事诉讼已提起</span>
+    <span style="padding:4px 10px;background:rgba(255,180,0,.08);border:1px solid rgba(255,180,0,.4);color:rgba(255,180,0,.9);font-family:var(--f-mono);font-size:calc(11px * var(--fs-mul));letter-spacing:.05em">⚖ 司法程序推进中</span>
+    <span style="padding:4px 10px;background:rgba(255,255,255,.05);border:1px solid var(--c-line);color:var(--c-dim);font-family:var(--f-mono);font-size:calc(11px * var(--fs-mul));letter-spacing:.05em">↻ 持续更新</span>
+  </div>
+
+  <div class="hero__title-block">
+    <span class="hero__name ru" data-d="1"><span class="glitch" data-t="清雨Tpor">清雨Tpor</span></span>
+    <span class="hero__event ru" data-d="2">毁号事件</span>
+    <span class="hero__sub ru" data-d="3">直播恶意销毁忠实粉丝游戏账号事件 · 完整档案</span>
+  </div>
+
+  <p class="hero__desc ru" data-d="4">
+    一场因付费订阅于<strong>月末零点</strong>到期引发的直播毁号事件。超过<strong>一年</strong>的心血积累，<strong>30秒</strong>内化为乌有，当着数千名观众的面，被主播亲手摧毁。
+  </p>
+
+  <div class="hero__stats ru" data-d="5">
+    <div class="stat"><span class="stat__n" data-count="30" data-suffix="秒">0秒</span><span class="stat__l">账号被摧毁用时</span></div>
+    <div class="stat"><span class="stat__n">2月28日</span><span class="stat__l">舰长零点到期</span></div>
+    <div class="stat"><span class="stat__n" data-count="1" data-suffix="亿+">0亿</span><span class="stat__l">游戏币损失（约）</span></div>
+    <div class="stat"><span class="stat__n" data-count="40" data-suffix="万">0万</span><span class="stat__l">清雨Tpor事前粉丝数</span></div>
+    <div class="stat"><span class="stat__n stat__n--red">永久封禁</span><span class="stat__l">B站最终处理</span></div>
+  </div>
+
+  <div class="hero__banner ru" data-d="6">
+    <div class="bn"><span class="bn__n">23级</span><span class="bn__l">受害者粉丝牌</span></div>
+    <div class="bn"><span class="bn__n">10秒</span><span class="bn__l">故意利用的直播延迟</span></div>
+    <div class="bn"><span class="bn__n">6套</span><span class="bn__l">受害者提前配好的顶配装备</span></div>
+    <div class="bn"><span class="bn__n">+15万</span><span class="bn__l">受害者因此事涨粉</span></div>
+  </div>
+
+  <div class="hero__tape">
+    <span class="hero__tape-label">清雨Tpor.wtf · LIVE ARCHIVE · 2026</span>
+    <span class="hero__tape-dot"></span>
+  </div>
+</section>
+
+<!-- ══ 01 CHARACTERS ══ -->
+<section class="s s--dark" id="chars">
+  <div class="s__header ru">
+    <span class="s__num">01</span>
+    <span class="s__label">当事人</span>
+    <span class="s__rule"></span>
+  </div>
+  <h2 class="s__title ru">这场事件的两个<br>核心人物</h2>
+
+  <div class="char-wrap">
+
+    <div class="char char--villain rl">
+      <div class="char__glow"></div>
+      <span class="badge badge--red" style="margin-bottom:18px">施害方</span>
+      <div class="char__av villain-avatar">
+        <div class="char__av-ring"></div>
+        <img src="1.jpg" alt="清雨Tpor"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <span class="char__av-icon" style="display:none">!</span>
+      </div>
+      <h3 class="char__name">清雨Tpor</h3>
+      <div class="char__handle"><a href="https://space.bilibili.com/9253035" target="_blank" style="color:inherit;text-decoration:none">B站 @清雨Tpor ↗</a></div>
+      <div class="char__divider"></div>
+      <ul class="char__data">
+        <li><span class="ck">主要游戏</span><span class="cv">《三角洲行动》</span></li>
+        <li><span class="ck">粉丝量（事前）</span><span class="cv cv--r">约 40 万</span></li>
+        <li><span class="ck">粉丝量（最低）</span><span class="cv cv--r">约 37 万（-3万）</span></li>
+        <li><span class="ck">粉丝量（当前）</span><span class="cv cv--r">约 39 万</span></li>
+        <li><span class="ck">B站账号状态</span><span class="cv cv--r">■ 永久封禁</span></li>
+        <li><span class="ck">直播生涯状态</span><span class="cv cv--r">已宣告退出直播赛道</span></li>
+        <li><span class="ck">合作方状态</span><span class="cv cv--r">全部解约</span></li>
+        <li><span class="ck">历史前科</span><span class="cv cv--r">2025年6月已有毁号记录</span></li>
+      </ul>
+      <div class="char__verdict">主要责任方 · 涉嫌故意毁坏财物</div>
+    </div>
+
+    <div class="char__vs ru">
+      <span>VS</span>
+      <div class="char__vs-sparks">
+        <div class="sp"></div><div class="sp"></div>
+        <div class="sp"></div><div class="sp"></div>
+      </div>
+    </div>
+
+    <div class="char char--victim rr">
+      <div class="char__glow"></div>
+      <span class="badge badge--amber" style="margin-bottom:18px">受害方</span>
+      <div class="char__av victim-avatar">
+        <div class="char__av-ring"></div>
+        <img src="2.jpg" alt="五月食伍"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <span class="char__av-icon" style="display:none">◎</span>
+      </div>
+      <h3 class="char__name">五月食伍</h3>
+      <div class="char__handle"><a href="https://space.bilibili.com/220831630" target="_blank" style="color:inherit;text-decoration:none">B站 @五月食伍 ↗</a></div>
+      <div class="char__divider"></div>
+      <ul class="char__data">
+        <li><span class="ck">粉丝牌等级</span><span class="cv cv--a">23 级（长期核心老粉）</span></li>
+        <li><span class="ck">舰长状态</span><span class="cv cv--a">2月28日零点到期（已辟谣「过期数分钟」说法）</span></li>
+        <li><span class="ck">游戏资龄</span><span class="cv">S1赛季起（逾一年）</span></li>
+        <li><span class="ck">直接损失</span><span class="cv cv--a">绝版金红·AW弹·约1亿游戏币</span></li>
+        <li><span class="ck">当前粉丝数</span><span class="cv cv--a">超 +15 万</span></li>
+        <li><span class="ck">当前立场</span><span class="cv">案件已移送浙江，民事诉讼同步提起</span></li>
+      </ul>
+      <div class="char__verdict">次要责任方 · 正式向公安机关报案</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══ 02 BACKGROUND ══ -->
+<section class="s s--mid" id="bg">
+  <div class="s__header ru">
+    <span class="s__num">02</span>
+    <span class="s__label">背景机制</span>
+    <span class="s__rule"></span>
+  </div>
+  <h2 class="s__title ru">你需要先了解的事</h2>
+
+  <div class="bg-layout">
+    <div class="ru">
+      <p style="font-size:calc(14px * var(--fs-mul));color:var(--c-dim);line-height:1.9;margin-bottom:18px">
+        《三角洲行动》是一款战术射击游戏，玩家可积累大量高价值虚拟资产——稀有装备、绝版皮肤、战术物资，这些资产需要大量时间投入或真实货币购买，具有切实的现实价值。
+      </p>
+      <p style="font-size:calc(14px * var(--fs-mul));color:var(--c-dim);line-height:1.9;margin-bottom:18px">
+        在B站游戏直播生态中，<strong style="color:var(--c-red)">「舰长」</strong>是付费订阅等级（约每月198元）。清雨Tpor在直播间<strong style="color:var(--c-red)">单方面</strong>制定规则：持有舰长资格的粉丝可将账号扫码授权给他代打；但若发现是非舰长扫码，则当场在直播间公开清空账号全部有价值物品，他将此称为<strong style="color:var(--c-red)">「村规」</strong>。
+      </p>
+      <p style="font-size:calc(14px * var(--fs-mul));color:var(--c-dim);line-height:1.9">
+        这套规则本身已存在极大风险——账号控制权完全交由主播，粉丝需承担一切后果——但由于代打行业长期处于灰色地带，此前一直被默许运行。这一次，它以最冷血的方式撕碎了一个23级老粉长达一年的信任。
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══ 03 TIMELINE ══ -->
+<section class="s s--dark" id="tl">
+  <div class="s__header ru">
+    <span class="s__num">03</span>
+    <span class="s__label">事件时间线</span>
+    <span class="s__rule"></span>
+  </div>
+  <h2 class="s__title ru">从信任到毁灭<br>完整还原</h2>
+
+  <div class="tl">
+    <div class="tl__track"></div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年2月28日 深夜</div>
+        <h3 class="tl__h">舰长到期，本人毫不知情</h3>
+        <p class="tl__body">五月食伍的舰长订阅因自动续费失败，于2月28日深夜静默过期。他仍是清雨Tpor直播间的活跃核心粉丝，持有<strong>23级粉丝牌</strong>——不是路人，是他亲手培养出来的老舰长。</p>
+        <span class="tl__tag tag--bg">背景</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月1日 凌晨 · 舰长已于前日零点到期</div>
+        <h3 class="tl__h">善意一击，致命代价</h3>
+        <p class="tl__body">察觉到清雨Tpor当晚情绪不佳，五月食伍特意为账号配齐<strong>6套顶配满改装备</strong>，在弹幕打出<em>「我的号，随便玩」</em>并扫码授权。他完全不知道自己的舰长身份已于前一天零点静默失效。</p>
+        <span class="tl__tag tag--key">关键事件</span>
+      </div>
+    </div>
+
+    <div class="tl__item tl__item--hot ru">
+      <div class="tl__node tl__node--hot"></div>
+      <div class="tl__content">
+        <div class="tl__time tl__time--red">3月1日 凌晨 · 毁号全程约30秒</div>
+        <h3 class="tl__h">登录后第一件事：不提醒，不退出，直接销毁</h3>
+        <p class="tl__body">清雨Tpor登录账号，<strong>第一时间</strong>识别出舰长过期。他认识这个23级老粉，他清楚这是谁。他没有发一条弹幕提醒，没有退出账号，只说了一句<em>「还有神人」</em>，随即打开仓库。</p>
+        <p class="tl__body" style="margin-top:10px">他开始倒数十秒——但<strong>故意数得比正常快</strong>，同时利用B站约<strong>10秒推流延迟</strong>。当五月食伍从屏幕上看到倒计时时，账号已实际被摧毁。绝版金红、超200发AW子弹、十几组红蛋，以及6套顶配装备，30秒内全部以最低价批量清空。</p>
+        <span class="tl__tag tag--hot" style="margin-top:8px">核心事件</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">3月1日 晚8:12</div>
+        <h3 class="tl__h">五月食伍发布视频，引爆全网</h3>
+        <p class="tl__body">受害者投稿《关于我三角洲资产30秒缩水一个亿这件事》，评论量一度<strong>突破10万条</strong>，大量评论者坦言从未玩过《三角洲行动》——愤怒已突破游戏圈。</p>
+        <span class="tl__tag tag--ev">舆论引爆</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">3月1日 事发后</div>
+        <h3 class="tl__h">强硬态度把怒火烧到最高点</h3>
+        <p class="tl__body">清雨Tpor拒绝道歉，留下一系列令人发指的回应：<em>「退游吧」「你谁啊」「我跟你很熟吗」「不要把自己看得太重要了」「我知道是你的，我就是要毁啊」</em>。这套嚣张态度让事件热度以指数级扩散。</p>
+        <span class="tl__tag tag--hot">舆论升级</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node tl__node--ban"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月3日 · 48小时内全面崩盘</div>
+        <h3 class="tl__h">B站永久封禁 · 合作方光速全撤</h3>
+        <p class="tl__body">B站宣布对清雨Tpor账号实施<strong>永久封禁</strong>。《永劫无间》官方解除全部合作；雷蛇声援五月食伍；所有商业合作方、代言品牌全数解约。十年直播积累的商业价值，48小时内彻底归零。</p>
+        <p class="tl__body" style="margin-top:10px">同日，清雨Tpor公开求和，但私下QQ群发言随即曝光——内容显示他仍在甩锅，与公开态度截然矛盾。</p>
+        <span class="tl__tag tag--ban">平台处理</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月4日</div>
+        <h3 class="tl__h">五月食伍：明确拒绝和解，坚持追责到底</h3>
+        <p class="tl__body">受害者公开声明<strong>不接受任何私下和解</strong>，全力推进法律程序。盼之App法务团队正式介入，完成账号资产价值评估。</p>
+        <span class="tl__tag tag--law">受害方回应</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月6日</div>
+        <h3 class="tl__h">被曝系惯犯 · 2025年6月前科细节骇人听闻</h3>
+        <p class="tl__body">被挖出的录像揭示：即使用户成功顶号，清雨Tpor仍反复登录，将1分钟改密时限<strong>每次减少10秒</strong>，直到对方无法完成——这是经过设计的蓄意行为，绝非冲动。</p>
+        <p class="tl__body" style="margin-top:10px">愤怒网友<strong>网购纸船花圈快递送到其门口</strong>。</p>
+        <span class="tl__tag tag--hot">惯犯实锤</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node tl__node--law"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月13日 · 正式报案</div>
+        <h3 class="tl__h">上海警方受理 · 虚拟财产立法讨论引爆全社会</h3>
+        <p class="tl__body">盼之App陪同五月食伍在<strong>上海正式向公安机关报案</strong>，警方已出具接报回执，正讨论定性方案。事件登上上海电视台，引发全社会关于网络虚拟财产保护的立法讨论。</p>
+        <span class="tl__tag tag--law">法律进程</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月5日 前后</div>
+        <h3 class="tl__h">LOL圈知名主播公开力挺清雨：「乱扫码就该毁」</h3>
+        <p class="tl__body">争议蔓延至英雄联盟直播圈，一名LOL知名主播发表声援言论，公开表示支持清雨的毁号行为，引发更大范围的跨圈舆论对撞，被大量玩家谴责。</p>
+        <span class="tl__tag tag--hot">跨圈扩散</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月6日 前后</div>
+        <h3 class="tl__h">清雨遭开盒 · 本人向公安求助</h3>
+        <p class="tl__body">事件持续发酵中，清雨本人遭到网友「开盒」（曝光个人真实信息）。清雨公开表示已向公安机关求助，要求对开盒行为进行追责。</p>
+        <span class="tl__tag tag--ev">当事人动态</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月7日</div>
+        <h3 class="tl__h">《南方周末》发文：「粉丝虚拟财产如何保护？」</h3>
+        <p class="tl__body">《南方周末》自媒体账号发表评论文章，认定此事为「典型网络虚拟财产纠纷」，指出五月食伍起诉大概率获法院立案，但由于现行法律存在空白，要成罪「也很难」，通常只能以破坏计算机信息系统等条款追责。</p>
+        <span class="tl__tag tag--law">权威媒体报道</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node tl__node--ban"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月11日</div>
+        <h3 class="tl__h">B站撤销「知名UP主」认证</h3>
+        <p class="tl__body">B站正式撤销清雨Tpor的「知名UP主」黄色闪电认证标识，平台层面对其处理进一步升级。</p>
+        <span class="tl__tag tag--ban">平台处理</span>
+      </div>
+    </div>
+
+    <div class="tl__item tl__item--hot ru">
+      <div class="tl__node tl__node--law"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月14日 · 重大进展</div>
+        <h3 class="tl__h">正式立案成功 · 涉案总金额曝光</h3>
+        <p class="tl__body">盼之App携五月食伍赴上海，<strong>警方正式受理立案</strong>，开具立案回执单，涉案虚拟资产总金额同步曝光。这是国内以「恶意毁号」正式立案的标志性案例之一。</p>
+        <span class="tl__tag tag--law">正式立案</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月14日 · 同日</div>
+        <h3 class="tl__h">清雨宣告告别直播赛道 · 立案后随即宣战</h3>
+        <p class="tl__body">清雨公开宣布退出直播行业，直播生涯正式画上句号。但同日又发出强硬声明向五月食伍宣战：<em>「你毁了我的一切，我倒要看看谁能笑到最后。」</em></p>
+        <span class="tl__tag tag--ev">当事人动态</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月15日</div>
+        <h3 class="tl__h">五月食伍直播精讲：案情定性与最新进展</h3>
+        <p class="tl__body">受害者五月食伍本人开播，详细讲解立案后的案情定性方向、法律程序推进情况及后续维权计划，直播播放量逾<strong>249万</strong>。</p>
+        <span class="tl__tag tag--law">受害方更新</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月18日</div>
+        <h3 class="tl__h">清雨发布道歉声明 · 自曝曾患抑郁症</h3>
+        <p class="tl__body">在舆论持续压力及立案后，清雨发布道歉声明，自曝刚经历过抑郁症，称没想到事件会演变为网暴。声明引发广泛讨论，多数网友认为其出发点仍是博取同情。</p>
+        <span class="tl__tag tag--ev">当事人动态</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月19日</div>
+        <h3 class="tl__h">央媒点名批评 · 事件再度扩散</h3>
+        <p class="tl__body">事件被中国央媒公开点名批评，舆论再次大范围扩散，标志着此案已从游戏圈纠纷上升至主流媒体持续关注的社会议题。</p>
+        <span class="tl__tag tag--hot">媒体关注</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月22日 · 重大进展</div>
+        <h3 class="tl__h">上海行政立案 · 移送浙江 · 同步提起民事诉讼</h3>
+        <p class="tl__body">五月食伍公布：上海警方已出具<strong>行政案件立案告知书</strong>，同时出具移送案件通知书，将案件正式移交浙江方面处理。五月食伍表示将携其他受害人赴浙江重新提交报案材料，争取将案件由「行政」升级为<strong>刑事案件</strong>。同时强调绝不调解、不出谅解书，并已<strong>同步对清雨Tpor提起民事诉讼</strong>。</p>
+        <span class="tl__tag tag--law">正式立案</span>
+        <span class="tl__tag tag--key" style="margin-top:8px">管辖转移</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月23日</div>
+        <h3 class="tl__h">五月食伍带领受害者赴浙江线下维权</h3>
+        <p class="tl__body">五月食伍组织多名受害者实际前往浙江，推进重新提交报案材料的行动，争取刑事立案。</p>
+        <span class="tl__tag tag--law">受害方更新</span>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月24日</div>
+        <span class="tl__tag tag--hot">媒体升级</span>
+        <h3 class="tl__h">登上央视正式节目 · 国家级媒体全面覆盖</h3>
+        <p class="tl__body">在央媒点名批评后，清雨毁号事件进一步登上<strong>中央电视台正式节目</strong>向全国播出，事件影响力从网络舆论场全面扩展至国家级广播媒体，虚拟财产保护立法议题由此进入更高层次的公共讨论。</p>
+      </div>
+    </div>
+
+    <div class="tl__item ru">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月26日</div>
+        <h3 class="tl__h">清雨舰长群哭诉 · 扬言转行当陪玩</h3>
+        <p class="tl__body">清雨在昔日舰长群中带着<strong>哭腔</strong>为自己发声，与官方态度撕破脸，声称不会为了「这点钱」委曲求全，并扬言<em>「凭我这技术，大不了以后当陪玩，一小时我就能挣100」</em>。言论曝光后迅速在全网流传，被广泛解读为心理防线彻底崩溃的信号。</p>
+        <span class="tl__tag tag--key">被告方动态</span>
+      </div>
+    </div>
+
+    <div class="tl__item tl__item--hot ru" id="latest">
+      <div class="tl__node"></div>
+      <div class="tl__content">
+        <div class="tl__time">2026年3月27日 · 最新动态</div>
+        <span class="tl__tag tag--hot">线下真实</span>
+        <h3 class="tl__h">盼之App发布「线下真实」视频 · 全站最高排第1名</h3>
+        <p class="tl__body">盼之App联合五月食伍发布视频《清雨毁号案线下真实！后续来袭～》，记录<strong>直接前往受害者五月位置出发、线下对峙清雨</strong>全程，播放量突破<strong>332.8万</strong>，全站排行榜最高位列<strong>第1名</strong>，1.8万条评论，20.1万点赞。事件热度在维权进入实质阶段后再度引爆全站。</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══ 04 QUOTES ══ -->
+<section class="s s--mid" id="quotes">
+  <div class="s__header ru">
+    <span class="s__num">04</span>
+    <span class="s__label">原话实录</span>
+    <span class="s__rule"></span>
+  </div>
+  <h2 class="s__title ru">清雨Tpor<br>亲口说出的话</h2>
+  <p class="s__sub ru">以下均为清雨Tpor在直播或评论区的原话，有完整录像/截图存档</p>
+
+  <div class="q-grid ru">
+    <div class="q q--lg">
+      <span class="q__mark">"</span>
+      <div class="q__text">我知道是你的，我就是要毁啊。</div>
+      <div class="q__ctx">毁号过程中的直播发言</div>
+    </div>
+    <div class="q">
+      <span class="q__mark">"</span>
+      <div class="q__text">还有神人。</div>
+      <div class="q__ctx">发现五月食伍扫码时的第一反应</div>
+    </div>
+    <div class="q">
+      <span class="q__mark">"</span>
+      <div class="q__text">退游吧，别玩了，挺好的。</div>
+      <div class="q__ctx">毁号完成后对受害者的回应</div>
+    </div>
+    <div class="q">
+      <span class="q__mark">"</span>
+      <div class="q__text">你谁啊？我跟你很熟吗？</div>
+      <div class="q__ctx">对23级老粉长期支持者的态度</div>
+    </div>
+    <div class="q">
+      <span class="q__mark">"</span>
+      <div class="q__text">不要把自己看得太重要了。</div>
+      <div class="q__ctx">事后在评论区对粉丝发言</div>
+    </div>
+    <div class="q">
+      <span class="q__mark">"</span>
+      <div class="q__text">你错在先，是你的问题。</div>
+      <div class="q__ctx">事后对受害者的责任推卸</div>
+    </div>
+    <div class="q q--lg">
+      <span class="q__mark">"</span>
+      <div class="q__text">你毁了我的一切，我倒要看看谁能笑到最后。</div>
+      <div class="q__ctx">3月14日立案后对五月食伍公开宣战</div>
+    </div>
+    <div class="q">
+      <span class="q__mark">"</span>
+      <div class="q__text">没想到会被网暴。</div>
+      <div class="q__ctx">3月18日道歉声明，自曝曾患抑郁症</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 05 EVIDENCE ══ -->
+<section class="s s--dark" id="ev">
+  <div class="s__header ru">
+    <span class="s__num">05</span>
+    <span class="s__label">关键证据</span>
+    <span class="s__rule"></span>
+  </div>
+  <h2 class="s__title ru">此案的核心事实</h2>
+
+  <div class="ev-grid ru">
+    <div class="ev">
+      <div class="ev__num">EV-001</div>
+      <span class="ev__icon">◷</span>
+      <h3 class="ev__h">故意利用直播延迟</h3>
+      <p class="ev__body">B站直播约有10秒推流延迟，清雨Tpor对此心知肚明。他<strong>刻意加快倒计时速度</strong>，当受害者从屏幕上看到数字时，账号已实际被摧毁——这是精心设计的陷阱。</p>
+    </div>
+    <div class="ev">
+      <div class="ev__num">EV-002</div>
+      <span class="ev__icon">◈</span>
+      <h3 class="ev__h">23级粉丝牌 · 舰长已于前日零点到期</h3>
+      <p class="ev__body">五月食伍持有<strong>23级粉丝牌</strong>，是最高等级忠实支持者之一。舰长于<strong>2月28日零点</strong>因自动续费失败到期，本人事先并不知情，主观上并无违规意图。（「仅过期几分钟」的早期说法已由五月食伍本人公开辟谣。）</p>
+    </div>
+    <div class="ev">
+      <div class="ev__num">EV-003</div>
+      <span class="ev__icon">▶</span>
+      <h3 class="ev__h">全程直播录像</h3>
+      <p class="ev__body">毁号全程在直播中进行，<strong>数千名观众</strong>实时目击，完整录像已被受害者作为直接书证存档。清雨Tpor每一句话、每一个操作均有记录，无从抵赖。</p>
+    </div>
+    <div class="ev">
+      <div class="ev__num">EV-004</div>
+      <span class="ev__icon">≡</span>
+      <h3 class="ev__h">2025年6月前科</h3>
+      <p class="ev__body">被挖出的录像证明：即使受害者<strong>成功顶号改密</strong>，清雨Tpor仍反复登录，将时限每次减少10秒，直到对方无力阻止。这是<strong>经过设计的蓄意行为</strong>。</p>
+    </div>
+    <div class="ev">
+      <div class="ev__num">EV-005</div>
+      <span class="ev__icon">◇</span>
+      <h3 class="ev__h">表面求和·私下甩锅</h3>
+      <p class="ev__body">清雨Tpor公开求和的同一天，私下QQ群发言遭曝光：内容显示他仍将责任推给受害者，与公开态度截然矛盾，彻底戳穿了所谓道歉的真相。</p>
+    </div>
+    <div class="ev">
+      <div class="ev__num">EV-006</div>
+      <span class="ev__icon">□</span>
+      <h3 class="ev__h">上海电视台专题报道</h3>
+      <p class="ev__body">事件被主流媒体专题报道，律师连线分析：清雨Tpor承担<strong>主要责任</strong>；其自设「村规」在法律上<strong>完全无效</strong>，不能作为任何免责依据。</p>
+    </div>
+    <div class="ev">
+      <div class="ev__num">EV-007</div>
+      <span class="ev__icon">§</span>
+      <h3 class="ev__h">《南方周末》权威法律定性</h3>
+      <p class="ev__body">《南方周末》发文认定：五月食伍起诉<strong>大概率获法院立案</strong>，但由于现行法律对虚拟财产的审理缺乏细化条款，要成罪「也很难」，通常只能援引<strong>破坏计算机信息系统</strong>等条款追责——这一分析直接推动了立法层面的讨论。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 06 LEGAL ══ -->
+<section class="s s--mid" id="legal">
+  <div class="s__header ru">
+    <span class="s__num">06</span>
+    <span class="s__label">法律解剖</span>
+    <span class="s__rule"></span>
+  </div>
+  <h2 class="s__title ru">他触犯了哪些法律？<br>逐条核对</h2>
+  <p class="s__sub ru">以下均为现行有效法律条文原文，非解读，非推断</p>
+
+  <div class="law-grid ru">
+    <div class="law law--red">
+      <div class="law__ref">《中华人民共和国民法典》第127条</div>
+      <div class="law__quote">「法律对数据、网络虚拟财产的保护有规定的，依照其规定。」</div>
+      <div class="law__hr"></div>
+      <div class="law__tag">适用分析</div>
+      <p class="law__body">五月食伍账号内的绝版装备、AW弹药、游戏币，均通过<strong>真实货币充值或大量时间投入</strong>积累，属于受民法典明确保护的网络虚拟财产。清雨Tpor声称"有权毁号"的理由，在第127条面前彻底失效——<strong>他人财产不因你单方面制定的「村规」而丧失法律保护。</strong></p>
+    </div>
+
+    <div class="law law--red">
+      <div class="law__ref">《中华人民共和国刑法》第275条</div>
+      <div class="law__quote">「故意毁坏公私财物，数额较大或者有其他严重情节的，处三年以下有期徒刑、拘役或者罚金；数额巨大或者有其他特别严重情节的，处三年以上七年以下有期徒刑。」</div>
+      <div class="law__hr"></div>
+      <div class="law__tag">适用分析</div>
+      <p class="law__body">立案追诉标准：<strong>造成财物损失5000元以上</strong>，或毁坏财物<strong>三次以上</strong>，均应立案。本案两项均可满足。直播过程中<strong>故意加速倒计时、利用延迟阻止止损</strong>，属于「手段特别恶劣」的加重情节。</p>
+    </div>
+
+    <div class="law law--amber">
+      <div class="law__ref">《中华人民共和国刑法》第36条</div>
+      <div class="law__quote">「由于犯罪行为而使被害人遭受经济损失的，对犯罪分子除依法给予刑事处罚外，并应当根据情况判处赔偿经济损失。」</div>
+      <div class="law__hr"></div>
+      <div class="law__tag">适用分析</div>
+      <p class="law__body">刑事处罚与民事赔偿<strong>并行不悖</strong>——坐牢不等于免赔，赔钱不等于不坐牢。他所期待的"私下和解了结一切"，在法律意义上根本不成立。</p>
+    </div>
+
+    <div class="law law--amber">
+      <div class="law__ref">《中华人民共和国民法典》第1184条</div>
+      <div class="law__quote">「侵害他人财产的，财产损失按照损失发生时的市场价格或者其他合理方式计算。」</div>
+      <div class="law__hr"></div>
+      <div class="law__tag">适用分析</div>
+      <p class="law__body">赔偿金额以<strong>损失发生时的市场评估价值为准</strong>，而非清雨Tpor实际贱卖的价格。那些绝版装备的市场价值，远高于他几分钱一件清仓的瞬间。</p>
+    </div>
+  </div>
+
+  <div class="resp ru">
+    <div class="resp__card">
+      <span class="badge badge--red">主要责任 · 清雨Tpor</span>
+      <h3 class="resp__name">不存在任何合法免责空间</h3>
+      <p class="resp__body">他自设的「村规」是<strong>单方面意思表示</strong>，不构成任何形式的合法授权协议。即便粉丝违反了他的私设规则，他最多有权拒绝服务、退出账号，<strong>绝无权处置、销毁他人财产</strong>。他的行为完全符合刑法第275条「直接故意」的认定——犯罪目的就是将财物毁坏，动机出于报复，手段主动设计。</p>
+      <span class="resp__foot resp__foot--r">民法典127条 · 刑法275条 · 刑法36条</span>
+    </div>
+    <div class="resp__card">
+      <span class="badge badge--amber">次要责任 · 五月食伍</span>
+      <h3 class="resp__name">疏忽不等于自愿被毁</h3>
+      <p class="resp__body">律师认定其在舰长过期情况下主动扫码，存在一定疏忽。但有一个根本性区分：<strong>扫码授权代打 ≠ 授权销毁仓库全部财产</strong>。授权的边界是「帮我打游戏」，从未包含「你可以清空我的账号」。2026年3月13日，五月食伍已<strong>正式向上海公安机关报案</strong>，警方已出具接报回执。</p>
+      <span class="resp__foot resp__foot--a">民法典1184条 · 刑事附带民事诉讼</span>
+    </div>
+  </div>
+
+  <div class="gray-box ru">
+    <div class="gray-box__label">⚠ 关于「村规免责论」的彻底驳斥</div>
+    <p class="gray-box__body">任何人都无权在自己的直播间颁布凌驾于《民法典》之上的「私法」。就算他在屏幕上写了一百次"乱扫号毁号"，那也只是一种威胁性声明，<strong>不具备任何法律效力</strong>，不能成为侵犯他人财产权的挡箭牌。这就如同一家洗车店在门口挂牌「月卡过期者车辆砸毁不赔」——这块牌子无论写得多显眼，都是无效条款，从第一天起就是。</p>
+  </div>
+</section>
+
+<!-- ══ 06+ EDITORIAL ══ -->
+<section class="s s--dark" id="ed">
+  <div class="s__header ru">
+    <span class="s__num">06+</span>
+    <span class="s__label">深度评析</span>
+    <span class="s__rule"></span>
+  </div>
+  <h2 class="s__title ru">清雨Tpor的<br>深度评析</h2>
+  <p class="s__sub ru">以下为本站编辑基于事实所作的道德与社会层面判断，字字有据</p>
+
+  <div class="ed-grid">
+    <div class="ed ru" data-d="0">
+      <div class="ed__tag">道德审判 · 壹</div>
+      <h3 class="ed__h">反人民——吃人民的血汗饭，却砸人民的碗</h3>
+      <p class="ed__body">清雨Tpor的全部收入来源于哪里？来源于五月食伍这样的普通人民群众每个月掏出的198元舰长费，来源于无数个工薪阶层在工资里挤出来的打赏，来源于底层玩家用自己的劳动时间换来的支持。这些人供养了他。然后他转过头来，<strong>用这些人的信任，摧毁这些人的财产，嘲笑这些人的愤怒</strong>，最后说"你谁啊"。这不是主播与粉丝的纠纷，这是<strong>一个靠人民群众吃饭的人，公开反咬人民群众一口</strong>。</p>
+    </div>
+    <div class="ed ru" data-d="1">
+      <div class="ed__tag">道德审判 · 贰</div>
+      <h3 class="ed__h">反劳动——剥削劳动成果，与旧社会恶霸本质无异</h3>
+      <p class="ed__body">五月食伍仓库里的每一件装备，都是他用时间、精力、真金白银换来的劳动果实。<strong>劳动创造价值，劳动成果神圣不可侵犯</strong>，这是最基本的社会共识。清雨Tpor30秒的操作，是对劳动价值最粗暴的否定——他的逻辑是"你的劳动成果在我面前一文不值"。与旧社会地主强占农民田产有何本质区别？<strong>不过一个用契约霸占，一个用鼠标清空。</strong></p>
+    </div>
+    <div class="ed ru" data-d="2">
+      <div class="ed__tag">道德审判 · 叁</div>
+      <h3 class="ed__h">反法治——以「村规」行封建私刑，开历史倒车</h3>
+      <p class="ed__body">法律面前人人平等，任何人不得以私设规则替代国家法律——这是现代法治的基本原则。清雨Tpor的「村规」在说什么？在说他的直播间里，<strong>他的意志高于《民法典》</strong>，他的规矩可以覆盖国家法律。这是对法治社会的公然挑衅，是<strong>开历史倒车，回到"谁拳头大谁说了算"的丛林时代</strong>。一个文明社会消灭私刑花了多少代人的代价，他用一套村规想一笔勾销。</p>
+    </div>
+    <div class="ed ru" data-d="3">
+      <div class="ed__tag">道德审判 · 肆</div>
+      <h3 class="ed__h">反文明——毒化网络公共空间，腐蚀社会价值体系</h3>
+      <p class="ed__body">清雨Tpor的每一次直播毁号，都在向成千上万的观众传递一个价值观：<strong>强者可以为所欲为，弱者的财产不受保护，规则由强者定义</strong>。更可怕的是，有人觉得这很好看，有人以此为乐——说明这种毒素已经渗透进了部分人的价值体系。<strong>一个人的恶行，正在腐蚀无数年轻观众的是非判断，污染整个网络文化生态。</strong></p>
+    </div>
+    <div class="ed ru" data-d="4">
+      <div class="ed__tag">道德审判 · 伍</div>
+      <h3 class="ed__h">反诚信——向全社会输出"好人没好报"毒液</h3>
+      <p class="ed__body">五月食伍做了什么？他心疼主播情绪不好，主动付出善意。他是这个社会里<strong>还愿意相信他人、还愿意付出善良的那种人</strong>。清雨Tpor给了他什么回报？毁号、嘲讽、"退游吧"。这个结果在向全社会广播：<strong>善良是愚蠢的，信任是危险的，付出是可笑的</strong>。社会诚信体系的崩塌，就是由无数个这样的事件一点一点积累的。</p>
+    </div>
+    <div class="ed ru" data-d="5">
+      <div class="ed__tag">道德审判 · 陆</div>
+      <h3 class="ed__h">反公义——欺软怕硬，专对底层下手的懦夫本色</h3>
+      <p class="ed__body">为什么选择毁五月食伍的号，而不是去挑战真正难惹的人？因为他的逻辑是<strong>典型的流氓逻辑：专挑软柿子捏</strong>。五月食伍越忠诚，越是被欺负的对象——这是流氓的经典策略，也是一切欺压关系的底层逻辑。<strong>对没有反抗能力的人挥舞拳头，对真正的强者俯首帖耳，一个只敢欺负自己粉丝的人，是彻头彻尾的懦夫。</strong></p>
+    </div>
+
+    <div class="ed ed--wide" style="opacity:1;transform:none">
+      <div class="ed__tag">综合评价</div>
+      <h3 class="ed__h" style="font-size:calc(clamp(16px,2.5vw,22px) * var(--fs-mul));margin-bottom:24px">清雨Tpor是什么人？六条判词，每一条都严丝合缝：</h3>
+      <div class="vd-grid">
+        <div class="vd ru" data-d="0">
+          <div class="vd__charge">罪名一</div>
+          <div class="vd__name">反人民</div>
+          <p class="vd__desc">以人民的血汗供养自己，却反过来摧毁人民的财产、嘲笑人民的愤怒。背刺衣食父母，人民群众永远不会原谅。</p>
+        </div>
+        <div class="vd ru" data-d="80">
+          <div class="vd__charge">罪名二</div>
+          <div class="vd__name">反劳动</div>
+          <p class="vd__desc">用30秒抹除一个劳动者超过一年的劳动成果，是对劳动价值最粗暴的否定，是对劳动人民尊严最赤裸的践踏。</p>
+        </div>
+        <div class="vd ru" data-d="160">
+          <div class="vd__charge">罪名三</div>
+          <div class="vd__name">反法治</div>
+          <p class="vd__desc">以「村规」凌驾于《民法典》《刑法》之上，以私刑替代国家法律，是对社会主义法治秩序的公然挑衅。</p>
+        </div>
+        <div class="vd ru" data-d="240">
+          <div class="vd__charge">罪名四</div>
+          <div class="vd__name">反文明</div>
+          <p class="vd__desc">向全社会输出弱肉强食的丛林逻辑，腐蚀网络公共空间，毒化年轻一代的价值判断，危害文明社会根基。</p>
+        </div>
+        <div class="vd ru" data-d="320">
+          <div class="vd__charge">罪名五</div>
+          <div class="vd__name">反诚信</div>
+          <p class="vd__desc">以最残忍的方式向全社会证明"善良有罪、信任危险"，是对社会诚信体系的蓄意破坏，是道德的癌变。</p>
+        </div>
+        <div class="vd ru" data-d="400">
+          <div class="vd__charge">罪名六</div>
+          <div class="vd__name">反公义</div>
+          <p class="vd__desc">在数千人面前公开作恶、拒绝认错、表演道歉，挑战公众对正义的基本期待，是对公序良俗的正面冲撞。</p>
+        </div>
+      </div>
+      <div class="ed__final">
+        历史的车轮滚滚向前，每一个以为自己可以凌驾于人民、法律、道义之上的人，最终都被碾入了历史的尘埃。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 07 AFTERMATH ══ -->
+<section class="s s--mid" id="aft">
+  <div class="s__header ru">
+    <span class="s__num">07</span>
+    <span class="s__label">事件后续</span>
+    <span class="s__rule"></span>
+  </div>
+  <h2 class="s__title ru">清算速度<br>有多快？</h2>
+
+  <div class="aft ru">
+    <div class="aft__item"><div class="aft__date">3月1日</div><div class="aft__bar"></div><div class="aft__text">曝光视频发布，评论量突破 <strong>10万条</strong>，跨圈传播，从未玩过三角洲的网友大批涌入声讨。</div></div>
+    <div class="aft__item"><div class="aft__date">3月3日</div><div class="aft__bar"></div><div class="aft__text"><strong>《永劫无间》官方</strong>率先声明，解除与清雨Tpor全部内容合作，教科书式切割。</div></div>
+    <div class="aft__item"><div class="aft__date">3月3日</div><div class="aft__bar aft__bar--red"></div><div class="aft__text"><strong>B站官方</strong>宣布对清雨Tpor实施 <strong class="red">永久封禁</strong>，平台内已完全无法搜索到该账号。</div></div>
+    <div class="aft__item"><div class="aft__date">3月3日</div><div class="aft__bar"></div><div class="aft__text"><strong>雷蛇</strong>官方公开声援五月食伍，宣布赠送旗舰电竞外设（后改为公开抽奖）。</div></div>
+    <div class="aft__item"><div class="aft__date">3月3日</div><div class="aft__bar"></div><div class="aft__text">所有<strong>商业合作方、代言品牌、淘宝店铺</strong>全部火速解约，十年直播积累的商业价值彻底归零。</div></div>
+    <div class="aft__item"><div class="aft__date">3月4日</div><div class="aft__bar"></div><div class="aft__text">五月食伍公开声明：<strong>明确拒绝和解，坚持追责到底</strong>，全力推进法律程序。</div></div>
+    <div class="aft__item"><div class="aft__date">3月5日</div><div class="aft__bar"></div><div class="aft__text"><strong>盼之App</strong>法务团队正式介入，完成账号资产价值评估；外访团队宣称随时准备「线下真实」。</div></div>
+    <div class="aft__item"><div class="aft__date">3月6日</div><div class="aft__bar"></div><div class="aft__text"><strong>2025年6月前科</strong>录像曝光，证实蓄意惯犯；愤怒网友网购<strong>纸船花圈快递送到其门口</strong>。清雨遭「开盒」，本人向公安求助反击。</div></div>
+    <div class="aft__item"><div class="aft__date">3月7日</div><div class="aft__bar"></div><div class="aft__text"><strong>《南方周末》</strong>发文，认定此案为「典型虚拟财产纠纷」，五月起诉大概率立案，但要成罪「也很难」，现行法律存在空白。同日事件<strong>登上电视台</strong>，律师公开表态主播负主责。</div></div>
+    <div class="aft__item"><div class="aft__date">3月7日</div><div class="aft__bar"></div><div class="aft__text"><strong>LOL圈知名主播</strong>公开力挺清雨「乱扫码就该毁」，引发跨圈更大范围舆论对撞，被玩家群体集体谴责。</div></div>
+    <div class="aft__item"><div class="aft__date">3月11日</div><div class="aft__bar aft__bar--red"></div><div class="aft__text">B站正式<strong>撤销清雨Tpor「知名UP主」认证</strong>，平台处理进一步升级。</div></div>
+    <div class="aft__item"><div class="aft__date">3月13日</div><div class="aft__bar aft__bar--amber"></div><div class="aft__text">盼之App陪同五月食伍在<strong>上海正式报案</strong>，警方出具接报回执，正讨论定性方案。</div></div>
+    <div class="aft__item"><div class="aft__date">3月14日</div><div class="aft__bar aft__bar--amber"></div><div class="aft__text">警方<strong>正式受理立案</strong>，开具立案回执，涉案总金额曝光——国内恶意毁号正式立案的标志性案例。</div></div>
+    <div class="aft__item"><div class="aft__date">3月14日</div><div class="aft__bar"></div><div class="aft__text">清雨宣告<strong>告别直播赛道</strong>；同日向五月食伍宣战：<em>「你毁了我的一切，我倒要看看谁能笑到最后。」</em></div></div>
+    <div class="aft__item"><div class="aft__date">3月15日</div><div class="aft__bar"></div><div class="aft__text">五月食伍<strong>直播精讲案情定性</strong>，播放量超249万，公开说明立案后法律程序推进方向。</div></div>
+    <div class="aft__item"><div class="aft__date">3月18日</div><div class="aft__bar"></div><div class="aft__text">清雨发布道歉声明，<strong>自曝曾患抑郁症</strong>，称没想到会被网暴；舆论普遍认为是博取同情。</div></div>
+    <div class="aft__item"><div class="aft__date">3月19日</div><div class="aft__bar"></div><div class="aft__text"><strong>央媒公开点名批评</strong>清雨事件，事件再度扩散，从游戏圈纠纷上升为社会议题。</div></div>
+    <div class="aft__item"><div class="aft__date">3月22日</div><div class="aft__bar aft__bar--amber"></div><div class="aft__text">上海警方出具<strong>行政案件立案告知书</strong>及移送通知，<strong>案件正式移交浙江处理</strong>；五月食伍同步对清雨<strong>提起民事诉讼</strong>，拒绝调解、不出谅解书。</div></div>
+    <div class="aft__item"><div class="aft__date">3月23日</div><div class="aft__bar aft__bar--amber"></div><div class="aft__text">五月食伍<strong>组织受害者赴浙江线下维权</strong>，重新提交报案材料，争取升级为刑事案件。</div></div>
+    <div class="aft__item"><div class="aft__date">3月24日</div><div class="aft__bar aft__bar--amber"></div><div class="aft__text">清雨毁号事件<strong>登上央视正式节目</strong>，影响力从网络舆论升级至国家级广播媒体，虚拟财产保护议题全面进入公众视野。</div></div>
+    <div class="aft__item"><div class="aft__date">3月26日</div><div class="aft__bar"></div><div class="aft__text">清雨在舰长群带着<strong>哭腔为自己发声</strong>，与官方立场撕破脸，扬言「大不了当陪玩，一小时我就能挣100」；言论曝光后引发全网嘲讽。</div></div>
+    <div class="aft__item"><div class="aft__date">3月27日</div><div class="aft__bar aft__bar--amber"></div><div class="aft__text">盼之App联合五月发布<strong>「线下真实」视频</strong>，直奔清雨进行线下对峙；播放量<strong>332.8万</strong>，全站最高排名<strong>第1</strong>，评论1.8万。</div></div>
+    <div class="aft__item"><div class="aft__date">持续中</div><div class="aft__bar aft__bar--amber"></div><div class="aft__text">清雨Tpor粉丝<strong>从40万降至37万</strong>后回升至38万；五月食伍<strong>涨粉超15万</strong>；事件推动虚拟财产保护立法讨论。</div></div>
+  </div>
+</section>
+
+<!-- ══ VERDICT ══ -->
+<div class="verdict">
+  <div class="verdict__inner ru">
+    <div class="verdict__label">// 结语</div>
+    <p class="verdict__q">
+      「一次月末的续费失败」——这是清雨Tpor发动这场毁灭所需要的全部理由。<br>
+      就是2月28日零点的一条系统通知，就是一次自动续费没有成功，<br>
+      就足以让他在数千名观众面前，亲手摧毁一个老粉<strong>超过一年的心血</strong>。<br><br>
+      他卖掉的不是数据包，是数百个熬夜的晚上，<br>
+      是省下来的奶茶钱，是一个23级粉丝牌背后真实的情感投入。<br>
+      <strong>30秒销毁的，是一整年的生活。</strong>
+    </p>
+    <div class="verdict__stamp">
+      清雨Tpor.wtf · 事件档案<br>
+      所有细节均来源于公开报道和直播录像 · 法律责任以最终司法认定为准
+    </div>
+  </div>
+</div>
+
+<!-- ══ REFS ══ -->
+<section class="s s--mid" id="refs">
+  <div class="s__header ru">
+    <span class="s__num">08</span>
+    <span class="s__label">参考资料</span>
+    <span class="s__rule"></span>
+  </div>
+  <h2 class="s__title ru">延伸阅读</h2>
+  <ul class="ref-list ru">
+    <li><a href="https://zh.wikipedia.org/wiki/清雨毁号事件" target="_blank" class="ref-link"><span class="ref-badge">WIKI</span><span>清雨毁号事件 · 维基百科（中文）</span><span>↗</span></a></li>
+    <li><a href="https://zh.moegirl.org.cn/清雨毁号事件" target="_blank" class="ref-link"><span class="ref-badge">萌百</span><span>清雨毁号事件 · 萌娘百科——事件详细梳理</span><span>↗</span></a></li>
+    <li><a href="https://news.17173.com/content/03082026/032202864.shtml" target="_blank" class="ref-link"><span class="ref-badge">媒体</span><span>清雨Tpor毁号事件升级报道 · 17173游戏门户</span><span>↗</span></a></li>
+    <li><a href="https://news.qq.com/rain/a/20260305A07DR200" target="_blank" class="ref-link"><span class="ref-badge">腾讯</span><span>原来是惯犯！清雨Tpor多次毁号 · 腾讯新闻</span><span>↗</span></a></li>
+    <li><a href="https://news.qq.com/rain/a/20260304A092R000" target="_blank" class="ref-link"><span class="ref-badge">腾讯</span><span>30秒毁号，清雨成了游戏圈人人喊打的主播 · 腾讯新闻</span><span>↗</span></a></li>
+    <li><a href="https://www.gamersky.com/news/202603/2100243.shtml" target="_blank" class="ref-link"><span class="ref-badge">游民</span><span>号主回应：启动法律程序 · 游民星空</span><span>↗</span></a></li>
+    <li><a href="https://www.gamersky.com/news/202603/2101845.shtml" target="_blank" class="ref-link"><span class="ref-badge">游民</span><span>LOL知名主播力挺清雨毁号事件 · 游民星空</span><span>↗</span></a></li>
+    <li><a href="https://www.gamersky.com/news/202603/2105252.shtml" target="_blank" class="ref-link"><span class="ref-badge">游民</span><span>毁号事件重大进展！正式向公安机关报案 · 游民星空</span><span>↗</span></a></li>
+    <li><a href="https://www.gamersky.com/news/202603/2100927.shtml" target="_blank" class="ref-link"><span class="ref-badge">游民</span><span>盼之App介入协助线下维权 · 游民星空</span><span>↗</span></a></li>
+    <li><a href="https://www.bilibili.com/video/BV188P4zHEC7/" target="_blank" class="ref-link"><span class="ref-badge">B站</span><span>盼之App官方跟进视频 · 728万播放</span><span>↗</span></a></li>
+    <li><a href="https://www.bilibili.com/video/BV1Y1PzzfEb9/" target="_blank" class="ref-link"><span class="ref-badge">B站</span><span>道尔顿丶伊法：毁号哥后续来了 · 524万播放</span><span>↗</span></a></li>
+    <li><a href="https://www.bilibili.com/video/BV1XtPQzfECa/" target="_blank" class="ref-link"><span class="ref-badge">B站</span><span>五月食伍本人：3.9进展公布 · 249万播放</span><span>↗</span></a></li>
+    <li><a href="https://www.bilibili.com/video/BV1wYAAzuE8y/" target="_blank" class="ref-link"><span class="ref-badge">B站</span><span>五月食伍本人：3.21事件真实进展公布</span><span>↗</span></a></li>
+        <li><a href="https://www.bilibili.com/video/BV1y3XKB9ES2/" target="_blank" class="ref-link"><span class="ref-badge">B站</span><span>盼之App：3.27清雨毁号案线下真实！全站最高第1名 · 332万播放</span><span>↗</span></a></li>
+    <li><a href="https://app.ardrive.io/#/drives/b37affb9-7455-4634-9c4a-7ea16ad36333?name=drive1" target="_blank" class="ref-link"><span class="ref-badge">链上</span><span>本站源码永久存档 · ArDrive（Arweave区块链）</span><span>↗</span></a></li>
+  </ul>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<!-- ══ CONTACT ══ -->
+<section class="s s--dark" id="contact">
+  <div class="s__header ru">
+    <span class="s__num">09</span>
+    <span class="s__label">联系</span>
+    <span class="s__rule"></span>
+  </div>
+  <h2 class="s__title ru">联系我们</h2>
+  <div class="ru" style="max-width:560px">
+    <p style="font-size:calc(14px * var(--fs-mul));color:var(--c-dim);line-height:1.9;margin-bottom:24px">
+      如果你也是清雨Tpor毁号事件的受害者，或掌握相关证据，欢迎联系。
+      同样欢迎补充事实信息、指出错误或提供更多资料。
+    </p>
+    <a href="mailto:mail@daum.pw" class="contact-link">
+      <span class="contact-label">邮件</span>
+      <span class="contact-addr">mail@daum.pw</span>
+      <span class="contact-arrow">→</span>
+    </a>
+    <a href="https://space.bilibili.com/3546731002202994" target="_blank" class="contact-link" style="margin-top:2px">
+      <span class="contact-label">B站</span>
+      <span class="contact-addr">daum12569</span>
+      <span class="contact-arrow">→</span>
+    </a>
+    <a href="#" class="contact-link" style="margin-top:2px" onclick="navigator.clipboard.writeText('3998824676');this.querySelector('.contact-arrow').textContent='✓';setTimeout(()=>this.querySelector('.contact-arrow').textContent='→',1500);return false">
+      <span class="contact-label">QQ</span>
+      <span class="contact-addr">3998824676</span>
+      <span class="contact-arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<div style="text-align:center;padding:28px 20px 0;font-family:var(--f-mono);font-size:calc(12px * var(--fs-mul));color:var(--c-dim);line-height:2">
+  <div style="margin-bottom:6px;opacity:.5">// 事件持续跟进中</div>
+  如发现新进展、补充证据或有任何修改建议<br>
+  欢迎随时联系站长更新本档案<br>
+  <span style="opacity:.7">邮件 <a href="mailto:mail@daum.pw" style="color:inherit;text-decoration:underline">mail@daum.pw</a> · QQ <span id="footer-qq" style="cursor:pointer;text-decoration:underline" onclick="navigator.clipboard.writeText('3998824676');this.textContent='已复制✓';setTimeout(()=>this.textContent='3998824676',1500)">3998824676</span> · B站 <a href="https://space.bilibili.com/3546731002202994" target="_blank" style="color:inherit;text-decoration:underline">daum12569</a></span>
+</div>
+
+<footer class="site-footer">
+  <div>
+    <div class="footer__logo">清雨Tpor.wtf · 毁号事件档案</div>
+    <div class="footer__note" style="margin-top:5px">本页面为事件公开信息整理，不代表任何法律意见 · 所有原话均有录像/截图存档</div>
+    <div style="margin-top:10px;display:inline-block;padding:5px 12px;border:1px solid var(--c-red);font-family:var(--f-mono);font-size:calc(11px * var(--fs-mul));letter-spacing:.06em">
+      <a href="https://app.ardrive.io/#/drives/b37affb9-7455-4634-9c4a-7ea16ad36333?name=drive1" target="_blank" style="color:var(--c-red);text-decoration:none">⛓ 源码已上链永久存档 · ArDrive ↗</a>
+    </div>
+    <div style="margin-top:16px;font-family:var(--f-mono);font-size:calc(10px * var(--fs-mul));color:var(--c-faint);line-height:1.8;max-width:480px">
+      免责声明：本站内容均来源于公开报道、直播录像及当事人陈述，仅作事件记录用途，不构成任何法律意见或定性结论。本站与清雨Tpor、五月食伍、盼之App等任何当事方均无利益关联。如有内容错误或侵权，请通过联系页面告知，核实后将及时更正或删除。法律责任以最终司法认定为准。
+    </div>
+  </div>
+  <div>
+    <div class="footer__domain">清雨Tpor.wtf</div>
+    <div class="footer__note" style="margin-top:4px;text-align:right">CASE FILE · 2026</div>
+  </div>
+</footer>
+
+<script src="demo/js/loader.js"></script>
+<script src="demo/js/theme.js"></script>
+<script src="demo/js/canvas.js"></script>
+<script src="demo/js/reveal.js"></script>
+<script src="demo/js/counters.js"></script>
+<script src="demo/js/interactions.js"></script>
+</body>
+</html>

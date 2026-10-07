@@ -1,125 +1,66 @@
 ---
-/**
- * tags/[tag].astro —— 单个标签下的文章列表
- *
- * 静态生成：标签集合在构建期即可确定，因此每个标签都是一条真实路径，
- * 直链 / 刷新 / 分享都能正确落到内容上，不依赖客户端读取 query。
- */
-import { Icon } from "astro-icon/components";
-import PostListRow from "@/components/layout/PostListRow.astro";
-import SbPageHeader from "@/components/layout/SbPageHeader.astro";
-import SupabaseLayout from "@/layouts/SupabaseLayout.astro";
-import { getSortedPosts } from "@/utils/content-utils";
-import { formatDateToYYYYMMDD } from "@/utils/date-utils";
-import { getPostUrlBySlug, url } from "@/utils/url-utils";
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import PostCard from "../../components/win/PostCard.astro";
 
 export async function getStaticPaths() {
-	const all = await getSortedPosts();
-	const tagSet = new Set<string>();
-	for (const post of all) {
-		for (const tag of post.data.tags ?? []) tagSet.add(tag);
-	}
-	return [...tagSet].map((tag) => ({ params: { tag } }));
+  const posts = await getCollection("posts", ({ data }) => !data.draft);
+
+  const tags = new Map<string, string[]>();
+  for (const post of posts) {
+    for (const tag of post.data.tags) {
+      if (!tags.has(tag)) tags.set(tag, []);
+      tags.get(tag)!.push(post.id);
+    }
+  }
+
+  return [...tags.entries()].map(([tag, slugs]) => ({
+    params: { tag },
+    props: {
+      tag,
+      posts: posts.filter((p) => p.id && slugs.includes(p.id)),
+    },
+  }));
 }
 
-const { tag } = Astro.params;
-const allPosts = await getSortedPosts();
-const posts = allPosts.filter((p) => (p.data.tags ?? []).includes(tag as string));
-
-// 同标签下的其它标签，方便横向跳转
-const relatedTags = new Map<string, number>();
-for (const post of posts) {
-	for (const t of post.data.tags ?? []) {
-		if (t !== tag) relatedTags.set(t, (relatedTags.get(t) ?? 0) + 1);
-	}
-}
-const siblings = [...relatedTags.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
+const { tag, posts } = Astro.props;
+const sorted = [...posts].sort(
+  (a, b) => b.data.published.valueOf() - a.data.published.valueOf(),
+);
 ---
 
-<SupabaseLayout
-	title={`#${tag}`}
-	description={`标签「${tag}」下的全部文章，共 ${posts.length} 篇。`}
->
-	<SbPageHeader eyebrow="Tag" title={`#${tag}`} subtitle={`共 ${posts.length} 篇文章`}>
-		<a href={url("/archive/")} class="su-btn su-btn--outline su-btn--sm">
-			<Icon name="material-symbols:arrow-back" />
-			返回归档
-		</a>
-	</SbPageHeader>
+<Base title={`#${tag}`} path={`/tags/${encodeURIComponent(tag)}/`}>
+  <nav class="crumb">
+    <a href="/tags/">← 全部标签</a>
+  </nav>
 
-	{
-		siblings.length > 0 ? (
-			<nav class="tag-siblings" aria-label="相关标签">
-				{siblings.map(([t, count]) => (
-					<a
-						href={url(`/tags/${encodeURIComponent(t)}/`)}
-						class="su-pill su-pill--outline"
-					>
-						#{t}
-						<span class="tag-count">{count}</span>
-					</a>
-				))}
-			</nav>
-		) : null
-	}
+  <h1 class="page-title">#{tag}</h1>
+  <p class="total">共 {sorted.length} 篇</p>
 
-	<ul class="tag-list">
-			{posts.map((post, i) => (
-				<li class="rv">
-					<PostListRow
-						rank={i + 1}
-						title={post.data.title}
-						href={getPostUrlBySlug(post.id)}
-						date={formatDateToYYYYMMDD(post.data.published)}
-						datetime={post.data.published.toISOString()}
-						category={post.data.category}
-						desc={post.data.description}
-						tags={post.data.tags ?? []}
-					/>
-				</li>
-			))}
-		</ul>
-</SupabaseLayout>
+  <div class="post-list">
+    {sorted.map((post) => (
+      <PostCard post={post} slug={post.id} />
+    ))}
+  </div>
+</Base>
 
 <style>
-	.tag-siblings {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-		padding-bottom: 24px;
-		margin-bottom: 8px;
-		border-bottom: 1px solid var(--su-border);
-	}
+  .crumb {
+    margin-bottom: var(--spacingHorizontalM);
+    font-size: var(--fontSizeBase200);
+  }
+  .crumb a {
+    color: var(--colorNeutralForeground3);
+    text-decoration: none;
+  }
+  .crumb a:hover { color: var(--colorBrandForeground1); }
 
-	.tag-siblings a {
-		padding: 5px 11px;
-		font-family: var(--font-supabase);
-	}
+  .page-title { margin-bottom: 4px; }
+  .total {
+    margin: 0 0 var(--spacingHorizontalXL);
+    color: var(--colorNeutralForeground4);
+    font-size: var(--fontSizeBase200);
+  }
 
-	.tag-count {
-		margin-left: 4px;
-		font-family: var(--font-mono-supabase);
-		font-size: 11px;
-		color: var(--su-ink-faint);
-	}
-
-	.tag-list {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	/* 列表行样式已抽到 <PostListRow> 组件 */
-	.tag-list {
-		display: flex;
-		flex-direction: column;
-		gap: var(--su-space-2xs);
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	@media (max-width: 640px) {
-
-	}
+  .post-list { display: grid; gap: var(--spacingHorizontalL); }
 </style>

@@ -1,0 +1,19 @@
+[package]
+name = "end-model"
+version = "0.2.0"
+edition = "2024"
+
+[dependencies]
+generativity = { workspace = true }
+thiserror = { workspace = true }
+vector-map = { workspace = true }
+
+[dev-dependencies]
+trybuild = "1"
+
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+indexing_slicing = "warn"
+undocumented_unsafe_blocks = "warn"

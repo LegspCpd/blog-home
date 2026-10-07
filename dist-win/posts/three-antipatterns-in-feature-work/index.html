@@ -1,0 +1,158 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"> <head><meta charset="UTF-8"><style>:root{colorNeutralBackground1:#202020;colorNeutralBackground2:#1c1c1c;colorNeutralBackground3:#282828;colorNeutralBackground4:#2d2d2d;colorNeutralBackground5:#333333;colorNeutralBackground6:#3a3a3a;colorSubtleBackground:#ffffff0a;colorSubtleBackgroundHover:#ffffff12;colorSubtleBackgroundPressed:#ffffff1a;colorSubtleBackgroundSelected:#ffffff14;colorBackgroundOverlay:#2c2c2c;colorTransparentBackground:transparent;colorNeutralForeground1:#ffffff;colorNeutralForeground2:#e6e6e6;colorNeutralForeground3:#c5c5c5;colorNeutralForeground4:#9a9a9a;colorNeutralForegroundDisabled:#5c5c5c;colorNeutralForegroundOnBrand:#000000;colorBrandBackground:#0078d4;colorBrandBackgroundHover:#1a86d9;colorBrandBackgroundPressed:#005fb0;colorBrandBackgroundSelected:#005fb0;colorBrandForeground1:#c7e0f4;colorBrandForeground2:#9cc9ec;colorNeutralStroke1:#3d3d3d;colorNeutralStroke2:#484848;colorNeutralStroke3:#5a5a5a;colorNeutralStrokeAccessible:#8a8a8a;colorStrokeFocus1:#4cc2ff;colorStrokeFocus2:#4cc2ff;colorTransparentStroke:transparent;borderRadiusNone:0px;borderRadiusSmall:4px;borderRadiusMedium:7px;borderRadiusLarge:8px;borderRadiusXLarge:12px;borderRadiusCircular:9999px;fontFamilyBase:'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;fontFamilyMonospace:'Cascadia Code', 'JetBrains Mono', Consolas, monospace;fontSizeBase100:12px;fontSizeBase200:14px;fontSizeBase300:14px;fontSizeBase400:16px;fontSizeBase500:20px;fontSizeBase600:24px;fontWeightRegular:400;fontWeightMedium:500;fontWeightSemibold:600;lineHeightBase100:16px;lineHeightBase200:20px;lineHeightBase300:20px;lineHeightBase400:24px;lineHeightBase500:28px;lineHeightBase600:32px;spacingHorizontalS:8px;spacingHorizontalM:12px;spacingHorizontalL:16px;spacingHorizontalXL:20px;spacingVerticalS:8px;spacingVerticalM:12px;spacingVerticalL:16px;durationFast:100ms;durationNormal:150ms;durationSlow:250ms;curveEasyEase:cubic-bezier(0.33, 0, 0.67, 1);shadow2:0 1px 2px rgba(0,0,0,.28);shadow4:0 2px 4px rgba(0,0,0,.28);shadow8:0 4px 8px rgba(0,0,0,.32);shadow16:0 8px 16px rgba(0,0,0,.36);shadow28:0 14px 28px rgba(0,0,0,.40);shadow64:0 32px 64px rgba(0,0,0,.44)}</style><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>给博客加功能时，我踩过的三个反模式 | LegspCpd Blog</title><meta name="description" content="写脚本改代码、凭记忆猜 API、把&quot;能编译&quot;当&quot;能用&quot;——这三个错误我都犯过，而且都花了一轮才修好。"><link rel="canonical" href="https://legspcpd.asia/posts/three-antipatterns-in-feature-work/"><!-- RSS：博客必备 --><link rel="alternate" type="application/rss+xml" title="LegspCpd Blog RSS" href="https://legspcpd.asia/rss.xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="sitemap" href="/sitemap-index.xml"><!-- Open Graph --><meta property="og:type" content="article"><meta property="og:site_name" content="LegspCpd Blog"><meta property="og:title" content="给博客加功能时，我踩过的三个反模式 | LegspCpd Blog"><meta property="og:description" content="写脚本改代码、凭记忆猜 API、把&quot;能编译&quot;当&quot;能用&quot;——这三个错误我都犯过，而且都花了一轮才修好。"><meta property="og:url" content="https://legspcpd.asia/posts/three-antipatterns-in-feature-work/"><meta property="og:locale" content="zh_CN"><meta property="article:published_time" content="2026-10-06T00:00:00.000Z"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="给博客加功能时，我踩过的三个反模式 | LegspCpd Blog"><meta name="twitter:description" content="写脚本改代码、凭记忆猜 API、把&quot;能编译&quot;当&quot;能用&quot;——这三个错误我都犯过，而且都花了一轮才修好。"><meta name="generator" content="Astro v7.3.4"><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://legspcpd.asia/#website","url":"https://legspcpd.asia","name":"LegspCpd Blog","description":"LegspCpd 的个人博客，记录学习与生活点滴，分享技术经验与见解。","inLanguage":"zh-CN"},{"@type":"WebPage","@id":"https://legspcpd.asia/posts/three-antipatterns-in-feature-work/#webpage","url":"https://legspcpd.asia/posts/three-antipatterns-in-feature-work/","name":"给博客加功能时，我踩过的三个反模式 | LegspCpd Blog","description":"写脚本改代码、凭记忆猜 API、把\"能编译\"当\"能用\"——这三个错误我都犯过，而且都花了一轮才修好。","isPartOf":{"@id":"https://legspcpd.asia/#website"},"inLanguage":"zh-CN"}]}</script><!--
+      防闪烁：主题脚本在渲染前同步执行首屏取色。
+      默认暗色优先 —— 没有本地偏好就直接暗色。
+    --><script>(function(){const storageKey = "winui-theme";
+const fallback = "dark";
+
+      (function () {
+        try {
+          var saved = localStorage.getItem(storageKey);
+          var t =
+            saved === "dark" || saved === "light"
+              ? saved
+              : fallback;
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", fallback);
+        }
+      })();
+    })();</script><style>.post[data-astro-cid-vt34qafq]{max-width:760px;margin-inline:auto}.post-head[data-astro-cid-vt34qafq]{margin-bottom:var(--spacingHorizontalXL);padding-bottom:var(--spacingHorizontalL);border-bottom:1px solid var(--colorNeutralStroke1)}.post-head[data-astro-cid-vt34qafq] h1[data-astro-cid-vt34qafq]{font-size:var(--fontSizeBase600);margin-bottom:10px;line-height:1.3}.post-meta[data-astro-cid-vt34qafq]{color:var(--colorNeutralForeground4);font-size:var(--fontSizeBase200);flex-wrap:wrap;align-items:center;gap:8px;display:flex}.badge[data-astro-cid-vt34qafq]{border-radius:var(--borderRadiusCircular);background:var(--colorSubtleBackground);color:var(--colorBrandForeground1);padding:1px 8px}.tags[data-astro-cid-vt34qafq]{flex-wrap:wrap;gap:6px;margin:12px 0 0;padding:0;list-style:none;display:flex}.tags[data-astro-cid-vt34qafq] a[data-astro-cid-vt34qafq]{border-radius:var(--borderRadiusCircular);border:1px solid var(--colorNeutralStroke1);color:var(--colorNeutralForeground3);font-size:var(--fontSizeBase100);padding:1px 8px;text-decoration:none}.tags[data-astro-cid-vt34qafq] a[data-astro-cid-vt34qafq]:hover{background:var(--colorSubtleBackgroundHover);color:var(--colorNeutralForeground1)}.cover[data-astro-cid-vt34qafq]{border-radius:var(--borderRadiusXLarge);width:100%;margin-bottom:var(--spacingHorizontalXL)}.post-foot[data-astro-cid-vt34qafq]{padding-top:var(--spacingHorizontalL);border-top:1px solid var(--colorNeutralStroke1);margin-top:48px}.back[data-astro-cid-vt34qafq]{color:var(--colorNeutralForeground3);font-size:var(--fontSizeBase200);text-decoration:none}.back[data-astro-cid-vt34qafq]:hover{color:var(--colorBrandForeground1)}
+</style><link rel="stylesheet" href="/_astro/Base.-GmEwmLW.css"></head> <body> <header class="nav" data-astro-cid-hpih3g2g> <div class="container nav-inner" data-astro-cid-hpih3g2g> <a href="/" class="brand" aria-label="LegspCpd Blog 首页" data-astro-cid-hpih3g2g> <span class="brand-mark" aria-hidden="true" data-astro-cid-hpih3g2g></span> <span class="brand-text" data-astro-cid-hpih3g2g>LegspCpd Blog</span> </a> <nav class="nav-links" aria-label="主导航" data-astro-cid-hpih3g2g> <a href="/" class="nav-link" data-astro-cid-hpih3g2g> 首页 </a><a href="/archive/" class="nav-link" data-astro-cid-hpih3g2g> 归档 </a><a href="/tags/" class="nav-link" data-astro-cid-hpih3g2g> 标签 </a> </nav> <button id="theme-toggle" class="theme-btn" type="button" aria-label="切换明暗主题" title="切换明暗主题" data-astro-cid-hpih3g2g> <span class="theme-icon" aria-hidden="true" data-astro-cid-hpih3g2g></span> </button> </div> </header><script type="module">document.getElementById(`theme-toggle`)?.addEventListener(`click`,()=>{window.__toggleTheme?.()});</script> <main class="page-main"> <div class="container">  <article class="post" data-astro-cid-vt34qafq> <header class="post-head" data-astro-cid-vt34qafq> <h1 data-astro-cid-vt34qafq>给博客加功能时，我踩过的三个反模式</h1> <div class="post-meta" data-astro-cid-vt34qafq> <time datetime="2026-10-06T00:00:00.000Z" data-astro-cid-vt34qafq> 2026年10月6日 </time>  <span class="badge" data-astro-cid-vt34qafq>技术</span> </div> <ul class="tags" data-astro-cid-vt34qafq> <li data-astro-cid-vt34qafq><a href="/tags/%E5%8D%9A%E5%AE%A2/" data-astro-cid-vt34qafq>#博客</a></li><li data-astro-cid-vt34qafq><a href="/tags/%E5%89%8D%E7%AB%AF/" data-astro-cid-vt34qafq>#前端</a></li><li data-astro-cid-vt34qafq><a href="/tags/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5/" data-astro-cid-vt34qafq>#工程实践</a></li><li data-astro-cid-vt34qafq><a href="/tags/%E5%A4%8D%E7%9B%98/" data-astro-cid-vt34qafq>#复盘</a></li> </ul> </header>  <div class="prose" data-astro-cid-vt34qafq> <p>最近给博客做了一轮功能迭代，加了命令面板、灯箱、滚动动效、长文折叠、联系页之类的东西。</p>
+<p>技术上都不复杂，但过程中我犯的几个错误挺典型的，写出来给自己提个醒。</p>
+<h2 id="反模式一用脚本批量改已有代码">反模式一：用脚本批量改已有代码</h2>
+<h3 id="出了什么事">出了什么事</h3>
+<p>我写了个 Node 脚本，想给四个列表页的行元素统一加一个 CSS 类：</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="js"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> targets</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> [</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  [</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"src/pages/archive.astro"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">'class="ar-row"'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"ar-row rv"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">],</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  // ...</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">src </span><span style="color:#D73A49;--shiki-dark:#F97583">=</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> src.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">split</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(from).</span><span style="color:#6F42C1;--shiki-dark:#B392F0">join</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(to);</span></span></code></pre>
+<p>看起来很合理对吧。问题是我把 <code>from</code> 和 <code>to</code> 都写成了裸字符串：</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="plaintext"><code><span class="line"><span>class="ar-row"   →   ar-row rv</span></span></code></pre>
+<p>结果是生成了 <code>&lt;a ar-row rv href="..."&gt;</code> ——<strong>属性名和属性值混在一起</strong>，HTML 直接失效。</p>
+<p>类型检查报了一堆我看不懂的错：</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="plaintext"><code><span class="line"><span>Type '{ children: any[]; "ar-row": true; rv: true; href: string; }'</span></span>
+<span class="line"><span>is not assignable to type 'AnchorHTMLAttributes'</span></span></code></pre>
+<p>我盯着看了半天才反应过来。</p>
+<h3 id="为什么这类脚本很危险">为什么这类脚本很危险</h3>
+<p>因为它<strong>绕过了你的视觉检查</strong>。你脑子里想的是“给元素加个类”，但脚本实际做的是“字符串替换”——这两件事在脑子里是等价的，在文本上完全不是。</p>
+<p>而且一旦出错，报错信息会指向一个你完全没想到的地方。</p>
+<h3 id="现在的做法">现在的做法</h3>
+<p><strong>已有文件一律用编辑器精确修改，脚本只用于新建文件。</strong></p>
+<p>判断标准很简单：</p>
+<ul>
+<li>新建文件 → 随便写，写错了整个文件重写</li>
+<li>改已有文件 → 必须能精确指出「哪几行、变成什么样」</li>
+</ul>
+<p>如果确实需要批量改，我会先在<strong>一个文件</strong>上跑，验证产物正确，再推广到其他文件。而且改完立刻 <code>astro check</code>，不要攒着。</p>
+<h2 id="反模式二凭记忆猜-api">反模式二：凭记忆猜 API</h2>
+<h3 id="出了什么事-1">出了什么事</h3>
+<p>我给命令面板写了个 <code>escapeHtml</code> 函数，用的是这种写法：</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="js"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">function</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> escapeHtml</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#E36209;--shiki-dark:#FFAB70">s</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">  return</span><span style="color:#6F42C1;--shiki-dark:#B392F0"> String</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(s).</span><span style="color:#6F42C1;--shiki-dark:#B392F0">replace</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">/</span><span style="color:#005CC5;--shiki-dark:#79B8FF">[&amp;&lt;&gt;"']</span><span style="color:#032F62;--shiki-dark:#9ECBFF">/</span><span style="color:#D73A49;--shiki-dark:#F97583">g</span><span style="color:#24292E;--shiki-dark:#E1E4E8">, </span><span style="color:#D73A49;--shiki-dark:#F97583">function</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#E36209;--shiki-dark:#FFAB70">c</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">    return</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &amp;: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"&amp;amp;"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &lt;: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"&amp;lt;"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">      &gt;: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"&amp;gt;"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">      '"'</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"&amp;quot;"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#032F62;--shiki-dark:#9ECBFF">      "'"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#032F62;--shiki-dark:#9ECBFF">"&amp;#39;"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">,</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">    }[c];</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">  });</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span></code></pre>
+<p>这是我“记得”的常见写法。写完我甚至没用它——因为 pagefind 返回的 HTML 片段需要保留 <code>&lt;mark&gt;</code> 高亮，我后来决定直接 innerHTML。</p>
+<p>但函数已经写进去了。</p>
+<p>构建时报错：</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="plaintext"><code><span class="line"><span>[CompilerError] Unexpected token</span></span></code></pre>
+<p>对象字面量里的裸标识符作键（<code>&amp;</code>、<code>&lt;</code>、<code>&gt;</code>）在 ES5 严格模式下是语法错误——需要写成 <code>"&amp;"</code>。</p>
+<h3 id="教训">教训</h3>
+<p><strong>没用的代码也要能编译。</strong></p>
+<p>我当时的逻辑是“反正不调用，语法错误也无所谓”。但它是错的：</p>
+<ol>
+<li>语法错误会让整个文件解析失败，连带周围的正常代码也编译不了</li>
+<li>下一个人（比如三个月后的我）会疑惑“这函数为什么在这儿”</li>
+<li>它证明了这段代码没被真正执行过，也就意味着<strong>没被真正思考过</strong></li>
+</ol>
+<p>现在的做法：写完立刻检查有没有未使用的函数，有就删。</p>
+<p>顺带一提，这次经历让我明白一个更普适的道理——</p>
+<blockquote>
+<p>你“记得”的 API，可能来自另一个语言、另一个版本，或者你根本没真正用过。</p>
+<p>与其凭记忆写，不如先查一眼，或者干脆换个更简单的实现。</p>
+</blockquote>
+<p>比如这次我就该直接不写 <code>escapeHtml</code>，而不是“先写上以防万一”。</p>
+<h2 id="反模式三把能编译当能用">反模式三：把“能编译”当“能用”</h2>
+<h3 id="出了什么事-2">出了什么事</h3>
+<p>我给移动端加了个固定顶栏，里面放品牌名 + 导航链接 + 抽屉按钮。</p>
+<p>样式我是这么写的：</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="css"><code><span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">.su-mobile-bar-brand</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#005CC5;--shiki-dark:#79B8FF">  padding-left</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">44</span><span style="color:#D73A49;--shiki-dark:#F97583">px</span><span style="color:#24292E;--shiki-dark:#E1E4E8">;   </span><span style="color:#6A737D;--shiki-dark:#6A737D">/* 给抽屉按钮让位 */</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">@media</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#005CC5;--shiki-dark:#79B8FF">max-width</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">520</span><span style="color:#D73A49;--shiki-dark:#F97583">px</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  .su-mobile-bar-brand</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> { </span><span style="color:#005CC5;--shiki-dark:#79B8FF">display</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">none</span><span style="color:#24292E;--shiki-dark:#E1E4E8">; }</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span></code></pre>
+<p>我以为没问题。构建通过，类型通过，<code>astro check</code> 通过。</p>
+<p><strong>但 520px 以下品牌名一隐藏，那个 44px 的占位也跟着没了</strong>，按钮下方会留出一段空白。</p>
+<p>编译器和类型检查都不会发现这种问题——因为 CSS 规则本身完全合法。</p>
+<h3 id="怎么发现的">怎么发现的</h3>
+<p>我拖了一下浏览器窗口。</p>
+<p>但我不可能每次都靠肉眼看。所以后来我写了个检查脚本：</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="js"><code><span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">// 检查移动端顶栏的结构完整性</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> hasBar</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> html.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">includes</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"su-mobile-bar"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> hasTrigger</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> html.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">includes</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"su-mobile-trigger"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">const</span><span style="color:#005CC5;--shiki-dark:#79B8FF"> hasBrand</span><span style="color:#D73A49;--shiki-dark:#F97583"> =</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> html.</span><span style="color:#6F42C1;--shiki-dark:#B392F0">includes</span><span style="color:#24292E;--shiki-dark:#E1E4E8">(</span><span style="color:#032F62;--shiki-dark:#9ECBFF">"su-mobile-bar-brand"</span><span style="color:#24292E;--shiki-dark:#E1E4E8">);</span></span></code></pre>
+<p>虽然这个脚本也发现不了“留白”这种问题（它只检查元素存在与否），但它至少能挡住“忘记加某个元素”这类失误。</p>
+<h3 id="更根本的做法">更根本的做法</h3>
+<p>我现在会在写 CSS 时问一句：</p>
+<blockquote>
+<p>这条规则在所有断点下都成立吗？</p>
+</blockquote>
+<p>上面那个例子的正确写法应该是：</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="css"><code><span class="line"><span style="color:#D73A49;--shiki-dark:#F97583">@media</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> (</span><span style="color:#005CC5;--shiki-dark:#79B8FF">max-width</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">520</span><span style="color:#D73A49;--shiki-dark:#F97583">px</span><span style="color:#24292E;--shiki-dark:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  .su-mobile-bar-brand</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> { </span><span style="color:#005CC5;--shiki-dark:#79B8FF">display</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">none</span><span style="color:#24292E;--shiki-dark:#E1E4E8">; }</span></span>
+<span class="line"><span style="color:#6A737D;--shiki-dark:#6A737D">  /* 品牌名消失了，让位由顶栏自己承担 */</span></span>
+<span class="line"><span style="color:#6F42C1;--shiki-dark:#B392F0">  .su-mobile-bar</span><span style="color:#24292E;--shiki-dark:#E1E4E8"> { </span><span style="color:#005CC5;--shiki-dark:#79B8FF">padding-left</span><span style="color:#24292E;--shiki-dark:#E1E4E8">: </span><span style="color:#005CC5;--shiki-dark:#79B8FF">60</span><span style="color:#D73A49;--shiki-dark:#F97583">px</span><span style="color:#24292E;--shiki-dark:#E1E4E8">; }</span></span>
+<span class="line"><span style="color:#24292E;--shiki-dark:#E1E4E8">}</span></span></code></pre>
+<p><strong>把隐含的依赖写出来</strong>，而不是指望它自动成立。</p>
+<h2 id="三件事的共同点">三件事的共同点</h2>
+<p>回看这三个错误，我发现它们有个共同点：</p>
+<table>
+<thead>
+<tr>
+<th>错误</th>
+<th>我以为在做什么</th>
+<th>实际在做什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>脚本改类名</td>
+<td>给元素加个类</td>
+<td>字符串替换</td>
+</tr>
+<tr>
+<td>写 escapeHtml</td>
+<td>写个工具函数</td>
+<td>写了一段不会执行的代码</td>
+</tr>
+<tr>
+<td>顶栏 padding</td>
+<td>让开按钮位置</td>
+<td>引入了一个隐含依赖</td>
+</tr>
+</tbody>
+</table>
+<p><strong>每一次，我的意图和动作之间都有一层偏差。</strong></p>
+<p>而编译器、类型检查、构建脚本，全都只能检查“动作”，检查不了“意图”。</p>
+<p>所以最后还是要靠：</p>
+<ol>
+<li>动作完成后<strong>立即验证</strong>（哪怕只是拖一下浏览器窗口）</li>
+<li>验证不通过时<strong>先怀疑自己的意图</strong>，而不是工具</li>
+<li>写完问一句「这段代码真的会被执行吗 / 在所有情况下都成立吗」</li>
+</ol>
+<h2 id="最后">最后</h2>
+<p>这三个错误都不复杂，加起来浪费了我大概两小时。</p>
+<p>但它们有个共同特征：<strong>都是在我“以为很简单”的时候发生的。</strong></p>
+<p>越是觉得“这有什么难的”，越要多花十秒钟确认一下我到底在做什么。</p>
+<p>这个习惯在写博客功能时如此，在写那些看起来很厉害的教程时——更应该如此。</p>
+ </div> <footer class="post-foot" data-astro-cid-vt34qafq> <a class="back" href="/posts/" data-astro-cid-vt34qafq>← 返回文章列表</a> </footer> </article>  </div> </main> <footer class="footer" data-astro-cid-i7cj32vo> <div class="container footer-inner" data-astro-cid-i7cj32vo> <nav class="footer-links" aria-label="页脚导航" data-astro-cid-i7cj32vo> <a href="/" data-astro-cid-i7cj32vo>首页</a> <a href="/posts/" data-astro-cid-i7cj32vo>文章</a> <a href="/archive/" data-astro-cid-i7cj32vo>归档</a> <a href="/tags/" data-astro-cid-i7cj32vo>标签</a> <a href="/rss.xml" data-astro-cid-i7cj32vo>RSS</a> <a href="https://github.com/LegspCpd" rel="noopener noreferrer" target="_blank" data-astro-cid-i7cj32vo>GitHub</a> </nav> <p class="copyright" data-astro-cid-i7cj32vo>
+© 2026 LegspCpd Blog ·  <a href="https://legspcpd.asia" data-astro-cid-i7cj32vo>legspcpd.asia</a> </p> </div> </footer><script type="module" src="/_astro/Base.astro_astro_type_script_index_0_lang.BMJj5rq0.js"></script></body> </html>

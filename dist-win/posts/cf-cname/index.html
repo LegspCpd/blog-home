@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"> <head><meta charset="UTF-8"><style>:root{colorNeutralBackground1:#202020;colorNeutralBackground2:#1c1c1c;colorNeutralBackground3:#282828;colorNeutralBackground4:#2d2d2d;colorNeutralBackground5:#333333;colorNeutralBackground6:#3a3a3a;colorSubtleBackground:#ffffff0a;colorSubtleBackgroundHover:#ffffff12;colorSubtleBackgroundPressed:#ffffff1a;colorSubtleBackgroundSelected:#ffffff14;colorBackgroundOverlay:#2c2c2c;colorTransparentBackground:transparent;colorNeutralForeground1:#ffffff;colorNeutralForeground2:#e6e6e6;colorNeutralForeground3:#c5c5c5;colorNeutralForeground4:#9a9a9a;colorNeutralForegroundDisabled:#5c5c5c;colorNeutralForegroundOnBrand:#000000;colorBrandBackground:#0078d4;colorBrandBackgroundHover:#1a86d9;colorBrandBackgroundPressed:#005fb0;colorBrandBackgroundSelected:#005fb0;colorBrandForeground1:#c7e0f4;colorBrandForeground2:#9cc9ec;colorNeutralStroke1:#3d3d3d;colorNeutralStroke2:#484848;colorNeutralStroke3:#5a5a5a;colorNeutralStrokeAccessible:#8a8a8a;colorStrokeFocus1:#4cc2ff;colorStrokeFocus2:#4cc2ff;colorTransparentStroke:transparent;borderRadiusNone:0px;borderRadiusSmall:4px;borderRadiusMedium:7px;borderRadiusLarge:8px;borderRadiusXLarge:12px;borderRadiusCircular:9999px;fontFamilyBase:'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;fontFamilyMonospace:'Cascadia Code', 'JetBrains Mono', Consolas, monospace;fontSizeBase100:12px;fontSizeBase200:14px;fontSizeBase300:14px;fontSizeBase400:16px;fontSizeBase500:20px;fontSizeBase600:24px;fontWeightRegular:400;fontWeightMedium:500;fontWeightSemibold:600;lineHeightBase100:16px;lineHeightBase200:20px;lineHeightBase300:20px;lineHeightBase400:24px;lineHeightBase500:28px;lineHeightBase600:32px;spacingHorizontalS:8px;spacingHorizontalM:12px;spacingHorizontalL:16px;spacingHorizontalXL:20px;spacingVerticalS:8px;spacingVerticalM:12px;spacingVerticalL:16px;durationFast:100ms;durationNormal:150ms;durationSlow:250ms;curveEasyEase:cubic-bezier(0.33, 0, 0.67, 1);shadow2:0 1px 2px rgba(0,0,0,.28);shadow4:0 2px 4px rgba(0,0,0,.28);shadow8:0 4px 8px rgba(0,0,0,.32);shadow16:0 8px 16px rgba(0,0,0,.36);shadow28:0 14px 28px rgba(0,0,0,.40);shadow64:0 32px 64px rgba(0,0,0,.44)}</style><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>仅需10分钟即可制作出一个Cloudflare的优选域名 | LegspCpd Blog</title><meta name="description" content="本文介绍如何通过 DNSPod 按运营商线路划分（电信/联通/移动）配置 CDN 优选 CNAME 或 IP，实现国内网络访问加速。"><link rel="canonical" href="https://legspcpd.asia/posts/cf-cname/"><!-- RSS：博客必备 --><link rel="alternate" type="application/rss+xml" title="LegspCpd Blog RSS" href="https://legspcpd.asia/rss.xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="sitemap" href="/sitemap-index.xml"><!-- Open Graph --><meta property="og:type" content="article"><meta property="og:site_name" content="LegspCpd Blog"><meta property="og:title" content="仅需10分钟即可制作出一个Cloudflare的优选域名 | LegspCpd Blog"><meta property="og:description" content="本文介绍如何通过 DNSPod 按运营商线路划分（电信/联通/移动）配置 CDN 优选 CNAME 或 IP，实现国内网络访问加速。"><meta property="og:url" content="https://legspcpd.asia/posts/cf-cname/"><meta property="og:locale" content="zh_CN"><meta property="article:published_time" content="2026-08-21T00:00:00.000Z"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="仅需10分钟即可制作出一个Cloudflare的优选域名 | LegspCpd Blog"><meta name="twitter:description" content="本文介绍如何通过 DNSPod 按运营商线路划分（电信/联通/移动）配置 CDN 优选 CNAME 或 IP，实现国内网络访问加速。"><meta name="generator" content="Astro v7.3.4"><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://legspcpd.asia/#website","url":"https://legspcpd.asia","name":"LegspCpd Blog","description":"LegspCpd 的个人博客，记录学习与生活点滴，分享技术经验与见解。","inLanguage":"zh-CN"},{"@type":"WebPage","@id":"https://legspcpd.asia/posts/cf-cname/#webpage","url":"https://legspcpd.asia/posts/cf-cname/","name":"仅需10分钟即可制作出一个Cloudflare的优选域名 | LegspCpd Blog","description":"本文介绍如何通过 DNSPod 按运营商线路划分（电信/联通/移动）配置 CDN 优选 CNAME 或 IP，实现国内网络访问加速。","isPartOf":{"@id":"https://legspcpd.asia/#website"},"inLanguage":"zh-CN"}]}</script><!--
+      防闪烁：主题脚本在渲染前同步执行首屏取色。
+      默认暗色优先 —— 没有本地偏好就直接暗色。
+    --><script>(function(){const storageKey = "winui-theme";
+const fallback = "dark";
+
+      (function () {
+        try {
+          var saved = localStorage.getItem(storageKey);
+          var t =
+            saved === "dark" || saved === "light"
+              ? saved
+              : fallback;
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", fallback);
+        }
+      })();
+    })();</script><style>.post[data-astro-cid-vt34qafq]{max-width:760px;margin-inline:auto}.post-head[data-astro-cid-vt34qafq]{margin-bottom:var(--spacingHorizontalXL);padding-bottom:var(--spacingHorizontalL);border-bottom:1px solid var(--colorNeutralStroke1)}.post-head[data-astro-cid-vt34qafq] h1[data-astro-cid-vt34qafq]{font-size:var(--fontSizeBase600);margin-bottom:10px;line-height:1.3}.post-meta[data-astro-cid-vt34qafq]{color:var(--colorNeutralForeground4);font-size:var(--fontSizeBase200);flex-wrap:wrap;align-items:center;gap:8px;display:flex}.badge[data-astro-cid-vt34qafq]{border-radius:var(--borderRadiusCircular);background:var(--colorSubtleBackground);color:var(--colorBrandForeground1);padding:1px 8px}.tags[data-astro-cid-vt34qafq]{flex-wrap:wrap;gap:6px;margin:12px 0 0;padding:0;list-style:none;display:flex}.tags[data-astro-cid-vt34qafq] a[data-astro-cid-vt34qafq]{border-radius:var(--borderRadiusCircular);border:1px solid var(--colorNeutralStroke1);color:var(--colorNeutralForeground3);font-size:var(--fontSizeBase100);padding:1px 8px;text-decoration:none}.tags[data-astro-cid-vt34qafq] a[data-astro-cid-vt34qafq]:hover{background:var(--colorSubtleBackgroundHover);color:var(--colorNeutralForeground1)}.cover[data-astro-cid-vt34qafq]{border-radius:var(--borderRadiusXLarge);width:100%;margin-bottom:var(--spacingHorizontalXL)}.post-foot[data-astro-cid-vt34qafq]{padding-top:var(--spacingHorizontalL);border-top:1px solid var(--colorNeutralStroke1);margin-top:48px}.back[data-astro-cid-vt34qafq]{color:var(--colorNeutralForeground3);font-size:var(--fontSizeBase200);text-decoration:none}.back[data-astro-cid-vt34qafq]:hover{color:var(--colorBrandForeground1)}
+</style><link rel="stylesheet" href="/_astro/Base.-GmEwmLW.css"></head> <body> <header class="nav" data-astro-cid-hpih3g2g> <div class="container nav-inner" data-astro-cid-hpih3g2g> <a href="/" class="brand" aria-label="LegspCpd Blog 首页" data-astro-cid-hpih3g2g> <span class="brand-mark" aria-hidden="true" data-astro-cid-hpih3g2g></span> <span class="brand-text" data-astro-cid-hpih3g2g>LegspCpd Blog</span> </a> <nav class="nav-links" aria-label="主导航" data-astro-cid-hpih3g2g> <a href="/" class="nav-link" data-astro-cid-hpih3g2g> 首页 </a><a href="/archive/" class="nav-link" data-astro-cid-hpih3g2g> 归档 </a><a href="/tags/" class="nav-link" data-astro-cid-hpih3g2g> 标签 </a> </nav> <button id="theme-toggle" class="theme-btn" type="button" aria-label="切换明暗主题" title="切换明暗主题" data-astro-cid-hpih3g2g> <span class="theme-icon" aria-hidden="true" data-astro-cid-hpih3g2g></span> </button> </div> </header><script type="module">document.getElementById(`theme-toggle`)?.addEventListener(`click`,()=>{window.__toggleTheme?.()});</script> <main class="page-main"> <div class="container">  <article class="post" data-astro-cid-vt34qafq> <header class="post-head" data-astro-cid-vt34qafq> <h1 data-astro-cid-vt34qafq>仅需10分钟即可制作出一个Cloudflare的优选域名</h1> <div class="post-meta" data-astro-cid-vt34qafq> <time datetime="2026-08-21T00:00:00.000Z" data-astro-cid-vt34qafq> 2026年8月21日 </time>  <span class="badge" data-astro-cid-vt34qafq>技术教程</span> </div> <ul class="tags" data-astro-cid-vt34qafq> <li data-astro-cid-vt34qafq><a href="/tags/DNSPod/" data-astro-cid-vt34qafq>#DNSPod</a></li><li data-astro-cid-vt34qafq><a href="/tags/Cloudflare/" data-astro-cid-vt34qafq>#Cloudflare</a></li><li data-astro-cid-vt34qafq><a href="/tags/%E4%BC%98%E9%80%89%E5%9F%9F%E5%90%8D/" data-astro-cid-vt34qafq>#优选域名</a></li><li data-astro-cid-vt34qafq><a href="/tags/CDN/" data-astro-cid-vt34qafq>#CDN</a></li><li data-astro-cid-vt34qafq><a href="/tags/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90/" data-astro-cid-vt34qafq>#域名解析</a></li> </ul> </header>  <div class="prose" data-astro-cid-vt34qafq> <p>制作自己的优选域名并不复杂，只需几个简单步骤即可完成。</p>
+<h2 id="准备工作">准备工作</h2>
+<p>在开始之前，你需要准备好以下项：</p>
+<ol>
+<li>一个 <strong>DNSPod</strong>（或腾讯云 ESA）账号</li>
+<li>一个自己拥有的已解析域名</li>
+</ol>
+<p><em>(本教程以 DNSPod 为例进行演示)</em></p>
+<hr>
+<h2 id="操作步骤">操作步骤</h2>
+<h3 id="1-域名接入">1. 域名接入</h3>
+<p>首先打开 <a href="https://console.cloud.tencent.com/cns">DNSPod控制台</a>。如果你尚未在平台中添加域名，请先将域名添加进控制台并完成 DNS 修改；已添加域名的直接进入下一步。</p>
+<hr>
+<h3 id="三网优化版">三网优化版</h3>
+<p>你可以寻找针对特定运营商的优化域名（如 Cloudflare 优选），或者使用自己测速筛选出的优选域名/IP。</p>
+<h4 id="步骤一添加解析记录">步骤一：添加解析记录</h4>
+<p>在域名解析页面点击“添加记录”。</p>
+<p><img src="https://hub.legspcpd.top/file/1787267358603_image.png" alt="添加记录"></p>
+<h4 id="步骤二配置-cname-与线路分流">步骤二：配置 CNAME 与线路分流</h4>
+<ol>
+<li>将 <strong>记录类型</strong> 修改为 <code>CNAME</code>（若使用优选 IP，则记录类型选择 <code>A</code>）。</li>
+<li>填写你需要的主机记录（例如 <code>cf</code> 或 <code>@</code>）。</li>
+<li>选择对应的 <strong>线路类型</strong>（如：电信、联通、移动等）。</li>
+</ol>
+<p><img src="https://hub.legspcpd.top/file/1787267501988_image.png" alt="配置线路类型"></p>
+<h4 id="步骤三填写优选域名并保存">步骤三：填写优选域名并保存</h4>
+<ol>
+<li>在 <strong>记录值</strong> 处填写获取到的优选域名（或优选 IP）。</li>
+</ol>
+<p><img src="https://hub.legspcpd.top/file/1787267501988_image.png" alt="填写优选域名"></p>
+<ol start="2">
+<li>点击“确认”完成保存。</li>
+</ol>
+<blockquote>
+<p><strong>⚠️ 注意事项：</strong></p>
+<ul>
+<li>如需为其他运营商做单独优化，重复上述步骤并将线路改为对应运营商即可。</li>
+<li><strong>必须保留一条“默认”线路</strong>，否则海外或未识别线路的用户将无法正常解析访问。</li>
+</ul>
+</blockquote>
+<hr>
+<h3 id="2-连通性与延迟测试">2. 连通性与延迟测试</h3>
+<p>配置完成后，推荐使用 <a href="https://www.itdog.cn/">ITDOG</a> 等网络测试工具，输入配置好的域名，测试三网下的解析节点与延迟表现。</p>
+<p><img src="https://hub.legspcpd.top/file/1787267751808_image.png" alt="ITDOG测试效果"></p>
+<hr>
+<h2 id="现成方案开箱即用">现成方案（开箱即用）</h2>
+<p>如果你不想自行寻找或制作优选域名，可以直接 CNAME 链接至作者提供的优选域名：</p>
+<pre class="astro-code astro-code-themes github-light github-dark" style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;" tabindex="0" data-language="text"><code><span class="line"><span>cf.choling.cyou</span></span></code></pre>
+<p>直接使用该域名作为 CNAME 记录值即可享受优化线路。</p>
+ </div> <footer class="post-foot" data-astro-cid-vt34qafq> <a class="back" href="/posts/" data-astro-cid-vt34qafq>← 返回文章列表</a> </footer> </article>  </div> </main> <footer class="footer" data-astro-cid-i7cj32vo> <div class="container footer-inner" data-astro-cid-i7cj32vo> <nav class="footer-links" aria-label="页脚导航" data-astro-cid-i7cj32vo> <a href="/" data-astro-cid-i7cj32vo>首页</a> <a href="/posts/" data-astro-cid-i7cj32vo>文章</a> <a href="/archive/" data-astro-cid-i7cj32vo>归档</a> <a href="/tags/" data-astro-cid-i7cj32vo>标签</a> <a href="/rss.xml" data-astro-cid-i7cj32vo>RSS</a> <a href="https://github.com/LegspCpd" rel="noopener noreferrer" target="_blank" data-astro-cid-i7cj32vo>GitHub</a> </nav> <p class="copyright" data-astro-cid-i7cj32vo>
+© 2026 LegspCpd Blog ·  <a href="https://legspcpd.asia" data-astro-cid-i7cj32vo>legspcpd.asia</a> </p> </div> </footer><script type="module" src="/_astro/Base.astro_astro_type_script_index_0_lang.BMJj5rq0.js"></script></body> </html>

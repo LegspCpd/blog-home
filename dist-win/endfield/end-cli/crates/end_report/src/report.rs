@@ -1,0 +1,594 @@
+use crate::ansi::Ansi;
+use crate::format::{
+    facility_display_name, format_recipe_label, item_display_name, outpost_display_name, t,
+};
+use crate::{Error, Lang, Result};
+use end_model::{
+    AicInputs, Catalog, ItemId, LogisticsEdge, LogisticsNodeSite, OptimizationResult, OutpostId,
+};
+use std::collections::{BTreeMap, BTreeSet};
+
+#[derive(Debug, Clone, Copy)]
+struct ReportSaleValue<'cid, 'sid> {
+    outpost_index: OutpostId<'sid>,
+    item: ItemId<'cid>,
+    value_per_min: f64,
+}
+
+/// Render a human-readable optimization report from solved results.
+pub fn build_report<'cid, 'sid, 'rid>(
+    lang: Lang,
+    catalog: &Catalog<'cid>,
+    inputs: &AicInputs<'cid, 'sid>,
+    result: &OptimizationResult<'cid, 'sid, 'rid>,
+) -> Result<String> {
+    let stage1 = &result.stage1;
+    let stage2 = &result.stage2;
+    let power = stage2.power.as_ref();
+    let a = Ansi::from_env();
+
+    let mut out = String::new();
+
+    out.push_str(&format!("{}\n", a.h(t(lang, "结论", "Conclusion"))));
+    out.push_str(&format!(
+        "{}\n",
+        a.good(&match (lang, power) {
+            (Lang::Zh, Some(power)) => format!(
+                "结论：在当前外部供给/外部消耗与外部耗电 {}W 下，最优收入约 {:.2}/min（{:.0}/h），对应产线规模：生产机器 {} 台 + 热能池 {} 台；电力余量 {}W。",
+                power.external_consumption_w,
+                stage2.revenue_per_min,
+                stage2.revenue_per_min * 60.0,
+                stage2.total_machines,
+                stage2.total_thermal_banks,
+                power.margin_w,
+            ),
+            (Lang::En, Some(power)) => format!(
+                "Conclusion: with the current external supply/consumption and external usage {}W, optimal revenue is about {:.2}/min ({:.0}/h). Line size: {} production machines + {} thermal banks; power margin {}W.",
+                power.external_consumption_w,
+                stage2.revenue_per_min,
+                stage2.revenue_per_min * 60.0,
+                stage2.total_machines,
+                stage2.total_thermal_banks,
+                power.margin_w,
+            ),
+            (Lang::Zh, None) => format!(
+                "结论：在当前外部供给/外部消耗下（电力计算已禁用），最优收入约 {:.2}/min（{:.0}/h），对应产线规模：生产机器 {} 台 + 热能池 {} 台。",
+                stage2.revenue_per_min,
+                stage2.revenue_per_min * 60.0,
+                stage2.total_machines,
+                stage2.total_thermal_banks,
+            ),
+            (Lang::En, None) => format!(
+                "Conclusion: with the current external supply/consumption (power model disabled), optimal revenue is about {:.2}/min ({:.0}/h). Line size: {} production machines + {} thermal banks.",
+                stage2.revenue_per_min,
+                stage2.revenue_per_min * 60.0,
+                stage2.total_machines,
+                stage2.total_thermal_banks,
+            ),
+        })
+    ));
+
+    let delta = (stage1.revenue_per_min - stage2.revenue_per_min).abs();
+    if delta > 1e-6 {
+        out.push_str(&format!(
+            "{}\n",
+            a.warn(&match lang {
+                Lang::Zh => format!(
+                    "提示：阶段2收入与阶段1最优有微小差异（|Δ|={:.6}），可能受数值精度影响。",
+                    delta
+                ),
+                Lang::En => format!(
+                    "Note: stage2 revenue differs slightly from stage1 optimum (|Δ|={delta:.6}), likely due to numeric precision."
+                ),
+            })
+        ));
+    }
+
+    out.push('\n');
+    out.push_str(&format!("{}\n", a.h(t(lang, "交易", "Trading"))));
+    for ov in &stage2.outpost_values {
+        let outpost = inputs.outpost(ov.outpost_index);
+        let name = outpost_display_name(lang, outpost);
+        let at_cap = ov.cap_per_min > 0.0 && ov.ratio >= 0.9999;
+        let tag = if at_cap {
+            a.good(t(lang, "触顶", "Capped"))
+        } else {
+            a.warn(t(lang, "未触顶", "Not capped"))
+        };
+
+        out.push_str(&format!(
+            "- {}: {}\n",
+            name,
+            match lang {
+                Lang::Zh => format!(
+                    "{:.2}/min（上限 {:.2}/min，{:.0}%） {}",
+                    ov.value_per_min,
+                    ov.cap_per_min,
+                    ov.ratio * 100.0,
+                    tag
+                ),
+                Lang::En => format!(
+                    "{:.2}/min (cap {:.2}/min, {:.0}%) {}",
+                    ov.value_per_min,
+                    ov.cap_per_min,
+                    ov.ratio * 100.0,
+                    tag
+                ),
+            }
+        ));
+    }
+
+    let top_sales = top_sales_by_value(&stage2.outpost_sales_qty);
+    if !top_sales.is_empty() {
+        out.push_str(&format!(
+            "{}\n",
+            a.dim(t(
+                lang,
+                "销售排行（按收入贡献）:",
+                "Top sales (by revenue):"
+            ))
+        ));
+        for sale in top_sales {
+            let outpost = inputs.outpost(sale.outpost_index);
+            let item = item_display_name(lang, catalog, sale.item)?;
+            out.push_str(&format!(
+                "- {} @ {}: {:.2}/min\n",
+                item,
+                outpost_display_name(lang, outpost),
+                sale.value_per_min
+            ));
+        }
+    }
+
+    if let Some(power) = power {
+        out.push('\n');
+        out.push_str(&format!("{}\n", a.h(t(lang, "电力", "Power"))));
+        let p_tag = if power.margin_w < 1 {
+            a.warn(t(lang, "紧张", "Tight"))
+        } else {
+            a.good(t(lang, "充足", "OK"))
+        };
+        out.push_str(&format!(
+            "- {}\n",
+            match lang {
+                Lang::Zh => format!(
+                    "总发电 {}W = 外部发电 {}W + 热能池发电 {}W；总用电 {}W = 外部耗电 {}W + 生产机器耗电 {}W；余量 {}W {}",
+                    power.total_gen_w,
+                    power.external_production_w,
+                    power.thermal_generation_w,
+                    power.total_use_w,
+                    power.external_consumption_w,
+                    power.machine_consumption_w,
+                    power.margin_w,
+                    p_tag
+                ),
+                Lang::En => format!(
+                    "Total generation {}W = external generation {}W + thermal banks {}W; total usage {}W = external usage {}W + production machines {}W; margin {}W {}",
+                    power.total_gen_w,
+                    power.external_production_w,
+                    power.thermal_generation_w,
+                    power.total_use_w,
+                    power.external_consumption_w,
+                    power.machine_consumption_w,
+                    power.margin_w,
+                    p_tag
+                ),
+            }
+        ));
+
+        if !stage2.thermal_banks_used.is_empty() {
+            out.push_str(&format!(
+                "{}\n",
+                a.dim(t(lang, "热能池配置:", "Thermal bank setup:"))
+            ));
+            for tb in &stage2.thermal_banks_used {
+                let item = item_display_name(lang, catalog, tb.ingredient)?;
+                let consume_per_min = 60.0 / tb.duration_s as f64;
+                out.push_str(&format!(
+                    "- {} x{}: {}\n",
+                    item,
+                    tb.banks.get(),
+                    match lang {
+                        Lang::Zh => format!(
+                            "每台 {}W，耗时 {}s（消耗 {:.3}/min）",
+                            tb.power_w, tb.duration_s, consume_per_min
+                        ),
+                        Lang::En => format!(
+                            "{}W each, {}s (consumes {:.3}/min)",
+                            tb.power_w, tb.duration_s, consume_per_min
+                        ),
+                    }
+                ));
+            }
+        }
+    }
+
+    out.push('\n');
+    out.push_str(&format!("{}\n", a.h(t(lang, "产线", "Production"))));
+    out.push_str(&format!(
+        "- {}\n",
+        match lang {
+            Lang::Zh => format!("生产机器总数 {}（按设施汇总）", stage2.total_machines),
+            Lang::En => format!(
+                "Total production machines: {} (by facility)",
+                stage2.total_machines
+            ),
+        }
+    ));
+
+    for f in stage2.machines_by_facility.iter() {
+        let facility = facility_display_name(lang, catalog, f.facility)?;
+        out.push_str(&format!("- {}: {}\n", facility, f.machines));
+    }
+    if stage2.machines_by_facility.len() > 12 {
+        out.push_str(&format!(
+            "{}\n",
+            a.dim(&match lang {
+                Lang::Zh => format!(
+                    "（其余 {} 种设施略）",
+                    stage2.machines_by_facility.len() - 12
+                ),
+                Lang::En => format!(
+                    "(omitted {} more facilities)",
+                    stage2.machines_by_facility.len() - 12
+                ),
+            })
+        ));
+    }
+
+    if !stage2.recipes_used.is_empty() {
+        out.push_str(&format!(
+            "{}\n",
+            a.dim(t(
+                lang,
+                "配方排行（按机器数）:",
+                "Top recipes (by machine count):"
+            ))
+        ));
+        for r in stage2.recipes_used.iter() {
+            let recipe = catalog.recipe(r.recipe_index);
+            let label = format_recipe_label(
+                lang,
+                catalog,
+                recipe.facility,
+                &recipe.ingredients,
+                &recipe.products,
+                recipe.time_s,
+            )?;
+            out.push_str(&format!(
+                "- {} | {} {} | {:.3} {}\n",
+                label,
+                t(lang, "机器", "machines"),
+                r.machines.get(),
+                r.executions_per_min,
+                t(lang, "次/min", "runs/min")
+            ));
+        }
+    }
+
+    out.push('\n');
+    out.push_str(&format!("{}\n", a.h(t(lang, "物流", "Logistics"))));
+    render_logistics(lang, catalog, inputs, result, &mut out)?;
+
+    out.push('\n');
+    out.push_str(&format!(
+        "{}\n",
+        a.h(t(lang, "瓶颈与改进", "Bottlenecks & Tips"))
+    ));
+
+    let mut any = false;
+    for ov in &stage2.outpost_values {
+        if ov.ratio > 0.98 {
+            any = true;
+            let outpost = inputs.outpost(ov.outpost_index);
+            out.push_str(&format!(
+                "- {}\n",
+                match lang {
+                    Lang::Zh => format!(
+                        "{}交易额触顶，做得好！",
+                        outpost_display_name(lang, outpost)
+                    ),
+                    Lang::En => format!(
+                        "{} is capped, great job!",
+                        outpost_display_name(lang, outpost)
+                    ),
+                }
+            ));
+        }
+    }
+
+    if let Some(power) = power
+        && power.margin_w < 1
+    {
+        any = true;
+        out.push_str(&format!(
+            "- {}\n",
+            t(
+                lang,
+                "电力接近满载：想扩产需要更多热能池燃料。",
+                "Power is near full load: scaling up needs more thermal-bank fuel.",
+            )
+        ));
+    }
+
+    for s in stage2.external_supply_slack.iter().take(3) {
+        if s.slack_per_min < 1e-3 {
+            any = true;
+            let item = item_display_name(lang, catalog, s.item)?;
+            out.push_str(&format!(
+                "- {}\n",
+                match lang {
+                    Lang::Zh => format!(
+                        "外部供给吃满：{} 基本用尽（{:.0}/min），提升采集/供给会直接提高上限。",
+                        item, s.supply_per_min
+                    ),
+                    Lang::En => format!(
+                        "External supply is saturated: {} is basically exhausted ({:.0}/min). Increasing supply raises the cap directly.",
+                        item, s.supply_per_min
+                    ),
+                }
+            ));
+        }
+    }
+
+    out.push_str(&format!(
+        "{}\n",
+        a.dim(t(lang, "外部供给剩余:", "External supply slack:"))
+    ));
+    for s in &stage2.external_supply_slack {
+        let used = (s.supply_per_min - s.slack_per_min).max(0.0);
+        let pct = if s.supply_per_min > 0.0 {
+            used / s.supply_per_min * 100.0
+        } else {
+            0.0
+        };
+        let item = item_display_name(lang, catalog, s.item)?;
+        out.push_str(&format!(
+            "- {}: {}\n",
+            item,
+            match lang {
+                Lang::Zh => format!(
+                    "用 {:.1}/min / 供给 {:.1}/min（剩 {:.1}/min，{:.0}% 使用）",
+                    used, s.supply_per_min, s.slack_per_min, pct
+                ),
+                Lang::En => format!(
+                    "used {:.1}/min / supply {:.1}/min (slack {:.1}/min, {:.0}% used)",
+                    used, s.supply_per_min, s.slack_per_min, pct
+                ),
+            }
+        ));
+    }
+
+    if !any {
+        out.push_str(&format!(
+            "- {}\n",
+            t(
+                lang,
+                "暂无明显单一瓶颈：可优先尝试提高高价商品产量，或检查是否有更优的售卖组合。",
+                "No single obvious bottleneck: try increasing high-price outputs first, or check for a better sales mix.",
+            )
+        ));
+    }
+
+    Ok(out)
+}
+
+fn top_sales_by_value<'cid, 'sid>(
+    lines: &[end_model::OutpostSaleQty<'cid, 'sid>],
+) -> Vec<ReportSaleValue<'cid, 'sid>> {
+    let mut sales = lines
+        .iter()
+        .map(|line| ReportSaleValue {
+            outpost_index: line.outpost_index,
+            item: line.item,
+            value_per_min: line.qty_per_min.get() * line.price as f64,
+        })
+        .collect::<Vec<_>>();
+    sales.sort_by(|a, b| b.value_per_min.total_cmp(&a.value_per_min));
+    sales
+}
+
+fn render_logistics<'cid, 'sid, 'rid>(
+    lang: Lang,
+    catalog: &Catalog<'cid>,
+    inputs: &AicInputs<'cid, 'sid>,
+    result: &OptimizationResult<'cid, 'sid, 'rid>,
+    out: &mut String,
+) -> Result<()> {
+    let node_by_id = result
+        .logistics
+        .nodes
+        .iter()
+        .map(|node| (node.id, node))
+        .collect::<BTreeMap<_, _>>();
+    let mut edges_by_item =
+        BTreeMap::<end_model::ItemId<'cid>, Vec<&LogisticsEdge<'cid, 'rid>>>::new();
+    for edge in &result.logistics.edges {
+        edges_by_item.entry(edge.item).or_default().push(edge);
+    }
+
+    let total_edges = result.logistics.edges.len();
+    let total_flow = result
+        .logistics
+        .edges
+        .iter()
+        .map(|edge| edge.flow_per_min.get())
+        .sum::<f64>();
+
+    out.push_str(&format!(
+        "- {}\n",
+        match lang {
+            Lang::Zh => format!(
+                "总物流连接 {} 条，覆盖 {} 种物品，总流量 {:.3}/min。",
+                total_edges,
+                edges_by_item.len(),
+                total_flow
+            ),
+            Lang::En => format!(
+                "{} logistics edges across {} items, total flow {:.3}/min.",
+                total_edges,
+                edges_by_item.len(),
+                total_flow
+            ),
+        }
+    ));
+
+    if edges_by_item.is_empty() {
+        out.push_str(&format!(
+            "{}\n",
+            t(
+                lang,
+                "- 当前场景没有需要分配的物流边。",
+                "- No logistics edges are required in this scenario."
+            )
+        ));
+        return Ok(());
+    }
+
+    let edge_preview_limit = 6usize;
+    for (item, edges) in edges_by_item {
+        let item_name = item_display_name(lang, catalog, item)?;
+        let total_item_flow = edges
+            .iter()
+            .map(|edge| edge.flow_per_min.get())
+            .sum::<f64>();
+        let node_count = edges
+            .iter()
+            .flat_map(|edge| [edge.from.as_u32(), edge.to.as_u32()])
+            .collect::<BTreeSet<_>>()
+            .len();
+        let mut rendered_edges = Vec::<(f64, Box<str>, Box<str>)>::with_capacity(edges.len());
+        for edge in edges.iter().copied() {
+            let from_node =
+                node_by_id
+                    .get(&edge.from)
+                    .copied()
+                    .ok_or(Error::MissingLogisticsNode {
+                        item: item.as_u32(),
+                        node: edge.from.as_u32(),
+                    })?;
+            let to_node = node_by_id
+                .get(&edge.to)
+                .copied()
+                .ok_or(Error::MissingLogisticsNode {
+                    item: item.as_u32(),
+                    node: edge.to.as_u32(),
+                })?;
+            let from = describe_logistics_site(lang, inputs, catalog, &from_node.site)?;
+            let to = describe_logistics_site(lang, inputs, catalog, &to_node.site)?;
+            rendered_edges.push((edge.flow_per_min.get(), from, to));
+        }
+        rendered_edges.sort_by(|lhs, rhs| {
+            rhs.0
+                .total_cmp(&lhs.0)
+                .then_with(|| lhs.1.cmp(&rhs.1))
+                .then_with(|| lhs.2.cmp(&rhs.2))
+        });
+
+        out.push_str(&format!(
+            "- {}: {}\n",
+            item_name,
+            match lang {
+                Lang::Zh => format!(
+                    "节点 {}，连接 {}，流量 {:.3}/min",
+                    node_count,
+                    edges.len(),
+                    total_item_flow,
+                ),
+                Lang::En => format!(
+                    "nodes {}, edges {}, flow {:.3}/min",
+                    node_count,
+                    edges.len(),
+                    total_item_flow,
+                ),
+            }
+        ));
+
+        for (flow_per_min, from, to) in rendered_edges.iter().take(edge_preview_limit) {
+            out.push_str(&format!(
+                "  - {} -> {}: {:.3}/min\n",
+                from, to, flow_per_min
+            ));
+        }
+
+        if rendered_edges.len() > edge_preview_limit {
+            out.push_str(&format!(
+                "  - {}\n",
+                match lang {
+                    Lang::Zh => format!(
+                        "其余 {} 条连接略。",
+                        rendered_edges.len() - edge_preview_limit
+                    ),
+                    Lang::En => format!(
+                        "{} more edges omitted.",
+                        rendered_edges.len() - edge_preview_limit
+                    ),
+                }
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+fn describe_logistics_site<'cid, 'sid>(
+    lang: Lang,
+    inputs: &AicInputs<'cid, 'sid>,
+    catalog: &Catalog<'cid>,
+    site: &LogisticsNodeSite<'cid, 'sid>,
+) -> Result<Box<str>> {
+    let rendered: Box<str> = match site {
+        LogisticsNodeSite::ExternalSupply { item } => {
+            let item = item_display_name(lang, catalog, *item)?;
+            match lang {
+                Lang::Zh => format!("外部供给({item})").into_boxed_str(),
+                Lang::En => format!("External supply ({item})").into_boxed_str(),
+            }
+        }
+        LogisticsNodeSite::ExternalConsumption { item } => {
+            let item = item_display_name(lang, catalog, *item)?;
+            match lang {
+                Lang::Zh => format!("外部消耗({item})").into_boxed_str(),
+                Lang::En => format!("External consumption ({item})").into_boxed_str(),
+            }
+        }
+        LogisticsNodeSite::RecipeGroup { recipe_index } => {
+            let recipe = catalog.recipe(*recipe_index);
+            let facility = facility_display_name(lang, catalog, recipe.facility)?;
+            match lang {
+                Lang::Zh => format!("{} r{}", facility, recipe_index.as_u32()).into_boxed_str(),
+                Lang::En => format!("{} r{}", facility, recipe_index.as_u32()).into_boxed_str(),
+            }
+        }
+        LogisticsNodeSite::OutpostSale {
+            outpost_index,
+            item,
+        } => {
+            let outpost = inputs.outpost(*outpost_index);
+            let item = item_display_name(lang, catalog, *item)?;
+            match lang {
+                Lang::Zh => {
+                    format!("{} 出售({item})", outpost_display_name(lang, outpost)).into_boxed_str()
+                }
+                Lang::En => format!("{} sale ({item})", outpost_display_name(lang, outpost))
+                    .into_boxed_str(),
+            }
+        }
+        LogisticsNodeSite::ThermalBankGroup {
+            power_recipe_index, ..
+        } => match lang {
+            Lang::Zh => format!("热能池组 p{}", power_recipe_index.as_u32()).into_boxed_str(),
+            Lang::En => {
+                format!("Thermal bank group p{}", power_recipe_index.as_u32()).into_boxed_str()
+            }
+        },
+        LogisticsNodeSite::WarehouseStockpile { item } => {
+            let item = item_display_name(lang, catalog, *item)?;
+            match lang {
+                Lang::Zh => format!("囤到仓库({item})").into_boxed_str(),
+                Lang::En => format!("Stockpile to warehouse ({item})").into_boxed_str(),
+            }
+        }
+    };
+    Ok(rendered)
+}

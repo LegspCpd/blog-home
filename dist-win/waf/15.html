@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FATAL ERROR: 403</title>
+<style>
+    body {
+        background: #0000AA; color: #AAAAAA;
+        font-family: "Lucida Console", "Courier New", monospace;
+        margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh;
+        text-transform: uppercase;
+    }
+    .shell {
+        border: 3px solid #FFF; padding: 30px; width: 85%; max-width: 650px;
+        box-shadow: 15px 15px 0px #000;
+    }
+    .status-bar { background: #FFF; color: #0000AA; padding: 2px 10px; font-weight: bold; margin-bottom: 20px; display: inline-block; }
+    h1 { font-size: 28px; color: #FFF; margin: 0 0 10px 0; }
+    .msg { color: #FFFF55; margin-bottom: 20px; border-left: 4px solid #FFFF55; padding-left: 15px; }
+    .trace-output {
+        background: #000; color: #00FF00; padding: 15px;
+        border: 1px solid #FFF; font-size: 14px; line-height: 1.4;
+    }
+    .trace-line { display: flex; justify-content: space-between; border-bottom: 1px solid #222; }
+    .key { color: #00AA00; }
+    .val { color: #00FF00; }
+    .footer { margin-top: 20px; font-size: 12px; color: #FFF; opacity: 0.7; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+    <div class="status-bar">MOD_SECURITY_WAF</div>
+    <h1>403: ACCESS_DENIED</h1>
+    
+    <div class="msg">
+        GEO_RESTRICTION: YOUR IP IS LOCATED OUTSIDE MAINLAND CHINA.<br>
+        CONNECTION TERMINATED BY EDGE GATEWAY.
+    </div>
+
+    <div class="trace-output" id="output">
+        [SYSTEM] INITIALIZING TRACE...
+    </div>
+
+    <div class="footer">
+        PLEASE DISABLE PROXY/VPN OR CONNECT VIA DOMESTIC BACKBONE.
+    </div>
+</div>
+
+<script>
+    // Logic to fetch, parse, and display Cloudflare Trace data
+    async function getTrace() {
+        const output = document.getElementById('output');
+        try {
+            const response = await fetch('/cdn-cgi/trace');
+            const data = await response.text();
+            
+            // Clear the "Loading" text
+            output.innerHTML = '<div style="margin-bottom:10px">[CLOUDFLARE_TRACE_RESULT]</div>';
+            
+            // Split the raw text into lines and map to UI
+            data.trim().split('\n').forEach(line => {
+                const [key, val] = line.split('=');
+                // Only show relevant info to keep it clean
+                if(['ip', 'loc', 'colo', 'uag', 'visit_scheme'].includes(key)) {
+                    const row = document.createElement('div');
+                    row.className = 'trace-line';
+                    row.innerHTML = `<span class="key">${key.toUpperCase()}</span><span class="val">${val}</span>`;
+                    output.appendChild(row);
+                }
+            });
+            
+let locValue = "UNKNOWN";
+
+// 解析时顺便记录 loc
+data.trim().split('\n').forEach(line => {
+    const [key, val] = line.split('=');
+
+    if (key === 'loc') locValue = val;
+
+    if(['ip', 'loc', 'colo', 'uag', 'visit_scheme'].includes(key)) {
+        const row = document.createElement('div');
+        row.className = 'trace-line';
+        row.innerHTML = `<span class="key">${key.toUpperCase()}</span><span class="val">${val}</span>`;
+        output.appendChild(row);
+    }
+});
+
+// 显示 LOC（在时间上面）
+const locLine = document.createElement('div');
+locLine.style.marginTop = "10px";
+locLine.innerHTML = `LOCATION: ${locValue}`;
+output.appendChild(locLine);
+
+// 时间
+const ts = document.createElement('div');
+ts.innerHTML = `TIMESTAMP: ${new Date().toISOString()}`;
+output.appendChild(ts);
+
+        } catch (e) {
+            output.innerHTML = '<span style="color:red">ERROR: FAILED TO RETRIEVE EDGE DATA</span>';
+        }
+    }
+
+    getTrace();
+</script>
+
+</body>
+</html>

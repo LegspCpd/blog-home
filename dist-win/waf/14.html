@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>403 Forbidden - Security Gateway</title>
+<style>
+    /* 模拟经典 Win9x/ME 桌面颜色 (#008080 蓝绿色) */
+    body {
+        background-color: #008080;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        font-family: "Tahoma", "MS Sans Serif", "Microsoft YaHei", sans-serif;
+        overflow: hidden;
+    }
+
+    /* 经典 3D 浮雕边框窗体 */
+    .win-window {
+        background: #c0c0c0;
+        width: 500px;
+        border-top: 2px solid #ffffff;
+        border-left: 2px solid #ffffff;
+        border-right: 2px solid #000000;
+        border-bottom: 2px solid #000000;
+        box-shadow: 1px 1px 0px #808080 inset;
+        padding: 2px;
+        position: absolute; /* 为拖拽准备 */
+        user-select: none;
+    }
+
+    /* Windows ME 特有的渐变标题栏 */
+    .title-bar {
+        background: linear-gradient(90deg, #000080 0%, #0849ca 100%);
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 2px 3px;
+        cursor: default;
+    }
+
+    .title-text {
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        pointer-events: none;
+    }
+
+    .title-controls {
+        display: flex;
+        gap: 2px;
+    }
+
+    .win-btn-small {
+        width: 16px;
+        height: 14px;
+        background: #c0c0c0;
+        border-top: 1px solid #ffffff;
+        border-left: 1px solid #ffffff;
+        border-right: 1px solid #000;
+        border-bottom: 1px solid #000;
+        font-size: 9px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .content-area {
+        padding: 20px;
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .icon-box {
+        margin-right: 20px;
+        flex-shrink: 0;
+    }
+
+    .message-box {
+        font-size: 13px;
+        color: #000;
+        line-height: 1.4;
+        width: 100%;
+    }
+
+    /* 内部 Trace 文本框 */
+    .trace-view {
+        background: #ffffff;
+        border-top: 2px solid #808080;
+        border-left: 2px solid #808080;
+        border-right: 2px solid #ffffff;
+        border-bottom: 2px solid #ffffff;
+        padding: 8px;
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 11px;
+        height: 120px;
+        overflow-y: scroll;
+        margin-top: 12px;
+        white-space: pre-wrap;
+        user-select: text; /* 允许复制日志 */
+    }
+
+    /* 底部按钮区 */
+    .button-container {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 0 20px 15px 0;
+    }
+
+    .win-btn {
+        min-width: 80px;
+        height: 24px;
+        background: #c0c0c0;
+        border-top: 1px solid #ffffff;
+        border-left: 1px solid #ffffff;
+        border-right: 1px solid #000;
+        border-bottom: 1px solid #000;
+        font-family: inherit;
+        font-size: 12px;
+        outline: 1px solid #000;
+        cursor: pointer;
+    }
+
+    .win-btn:active {
+        border-top: 1px solid #000;
+        border-left: 1px solid #000;
+        border-right: 1px solid #ffffff;
+        border-bottom: 1px solid #ffffff;
+        padding: 2px 0 0 2px;
+    }
+</style>
+</head>
+<body>
+
+<div class="win-window" id="dragWindow">
+    <div class="title-bar" id="dragHeader">
+        <span class="title-text">HTTP 403 Forbidden</span>
+        <div class="title-controls">
+            <div class="win-btn-small">_</div>
+            <div class="win-btn-small">?</div>
+            <div class="win-btn-small" onclick="location.reload()">×</div>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <div class="icon-box">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="14" fill="#ff0000" stroke="#000" stroke-width="1.5"/>
+                <path d="M10 10L22 22M22 10L10 22" stroke="#fff" stroke-width="4" stroke-linecap="square"/>
+            </svg>
+        </div>
+        <div class="message-box">
+            <strong>Access Denied</strong>
+            <p style="margin: 8px 0;">您的 IP 地址已被 Web 应用防火墙（WAF）策略拦截。由于安全审计策略，该资源仅允许中国大陆区域的请求。</p>
+            
+            <div class="trace-view" id="trace-output">Loading system trace information...</div>
+        </div>
+    </div>
+
+    <div class="button-container">
+        <button class="win-btn" onclick="location.reload()">重试</button>
+        <button class="win-btn" onclick="alert('请联系系统管理员获取访问权限。')">详细信息</button>
+    </div>
+</div>
+
+<script>
+    // 1. 获取 Cloudflare Trace 结果
+    // 参考了上传文件中的抓取逻辑
+    fetch('https://cloudflare.com/cdn-cgi/trace')
+        .then(r => r.text())
+        .then(data => {
+            document.getElementById('trace-output').textContent = data;
+        })
+        .catch(() => {
+            document.getElementById('trace-output').textContent = "[ERROR] Unable to reach gateway.\nRequest failed at " + new Date().toISOString();
+        });
+
+    // 2. 窗口拖拽逻辑
+    const dragWindow = document.getElementById("dragWindow");
+    const dragHeader = document.getElementById("dragHeader");
+
+    let isDragging = false;
+    let offsetX, offsetY;
+
+    dragHeader.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        // 计算鼠标点击位置相对于窗口左上角的偏移
+        offsetX = e.clientX - dragWindow.offsetLeft;
+        offsetY = e.clientY - dragWindow.offsetTop;
+        dragHeader.style.cursor = "grabbing";
+    });
+
+    document.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        
+        // 更新窗口位置
+        dragWindow.style.left = (e.clientX - offsetX) + "px";
+        dragWindow.style.top = (e.clientY - offsetY) + "px";
+    });
+
+    document.addEventListener("mouseup", () => {
+        isDragging = false;
+        dragHeader.style.cursor = "default";
+    });
+</script>
+
+</body>
+</html>

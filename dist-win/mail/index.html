@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LCmail临时邮箱</title>
+    <style>
+        body{font-family:Arial;margin:20px;}
+        .container{max-width:800px;margin:0 auto;}
+        .section{margin:20px 0;padding:10px;border:1px solid #ccc;}
+        button{padding:8px 16px;cursor:pointer;margin:5px;}
+        pre{background:#f5f5f5;padding:10px;word-wrap:break-word;}
+        .error{color:red;}
+        .mail-item{margin:10px 0;padding:5px;border-bottom:1px solid #eee;}
+        .attachment{margin:8px 0;padding:5px;border:1px dashed #666;}
+        img{max-width:100%;height:auto;border:1px solid #eee;margin:5px 0;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LCmail临时邮箱工具</h1>
+        <!-- 创建邮箱 -->
+        <div class="section">
+            <h2>1. 创建临时邮箱</h2>
+            <button onclick="createMailbox()">创建新的临时邮箱</button>
+            <div id="mailInfo" class="error"></div>
+        </div>
+        <!-- 邮件列表 -->
+        <div class="section">
+            <h2>2. 查看收件箱</h2>
+            <button id="getMessagesBtn" onclick="getMessages()" disabled>获取邮件列表</button>
+            <div id="messageList"></div>
+        </div>
+        <!-- 邮件详情+附件+图片 -->
+        <div class="section">
+            <h2>3. 邮件详情/图片/附件</h2>
+            <div id="messageDetail"></div>
+        </div>
+    </div>
+
+<script>
+// 配置
+var CONFIG = {
+    API_KEY: 'vmail_uA9y7POGPvQZAd7U3EK21s1muv5WdBvy',
+    BASE_URL: 'https://lcmail.cc.cd/api/v1'
+};
+var currentMailboxId = '';
+
+// 兼容IE的JSON请求
+function requestApi(url, method, data, success, error) {
+    var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
+    xhr.open(method, url, true);
+    xhr.setRequestHeader('X-API-Key', CONFIG.API_KEY);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            try {
+                var res = JSON.parse(xhr.responseText);
+                xhr.status >= 200 && xhr.status < 300 ? success(res) : error(res.error?.message || '请求失败');
+            } catch (e) {
+                error('数据解析失败');
+            }
+        }
+    };
+    xhr.send(data ? JSON.stringify(data) : null);
+}
+
+// 兼容IE的附件Blob请求（图片/下载专用）
+function getAttachmentBlob(messageId, attachId, callback) {
+    var url = CONFIG.BASE_URL + '/mailboxes/' + currentMailboxId + '/messages/' + messageId + '/attachments/' + attachId;
+    var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
+    xhr.open('GET', url, true);
+    xhr.setRequestHeader('X-API-Key', CONFIG.API_KEY);
+    xhr.responseType = 'blob';
+    xhr.onload = function() {
+        if (xhr.status === 200) callback(xhr.response);
+    };
+    xhr.send();
+}
+
+// 下载附件（兼容IE+现代浏览器）
+function downloadFile(blob, fileName) {
+    if (window.navigator.msSaveOrOpenBlob) {
+        // IE专属下载
+        window.navigator.msSaveOrOpenBlob(blob, fileName);
+    } else {
+        // 现代浏览器下载
+        var a = document.createElement('a');
+        var url = URL.createObjectURL(blob);
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+}
+
+// 1. 创建邮箱
+function createMailbox() {
+    var info = document.getElementById('mailInfo');
+    info.className = 'error';
+    info.innerHTML = '创建中...';
+    requestApi(CONFIG.BASE_URL + '/mailboxes', 'POST', null, function(res) {
+        currentMailboxId = res.data.id;
+        document.getElementById('getMessagesBtn').disabled = false;
+        info.className = '';
+        info.innerHTML = '<strong>创建成功！</strong><br>邮箱：' + res.data.address + '<br>过期：' + new Date(res.data.expiresAt).toLocaleString();
+    }, function(err) {
+        info.innerHTML = err;
+    });
+}
+
+// 2. 获取邮件列表
+function getMessages() {
+    var list = document.getElementById('messageList');
+    list.innerHTML = '加载中...';
+    if (!currentMailboxId) {
+        list.innerHTML = '请先创建邮箱';
+        return;
+    }
+    requestApi(CONFIG.BASE_URL + '/mailboxes/' + currentMailboxId + '/messages', 'GET', null, function(res) {
+        if (!res.data.length) {
+            list.innerHTML = '暂无邮件';
+            return;
+        }
+        var html = '<strong>共' + res.pagination.total + '封邮件</strong><ul style="list-style:none;padding:0;">';
+        for (var i = 0; i < res.data.length; i++) {
+            var m = res.data[i];
+            html += '<li class="mail-item"><button onclick="viewMessageDetail(\'' + m.id + '\')">查看详情</button>发件人：' + (m.from.name || m.from.address) + '<br>主题：' + m.subject + '</li>';
+        }
+        list.innerHTML = html + '</ul>';
+    }, function(err) {
+        list.innerHTML = err;
+    });
+}
+
+// 3. 查看详情+图片预览+附件下载
+function viewMessageDetail(messageId) {
+    var detail = document.getElementById('messageDetail');
+    detail.innerHTML = '加载中...';
+    requestApi(CONFIG.BASE_URL + '/mailboxes/' + currentMailboxId + '/messages/' + messageId, 'GET', null, function(res) {
+        var m = res.data;
+        var toList = [];
+        for (var i = 0; i < m.to.length; i++) toList.push(m.to[i].address);
+        
+        // 基础邮件信息
+        var html = '<h3>邮件详情</h3>';
+        html += '<div>发件人：' + (m.from.name || m.from.address) + '</div>';
+        html += '<div>主题：' + m.subject + '</div>';
+        html += '<div>时间：' + new Date(m.receivedAt).toLocaleString() + '</div>';
+        html += '<div>内容：<pre>' + (m.text || '无') + '</pre></div>';
+
+        // 附件+图片区域
+        if (m.attachments && m.attachments.length) {
+            html += '<h4>附件/图片（' + m.attachments.length + '个）</h4>';
+            for (var j = 0; j < m.attachments.length; j++) {
+                var attach = m.attachments[j];
+                var isImage = attach.contentType.indexOf('image/') === 0;
+                html += '<div class="attachment">文件名：' + attach.fileName + '<br>';
+                
+                // 图片：在线预览
+                if (isImage) {
+                    html += '<div>图片预览：</div>';
+                    // 异步加载图片
+                    html += '<div id="img_' + attach.id + '">加载图片...</div>';
+                    // 执行图片预览
+                    setTimeout((function(aid, mid) {
+                        getAttachmentBlob(mid, aid, function(blob) {
+                            var imgUrl = URL.createObjectURL(blob);
+                            document.getElementById('img_' + aid).innerHTML = '<img src="' + imgUrl + '" alt="图片">';
+                        });
+                    })(attach.id, messageId), 0);
+                }
+                
+                // 所有附件：下载按钮
+                html += '<button onclick="downloadAttachment(\'' + messageId + '\',\'' + attach.id + '\',\'' + attach.fileName + '\')">下载附件</button>';
+                html += '</div>';
+            }
+        } else {
+            html += '<div>无附件</div>';
+        }
+
+        detail.innerHTML = html;
+    }, function(err) {
+        detail.innerHTML = err;
+    });
+}
+
+// 4. 下载附件入口
+function downloadAttachment(messageId, attachId, fileName) {
+    getAttachmentBlob(messageId, attachId, function(blob) {
+        downloadFile(blob, fileName);
+    });
+}
+</script>
+</body>
+</html>
