@@ -1,7 +1,9 @@
 ---
 import { getCollection, render } from "astro:content";
 import Base from "../../layouts/Base.astro";
+import PostCard from "../../components/win/PostCard.astro";
 import { SITE } from "../../config/site";
+import { moodOf } from "../../styles/design";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -20,6 +22,21 @@ const dateFmt = new Intl.DateTimeFormat("zh-CN", {
   month: "long",
   day: "numeric",
 });
+
+/* 上下篇：让长文有来处也有去处 */
+const all = (await getCollection("posts", ({ data: d }) => !d.draft)).sort(
+  (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
+);
+const i = all.findIndex((p) => p.id === post.id);
+const newer = i > 0 ? all[i - 1] : null;
+const older = i >= 0 && i < all.length - 1 ? all[i + 1] : null;
+
+const mood = moodOf(post.id);
+
+/* 阅读时长：用 frontmatter 的 summary 不准，正文在 post.body。
+   注意是 post.body 而不是 data.body —— 后者是 frontmatter，不含正文。 */
+const words = (post.body ?? "").split(/\s+/).length;
+const readMinutes = Math.max(1, Math.round(words / 400));
 ---
 
 <Base
@@ -36,114 +53,253 @@ const dateFmt = new Intl.DateTimeFormat("zh-CN", {
   }
   tags={data.tags}
 >
-  <article class="post">
-    <header class="post-head">
-      <h1>{data.title}</h1>
-      <div class="post-meta">
+  <article class="post" style={`--mood:${mood}`}>
+    <header class="head">
+      <p class="eyebrow">{data.category ?? "随笔"}</p>
+      <h1 class="title">{data.title}</h1>
+      {data.description && <p class="desc">{data.description}</p>}
+
+      <div class="meta">
         <time datetime={data.published.toISOString()}>
           {dateFmt.format(data.published)}
         </time>
         {
           data.updated &&
             data.updated.getTime() !== data.published.getTime() && (
-              <span>· 更新于 {dateFmt.format(data.updated)}</span>
+              <span>· 改于 {dateFmt.format(data.updated)}</span>
             )
         }
-        {data.category && <span class="badge">{data.category}</span>}
+        <span>· 约 {readMinutes} 分钟</span>
       </div>
-      {data.tags.length > 0 && (
-        <ul class="tags">
-          {data.tags.map((tag) => (
-            <li><a href={`/tags/${encodeURIComponent(tag)}/`}>#{tag}</a></li>
-          ))}
-        </ul>
+
+      {data.image && (
+        <div class="cover">
+          <img src={data.image} alt="" loading="eager" decoding="async" />
+        </div>
       )}
     </header>
-
-    {
-      data.image && (
-        <img class="cover" src={data.image} alt="" loading="eager" decoding="async" />
-      )
-    }
 
     <div class="prose">
       <Content />
     </div>
 
-    <footer class="post-foot">
-      <a class="back" href="/posts/">← 返回文章列表</a>
-    </footer>
+    {
+      data.tags.length > 0 && (
+        <footer class="tags">
+          <span class="eyebrow">标签</span>
+          <ul>
+            {data.tags.map((t) => (
+              <li>
+                <a href={`/tags/${encodeURIComponent(t)}/`}>{t}</a>
+              </li>
+            ))}
+          </ul>
+        </footer>
+      )
+    }
+
+    {
+      (newer || older) && (
+        <nav class="pager-nav" aria-label="文章导航">
+          {older ? (
+            <a class="pn pn-prev" href={`/posts/${older.id}/`}>
+              <span class="pn-dir">← 上一篇</span>
+              <span class="pn-title">{older.data.title}</span>
+            </a>
+          ) : (
+            <span class="pn is-off" />
+          )}
+
+          {newer ? (
+            <a class="pn pn-next" href={`/posts/${newer.id}/`}>
+              <span class="pn-dir">下一篇 →</span>
+              <span class="pn-title">{newer.data.title}</span>
+            </a>
+          ) : (
+            <span class="pn is-off" />
+          )}
+        </nav>
+      )
+    }
   </article>
 </Base>
 
 <style>
-  .post { max-width: 760px; margin-inline: auto; }
-
-  .post-head {
-    margin-bottom: var(--spacingHorizontalXL);
-    padding-bottom: var(--spacingHorizontalL);
-    border-bottom: 1px solid var(--colorNeutralStroke1);
+  .post {
+    padding: var(--s-xl) 0 0;
   }
 
-  .post-head h1 {
-    margin-bottom: 10px;
-    font-size: var(--fontSizeBase600);
-    line-height: 1.3;
+  /* ── 文章头部：不居中，左对齐并压到 720px。
+     MiniMax 的居中 hero 用在首页；文章页改为左对齐，
+     长文本的阅读起点固定在左上更符合直觉。 ── */
+  .head {
+    max-width: 720px;
+    margin: 0 auto var(--s-xl);
   }
 
-  .post-meta {
+  .head .eyebrow {
+    color: var(--mood);
+    margin-bottom: var(--s-sm);
+  }
+
+  /* 中文标题不加负字距（原因同首页：Inter 只覆盖拉丁，
+     负字距会把中文字形压到被切掉） */
+  .title {
+    font-size: clamp(30px, 5vw, 42px);
+    font-weight: var(--t-display-weight);
+    line-height: 1.18;
+    letter-spacing: 0;
+    margin: 0 0 var(--s-md);
+    color: var(--c-ink);
+  }
+
+  .desc {
+    margin: 0 0 var(--s-md);
+    font-size: 17px;
+    line-height: 1.68;
+    color: var(--c-muted);
+  }
+
+  .meta {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
     gap: 8px;
-    color: var(--colorNeutralForeground4);
-    font-size: var(--fontSizeBase200);
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--c-faint);
+    letter-spacing: 0.2px;
   }
 
-  .badge {
-    padding: 1px 8px;
-    border-radius: var(--borderRadiusCircular);
-    background: var(--colorSubtleBackground);
-    color: var(--colorBrandForeground1);
+  /* 封面：比正文更宽，打破 680px 的窄栏——刻意的宽度不对称 */
+  .cover {
+    max-width: 1000px;
+    margin: var(--s-xl) auto 0;
+    border: 1px solid var(--line-base);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    background: var(--c-inset);
   }
 
+  .cover img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 8;
+    object-fit: cover;
+  }
+
+  /* ── 标签 ─────────────────────────────────────────────── */
   .tags {
+    max-width: 680px;
+    margin: var(--s-xl) auto 0;
+    padding-top: var(--s-lg);
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .tags .eyebrow {
+    color: var(--c-faint);
+    margin-bottom: var(--s-sm);
+  }
+
+  .tags ul {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin: 12px 0 0;
+    gap: 8px;
+    margin: 0;
     padding: 0;
     list-style: none;
   }
+
   .tags a {
-    padding: 1px 8px;
-    border-radius: var(--borderRadiusCircular);
-    border: 1px solid var(--colorNeutralStroke1);
-    color: var(--colorNeutralForeground3);
-    font-size: var(--fontSizeBase100);
-    text-decoration: none;
+    display: inline-block;
+    padding: 4px 12px;
+    border: 1px solid var(--line-base);
+    border-radius: var(--r-pill);
+    color: var(--c-muted);
+    font-size: 13px;
+    transition:
+      transform var(--m-quick),
+      color var(--m-quick),
+      border-color var(--m-quick),
+      background var(--m-quick);
   }
+
   .tags a:hover {
-    background: var(--colorSubtleBackgroundHover);
-    color: var(--colorNeutralForeground1);
-  }
-
-  .cover {
-    width: 100%;
-    border-radius: var(--borderRadiusXLarge);
-    margin-bottom: var(--spacingHorizontalXL);
-  }
-
-  .post-foot {
-    margin-top: 48px;
-    padding-top: var(--spacingHorizontalL);
-    border-top: 1px solid var(--colorNeutralStroke1);
-  }
-
-  .back {
-    color: var(--colorNeutralForeground3);
-    font-size: var(--fontSizeBase200);
     text-decoration: none;
+    transform: translateY(-2px);
+    color: var(--mood);
+    border-color: color-mix(in srgb, var(--mood) 50%, transparent);
+    background: color-mix(in srgb, var(--mood) 9%, transparent);
   }
-  .back:hover { color: var(--colorBrandForeground1); }
+
+  /* ── 上下篇：左右不对称地撑开，鼠标移上去才显出方向 ───── */
+  .pager-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-md);
+    max-width: 1000px;
+    margin: var(--s-xl) auto 0;
+  }
+
+  .pn {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: var(--s-md) var(--s-lg);
+    border: 1px solid var(--line-base);
+    border-radius: var(--r-md);
+    background: var(--c-s1);
+    transition:
+      transform var(--m-quick),
+      border-color var(--m-quick),
+      background var(--m-quick);
+  }
+
+  .pn:hover {
+    text-decoration: none;
+    transform: translateY(-3px);
+    border-color: var(--line-strong);
+    background: var(--c-s2);
+  }
+
+  .pn-next {
+    text-align: right;
+  }
+
+  .pn.is-off {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .pn-dir {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--c-faint);
+  }
+
+  .pn-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--c-ink);
+    /* 标题可能很长，限制两行保持左右两栏等高 */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .pn:hover .pn-title {
+    color: var(--c-neon-volt);
+  }
+
+  @media (max-width: 640px) {
+    .pager-nav {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .pn-next {
+      text-align: left;
+    }
+  }
 </style>

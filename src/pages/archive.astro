@@ -2,85 +2,219 @@
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
 
-const posts = (await getCollection("posts", ({ data }) => !data.draft))
-  .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
+const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
+);
 
-// 按年月分组
+/* 按年月分组 */
 const groups = new Map<string, typeof posts>();
 for (const post of posts) {
   const d = post.data.published;
-  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  const key = `${d.getFullYear()} 年 ${String(d.getMonth() + 1).padStart(2, "0")} 月`;
   if (!groups.has(key)) groups.set(key, []);
   groups.get(key)!.push(post);
 }
 
-const months = [...groups.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+const months = [...groups.entries()];
 
-const fmt = new Intl.DateTimeFormat("zh-CN", { month: "2-digit", day: "2-digit" });
+const fmt = new Intl.DateTimeFormat("zh-CN", {
+  month: "2-digit",
+  day: "2-digit",
+});
 ---
 
 <Base title="归档" path="/archive/">
-  <h1 class="page-title">归档</h1>
-  <p class="total">共 {posts.length} 篇文章</p>
+  <header class="head">
+    <p class="eyebrow">全部文章</p>
+    <h1 class="title">归档</h1>
+    <p class="total">
+      共 <span class="num">{posts.length}</span> 篇，按时间倒序
+    </p>
+  </header>
 
-  {
-    months.map(([month, list]) => (
-      <section class="month-group">
-        <h2 class="month">{month}</h2>
-        <ul class="list">
-          {list.map((post) => (
-            <li>
-              <time class="day" datetime={post.data.published.toISOString()}>
-                {fmt.format(post.data.published)}
-              </time>
-              <a href={`/posts/${post.id}/`}>{post.data.title}</a>
-            </li>
-          ))}
-        </ul>
-      </section>
-    ))
-  }
+  <div class="timeline">
+    {
+      months.map(([month, list]) => (
+        <section class="group">
+          <h2 class="month">
+            <span class="month-label">{month}</span>
+            <span class="month-count">{list.length}</span>
+          </h2>
+
+          <ul class="list">
+            {list.map((post) => (
+              <li class="row">
+                <time class="day" datetime={post.data.published.toISOString()}>
+                  {fmt.format(post.data.published)}
+                </time>
+
+                <a class="row-link" href={`/posts/${post.id}/`}>
+                  <span class="row-title">{post.data.title}</span>
+                  {post.data.description && (
+                    <span class="row-desc">{post.data.description}</span>
+                  )}
+                </a>
+
+                {post.data.category && (
+                  <span class="row-cat">{post.data.category}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
 </Base>
 
 <style>
-  .page-title { margin-bottom: 4px; }
+  .head {
+    max-width: 780px;
+    margin-bottom: var(--s-xl);
+  }
+
+  .head .eyebrow {
+    color: var(--c-faint);
+    margin-bottom: var(--s-sm);
+  }
+
+  .title {
+    font-size: clamp(30px, 5vw, 40px);
+    letter-spacing: -1.4px;
+    margin: 0 0 var(--s-sm);
+  }
+
   .total {
-    margin: 0 0 var(--spacingHorizontalXL);
-    color: var(--colorNeutralForeground4);
-    font-size: var(--fontSizeBase200);
+    margin: 0;
+    color: var(--c-muted);
+    font-size: 15px;
   }
 
-  .month-group { margin-bottom: var(--spacingHorizontalXL); }
+  .num {
+    color: var(--c-neon-volt);
+    font-family: var(--mono);
+    font-weight: 600;
+  }
 
+  .timeline {
+    max-width: 900px;
+  }
+
+  .group {
+    margin-bottom: var(--s-xl);
+  }
+
+  /* 月份：左侧固定宽度的"时间轴"，右列是文章 */
   .month {
-    margin-bottom: var(--spacingHorizontalM);
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--colorNeutralStroke1);
-    font-size: var(--fontSizeBase400);
-    color: var(--colorNeutralForeground2);
-  }
-
-  .list { margin: 0; padding: 0; list-style: none; }
-
-  .list li {
     display: flex;
-    gap: var(--spacingHorizontalL);
-    padding: 7px 0;
-    border-bottom: 1px solid var(--colorNeutralStroke1);
+    align-items: baseline;
+    gap: var(--s-sm);
+    margin: 0 0 var(--s-sm);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line-base);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.6px;
+    color: var(--c-muted);
   }
-  .list li:last-child { border-bottom: none; }
+
+  .month-label {
+    font-family: var(--mono);
+    text-transform: uppercase;
+  }
+
+  .month-count {
+    padding: 1px 8px;
+    border: 1px solid var(--line-base);
+    border-radius: var(--r-pill);
+    font-size: 11px;
+    letter-spacing: 0;
+    color: var(--c-faint);
+  }
+
+  .list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    align-items: baseline;
+    gap: var(--s-md);
+    padding: 11px var(--s-sm);
+    margin: 0 calc(-1 * var(--s-sm));
+    border-radius: var(--r-sm);
+    transition:
+      background var(--m-quick),
+      transform var(--m-quick);
+  }
+
+  /* 整行 hover 才亮——鼠标扫过一列文章时像点亮一列灯 */
+  .row:hover {
+    background: var(--c-s1);
+    transform: translateX(3px);
+  }
 
   .day {
-    flex-shrink: 0;
-    width: 48px;
-    color: var(--colorNeutralForeground4);
-    font-family: var(--fontFamilyMonospace);
-    font-size: var(--fontSizeBase200);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--c-faint);
+    letter-spacing: 0.3px;
   }
 
-  .list a {
-    color: var(--colorNeutralForeground2);
+  .row-link {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
     text-decoration: none;
   }
-  .list a:hover { color: var(--colorBrandForeground1); text-decoration: underline; }
+
+  .row-title {
+    font-size: 15.5px;
+    font-weight: 550;
+    color: var(--c-ink);
+    transition: color var(--m-snap);
+  }
+
+  .row:hover .row-title {
+    color: var(--c-neon-volt);
+  }
+
+  .row-desc {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--c-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+
+  .row-cat {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--c-faint);
+    opacity: 0;
+    transition: opacity var(--m-quick);
+  }
+
+  .row:hover .row-cat {
+    opacity: 1;
+  }
+
+  @media (max-width: 640px) {
+    .row {
+      grid-template-columns: 46px 1fr;
+      gap: var(--s-sm);
+    }
+    .row-cat {
+      display: none;
+    }
+  }
 </style>

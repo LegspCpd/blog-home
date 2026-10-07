@@ -1,12 +1,15 @@
 ---
 import type { CollectionEntry } from "astro:content";
+import { moodOf } from "../../styles/design";
 
 interface Props {
   post: CollectionEntry<"posts">;
   slug: string;
+  /** 首篇走大卡版式：跨两列 + 26px 超大圆角（MiniMax 的半径对比签名） */
+  hero?: boolean;
 }
 
-const { post, slug } = Astro.props;
+const { post, slug, hero = false } = Astro.props;
 const { data } = post;
 
 const dateFmt = new Intl.DateTimeFormat("zh-CN", {
@@ -17,95 +20,208 @@ const dateFmt = new Intl.DateTimeFormat("zh-CN", {
 
 const updated = data.updated ?? data.published;
 const href = `/posts/${slug}/`;
+/* 每篇文章一个稳定的情绪色：同一篇永远同色，不同篇之间是乱的 */
+const mood = moodOf(slug);
 ---
 
-<a class="card post-card" href={href}>
-  {data.image && (
-    <div class="cover">
-      <img src={data.image} alt="" loading="lazy" decoding="async" />
-    </div>
-  )}
+<article class={`card${hero ? " card-hero" : ""}`} style={`--mood:${mood}`}>
+  <a class="hit" href={href}>
+    <span class="sr">{data.title}</span>
+  </a>
+
+  {
+    data.image && (
+      <div class="cover">
+        <img src={data.image} alt="" loading="lazy" decoding="async" />
+      </div>
+    )
+  }
 
   <div class="body">
     <div class="meta">
+      <span class="eyebrow">{data.category ?? "随笔"}</span>
       <time datetime={data.published.toISOString()}>
         {dateFmt.format(data.published)}
       </time>
-      {data.updated && data.updated.getTime() !== data.published.getTime() && (
-        <span class="updated">更新于 {dateFmt.format(data.updated)}</span>
-      )}
-      {data.category && (
-        <fluent-badge appearance="tint" size="small">
-          {data.category}
-        </fluent-badge>
-      )}
+      {
+        data.updated && data.updated.getTime() !== data.published.getTime() && (
+          <span class="edited">改于 {dateFmt.format(data.updated)}</span>
+        )
+      }
     </div>
 
     <h2 class="title">{data.title}</h2>
     {data.description && <p class="desc">{data.description}</p>}
 
-    {data.tags.length > 0 && (
-      <div class="tags">
-        {data.tags.slice(0, 4).map((tag) => (
-          <fluent-badge appearance="outline" size="tiny">
-            {tag}
-          </fluent-badge>
-        ))}
-      </div>
-    )}
+    {
+      data.tags.length > 0 && (
+        <ul class="tags">
+          {data.tags.slice(0, hero ? 5 : 3).map((tag) => (
+            <li class="tag">{tag}</li>
+          ))}
+        </ul>
+      )
+    }
+
+    <span class="more" aria-hidden="true">
+      读全文
+      <span class="arrow">→</span>
+    </span>
   </div>
-</a>
+</article>
 
 <style>
-  .post-card {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacingHorizontalL);
-    color: inherit;
-  }
-
-  .post-card:has(.cover) {
-    grid-template-columns: 180px 1fr;
-  }
-
-  .cover {
-    border-radius: var(--borderRadiusLarge);
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
-    background: var(--colorNeutralBackground4);
+    border: 1px solid var(--line-base);
+    border-radius: var(--r-lg);
+    background: var(--c-s1);
+    /* 情绪色在卡片左上角做一团极淡的光晕——这是「neon」的来源，
+       每篇文章的光晕位置和颜色都不同，但都压得很低，不抢正文 */
+    isolation: isolate;
+    transition:
+      transform var(--m-quick),
+      border-color var(--m-quick),
+      background var(--m-quick),
+      box-shadow var(--m-quick);
   }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    border-radius: inherit;
+    opacity: 0;
+    background: radial-gradient(
+      240px circle at 14% 0%,
+      color-mix(in srgb, var(--mood) 15%, transparent),
+      transparent 70%
+    );
+    transition: opacity var(--m-heavy);
+  }
+
+  /* hover：抬起 + 边框变亮 + 光晕浮现。三个信号叠加 */
+  .card:hover {
+    transform: translateY(-3px);
+    background: var(--c-s2);
+    border-color: var(--line-strong);
+    box-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.9);
+  }
+
+  .card:hover::before {
+    opacity: 1;
+  }
+
+  /* 整卡可点，但用一层覆盖而不是包住整卡——
+     这样内部的 h2 / 时间 / 标签在语义上仍然独立，SEO 与读屏都更干净 */
+  .hit {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+  }
+
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  /* ── 大卡：跨两列 + 超大圆角（MiniMax 的半径对比）──────── */
+  .card-hero {
+    grid-column: span 2;
+    border-radius: var(--r-hero);
+    flex-direction: row;
+  }
+
+  .card-hero .cover {
+    width: 46%;
+    flex-shrink: 0;
+    border-right: 1px solid var(--line-base);
+    border-radius: 0;
+  }
+
+  .card-hero .cover img {
+    height: 100%;
+    min-height: 260px;
+  }
+
+  .card-hero .title {
+    font-size: 30px;
+    letter-spacing: -1px;
+  }
+
+  /* ── 封面 ──────────────────────────────────────────────── */
+  .cover {
+    overflow: hidden;
+    background: var(--c-inset);
+  }
+
   .cover img {
+    display: block;
     width: 100%;
     height: 100%;
-    min-height: 120px;
+    min-height: 132px;
     object-fit: cover;
-    display: block;
+    /* 图片随卡片一起缓慢放大，是最廉价也最有效的「活」感 */
+    transition: transform var(--m-heavy);
   }
 
-  .body { min-width: 0; }
+  .card:hover .cover img {
+    transform: scale(1.045);
+  }
+
+  /* ── 内容 ──────────────────────────────────────────────── */
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    padding: var(--s-lg);
+    min-width: 0;
+  }
 
   .meta {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: var(--spacingHorizontalM);
-    margin-bottom: 6px;
-    color: var(--colorNeutralForeground4);
-    font-size: var(--fontSizeBase100);
+    gap: 11px;
+    flex-wrap: wrap;
+    color: var(--c-faint);
+    font-size: 12px;
+    font-family: var(--mono);
+    letter-spacing: 0.2px;
   }
 
-  .title {
-    margin: 0 0 6px;
-    font-size: var(--fontSizeBase500);
-    line-height: var(--lineHeightBase500);
-    color: var(--colorNeutralForeground1);
+  /* 眉标用情绪色：这是霓虹唯一大面积出现的地方，量很小 */
+  .eyebrow {
+    color: var(--mood);
+    letter-spacing: 1.6px;
   }
-  .post-card:hover .title { color: var(--colorBrandForeground1); }
+
+  /* 中文标题不加负字距（同 global.css 的说明） */
+  .title {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 1.4;
+    color: var(--c-ink);
+    transition: color var(--m-snap);
+  }
+
+  .card:hover .title {
+    color: var(--mood);
+  }
 
   .desc {
-    margin: 0 0 10px;
-    color: var(--colorNeutralForeground3);
-    font-size: var(--fontSizeBase200);
-    line-height: 1.65;
+    margin: 0;
+    color: var(--c-muted);
+    font-size: 14px;
+    line-height: 1.62;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -116,13 +232,76 @@ const href = `/posts/${slug}/`;
   .tags {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: var(--spacingHorizontalXS);
-    margin: 0;
+    gap: 6px;
+    margin: 2px 0 0;
+    padding: 0;
+    list-style: none;
   }
 
-  @media (max-width: 640px) {
-    .post-card:has(.cover) { grid-template-columns: 1fr; }
-    .cover img { min-height: 160px; aspect-ratio: 16 / 9; }
+  .tag {
+    padding: 2px 9px;
+    border: 1px solid var(--line-base);
+    border-radius: var(--r-pill);
+    color: var(--c-faint);
+    font-size: 11.5px;
+    transition:
+      color var(--m-snap),
+      border-color var(--m-snap);
+  }
+
+  .card:hover .tag {
+    border-color: var(--line-strong);
+    color: var(--c-muted);
+  }
+
+  /* 「读全文 →」默认隐藏，hover 时从下方滑入。
+     留白固定高度，所以它出现时卡片不会跳动 */
+  .more {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+    color: var(--mood);
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+      opacity var(--m-quick),
+      transform var(--m-quick);
+  }
+
+  .card:hover .more {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .arrow {
+    transition: transform var(--m-quick);
+  }
+
+  .card:hover .arrow {
+    transform: translateX(4px);
+  }
+
+  /* ── 移动端 ────────────────────────────────────────────── */
+  @media (max-width: 720px) {
+    .card-hero {
+      grid-column: span 1;
+      flex-direction: column;
+    }
+    .card-hero .cover {
+      width: 100%;
+      border-right: 0;
+      border-bottom: 1px solid var(--line-base);
+    }
+    .card-hero .title {
+      font-size: 23px;
+    }
+    /* 触屏没有 hover，直接常显「读全文」 */
+    .more {
+      opacity: 1;
+      transform: none;
+    }
   }
 </style>

@@ -32,45 +32,32 @@ function contrast(a, b) {
   return (l1 + 0.05) / (l2 + 0.05);
 }
 
-// ---- 1. 直接从官方 @fluentui/tokens 取实际色值，算对比度 ----
-// 之前这个脚本是用正则去解析 tokens.ts 里手写的色值表；
-// 令牌改为官方包驱动后那个结构不存在了，所以这里改成直接 import 官方包——
-// 检查的对象必须和页面真正用的数据是同一份，否则检查的就是幻觉。
+// ---- 1. 直接从设计系统取实际色值，算对比度 ----
+// 检查的对象必须和页面真正用的数据是同一份：这里 import 的 design.ts
+// 就是页面注入 :root 的那一份，不重新解析 CSS，避免检查到幻觉。
 console.log("\n[1] Contrast ratios (WCAG AA needs 4.5 for body, 3.0 for large)");
-const official = {
-  dark: (await import("@fluentui/tokens")).webDarkTheme,
-  light: (await import("@fluentui/tokens")).webLightTheme,
-};
-for (const theme of ["dark", "light"]) {
-  const t = official[theme];
-  if (!t) {
-    fail(`cannot load ${theme} theme from @fluentui/tokens`);
+const { canvas, text, neon } = await import("../src/styles/design.ts");
+
+const checks = [
+  ["body      body/base", text.body, canvas.base, 4.5],
+  ["secondary muted/base", text.muted, canvas.base, 4.5],
+  ["tertiary  faint/base", text.faint, canvas.base, 3.0],
+  ["headline  ink/base", text.ink, canvas.base, 4.5],
+  ["card      body/s1", text.body, canvas.s1, 4.5],
+  ["card      muted/s1", text.muted, canvas.s1, 4.5],
+  ["link      volt/base", neon.volt, canvas.base, 4.5],
+  ["cta       onNeon/volt", text.onNeon, neon.volt, 4.5],
+  ["inline mint/inset", neon.mint, canvas.inset, 4.5],
+];
+
+for (const [label, fg, bgc, min] of checks) {
+  if (!fg || !bgc) {
+    fail(`${label}: missing value`);
     continue;
   }
-  const get = (k) => {
-    const v = t[k];
-    return typeof v === "string" && v.startsWith("#") ? v : null;
-  };
-
-  const bg = get("colorNeutralBackground1");
-  const fg1 = get("colorNeutralForeground1");
-  const fg3 = get("colorNeutralForeground3");
-  const fg4 = get("colorNeutralForeground4");
-
-  const checks = [
-    ["body text  fg1/bg", fg1, bg, 4.5],
-    ["secondary fg3/bg", fg3, bg, 4.5],
-    ["muted    fg4/bg", fg4, bg, 4.5],
-  ];
-  for (const [label, fg, bgc, min] of checks) {
-    if (!fg || !bgc) {
-      fail(`${theme} ${label}: missing value`);
-      continue;
-    }
-    const r = contrast(fg, bgc);
-    const ok = r >= min;
-    (ok ? pass : fail)(`${theme} ${label} = ${r.toFixed(2)} (need ${min})`);
-  }
+  const r = contrast(fg, bgc);
+  const ok = r >= min;
+  (ok ? pass : fail)(`${label} = ${r.toFixed(2)} (need ${min})`);
 }
 
 // ---- 2. 每页语义结构 ----
@@ -105,12 +92,9 @@ for (const p of pages) {
 // ---- 3. 交互元素可访问性 ----
 console.log("\n[3] Interactive elements");
 
-// 3a. 全站导航：每页都要有主题开关 + 无障碍名 + 跳过导航入口
+// 3a. 全站导航：每页都要有带无障碍名的导航、main、以及跳过导航入口
 for (const p of pages) {
   const html = readFileSync(`${DIST}/${p}`, "utf8");
-  const hasSwitch = /<fluent-switch/.test(html);
-  const swTag = (html.match(/<fluent-switch[^>]*>/) || [])[0] || "";
-  const hasLabel = /aria-label=/.test(swTag);
   const hasNav = /<nav[^>]*aria-label=/.test(html);
   const hasMain = /<main[\s>]/.test(html);
   const hasSkip =
@@ -118,8 +102,6 @@ for (const p of pages) {
     /href="#main"/.test(html);
 
   const issues = [];
-  if (!hasSwitch) issues.push("no <fluent-switch> in nav");
-  if (!hasLabel) issues.push("switch has no aria-label");
   if (!hasNav) issues.push("no <nav aria-label>");
   if (!hasMain) issues.push("no <main>");
   if (!hasSkip) issues.push("no skip-to-content link");
@@ -140,7 +122,7 @@ for (const p of pages) {
     }
   }
 
-  issues.length ? fail(`${p}: ${issues.join("; ")}`) : pass(`${p}: nav/main/switch/skip ok`);
+  issues.length ? fail(`${p}: ${issues.join("; ")}`) : pass(`${p}: nav/main/skip ok`);
 }
 
 // 3b. 图片 alt 与空链接

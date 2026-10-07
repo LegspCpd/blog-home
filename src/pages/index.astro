@@ -2,10 +2,12 @@
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
 import PostCard from "../components/win/PostCard.astro";
-import { POSTS_PER_PAGE } from "../config/site";
+import { POSTS_PER_PAGE, SITE } from "../config/site";
+import { moodOf } from "../styles/design";
 
-const posts = (await getCollection("posts", ({ data }) => !data.draft))
-  .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
+const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
+);
 
 const page = Math.max(1, Number(Astro.url.searchParams.get("page")) || 1);
 const total = Math.max(1, Math.ceil(posts.length / POSTS_PER_PAGE));
@@ -14,18 +16,49 @@ const slice = posts.slice((current - 1) * POSTS_PER_PAGE, current * POSTS_PER_PA
 
 const base = current > 1 ? `/?page=${current - 1}/` : "/";
 const next = current < total ? `/?page=${current + 1}/` : null;
+
+/* 标签云：取出现频次前 8 个，按次数决定字号——让「乱」有依据而不是随机 */
+const tally = new Map<string, number>();
+for (const p of posts) for (const t of p.data.tags) tally.set(t, (tally.get(t) ?? 0) + 1);
+const tags = [...tally.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+const maxCount = tags[0]?.[1] ?? 1;
+
+/* 页面的整体情绪色取自最新一篇文章 */
+const accent = moodOf(slice[0]?.id ?? "home");
 ---
 
 <Base title={current > 1 ? `第 ${current} 页` : undefined}>
-  <h1 class="page-title">最新文章</h1>
+  {
+    current === 1 ? (
+      <section class="hero" style={`--accent:${accent}`}>
+        <p class="eyebrow">{SITE.subtitle}</p>
+        <h1 class="hero-title">
+          写点<span class="accent">有意思</span>的东西
+        </h1>
+        <p class="hero-sub">
+          {posts.length} 篇记录。技术、设计、还有一些想不清楚的事。
+        </p>
+        <div class="hero-actions">
+          <a class="btn-primary" href="/archive/">
+            开始读 <span aria-hidden="true">→</span>
+          </a>
+          <a class="btn-ghost" href="/rss.xml">
+            订阅 RSS
+          </a>
+        </div>
+      </section>
+    ) : (
+      <h1 class="page-title">第 {current} 页</h1>
+    )
+  }
 
   {
     slice.length === 0 ? (
       <p class="empty">还没有文章。</p>
     ) : (
-      <div class="post-list">
-        {slice.map((post) => (
-          <PostCard post={post} slug={post.id} />
+      <div class="post-grid">
+        {slice.map((post, i) => (
+          <PostCard post={post} slug={post.id} hero={current === 1 && i === 0} />
         ))}
       </div>
     )
@@ -37,66 +70,281 @@ const next = current < total ? `/?page=${current + 1}/` : null;
         {current > 1 ? (
           <a class="pager-link" href={base}>← 上一页</a>
         ) : (
-          <span class="pager-link disabled">← 上一页</span>
+          <span class="pager-link is-off">← 上一页</span>
         )}
         <span class="pager-info">
-          第 {current} / {total} 页
+          {current} / {total}
         </span>
         {next ? (
           <a class="pager-link" href={next}>下一页 →</a>
         ) : (
-          <span class="pager-link disabled">下一页 →</span>
+          <span class="pager-link is-off">下一页 →</span>
         )}
       </nav>
+    )
+  }
+
+  {
+    current === 1 && tags.length > 0 && (
+      <aside class="tags-band" aria-label="标签">
+        <span class="eyebrow">按标签逛</span>
+        <ul class="tag-cloud">
+          {tags.map(([name, n]) => (
+            <li>
+              <a
+                class="cloud"
+                href={`/tags/${encodeURIComponent(name)}/`}
+                style={`--scale:${0.86 + (n / maxCount) * 0.34}`}
+              >
+                {name}
+                <sup>{n}</sup>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </aside>
     )
   }
 </Base>
 
 <style>
-  .page-title {
-    margin-bottom: var(--spacingHorizontalXL);
-    font-size: var(--fontSizeBase600);
+  /* ── Hero ────────────────────────────────────────────────
+     排版取自 Cursor（weight 500 而非 700，靠字距说话）
+     与 Linear（紧到 -2.2px 的 display）
+     霓虹只出现在一个词上。 */
+  .hero {
+    padding: var(--s-xl) 0 var(--s-xl);
+    max-width: 760px;
   }
 
-  .post-list {
+  .hero .eyebrow {
+    color: var(--c-faint);
+    margin-bottom: var(--s-md);
+  }
+
+  /* 中文标题不能带负字距：Inter 只覆盖拉丁，中文回落到系统字体，
+     负字距会把中文字形往左压、右侧被切掉（「有意思」变成「有息」）。
+     所以只有 .accent 这个纯拉丁词享受紧字距。 */
+  .hero-title {
+    font-size: var(--t-mega-size);
+    font-weight: var(--t-mega-weight);
+    line-height: var(--t-mega-lh);
+    letter-spacing: 0;
+    margin: 0 0 var(--s-md);
+    color: var(--c-ink);
+  }
+
+  .accent {
+    letter-spacing: -0.6px;
+  }
+
+  /* 一个词的霓虹：带辉光，悬停时更亮 */
+  .accent {
+    color: var(--accent);
+    text-shadow: 0 0 22px color-mix(in srgb, var(--accent) 45%, transparent);
+    transition:
+      text-shadow var(--m-quick),
+      filter var(--m-quick);
+  }
+
+  .hero-title:hover .accent {
+    text-shadow: 0 0 34px color-mix(in srgb, var(--accent) 75%, transparent);
+    filter: brightness(1.12);
+  }
+
+  .hero-sub {
+    margin: 0 0 var(--s-lg);
+    color: var(--c-muted);
+    font-size: 16.5px;
+    line-height: 1.68;
+    max-width: 46ch;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--s-sm);
+    flex-wrap: wrap;
+  }
+
+  /* 主按钮：hover 抬起，active 缩回。触感全在这两行 */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 19px;
+    border-radius: var(--r-md);
+    background: var(--c-neon-volt);
+    color: var(--c-on-neon);
+    font-size: 14px;
+    font-weight: 650;
+    transition:
+      transform var(--m-quick),
+      box-shadow var(--m-quick),
+      filter var(--m-snap);
+  }
+  .btn-primary:hover {
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 26px -8px rgba(0, 229, 154, 0.6);
+  }
+  .btn-primary:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: none;
+    transition-duration: var(--m-snap);
+  }
+  .btn-primary span {
+    transition: transform var(--m-quick);
+  }
+  .btn-primary:hover span {
+    transform: translateX(3px);
+  }
+
+  /* 次按钮：描边 + hover 时霓虹描边 */
+  .btn-ghost {
+    padding: 10px 19px;
+    border: 1px solid var(--line-base);
+    border-radius: var(--r-md);
+    color: var(--c-muted);
+    font-size: 14px;
+    font-weight: 600;
+    transition:
+      color var(--m-quick),
+      border-color var(--m-quick),
+      background var(--m-quick);
+  }
+  .btn-ghost:hover {
+    text-decoration: none;
+    color: var(--c-ink);
+    border-color: color-mix(in srgb, var(--c-neon-volt) 55%, transparent);
+    background: color-mix(in srgb, var(--c-neon-volt) 7%, transparent);
+  }
+
+  /* ── 文章网格：两列，首篇跨列 ─────────────────────────────
+     不对称的来源就在这里。 */
+  .post-grid {
     display: grid;
-    gap: var(--spacingHorizontalL);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-md);
+    margin-bottom: var(--s-xl);
   }
 
-  .empty {
-    color: var(--colorNeutralForeground4);
-    text-align: center;
-    padding-block: 64px;
-  }
-
+  /* ── 分页 ─────────────────────────────────────────────── */
   .pager {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--spacingHorizontalM);
-    margin-top: var(--spacingHorizontalXL);
+    gap: var(--s-md);
+    padding: var(--s-md) 0;
+    border-top: 1px solid var(--line-soft);
+    border-bottom: 1px solid var(--line-soft);
+    margin-bottom: var(--s-xl);
   }
 
   .pager-link {
-    padding: 8px 16px;
-    border-radius: var(--borderRadiusMedium);
-    border: 1px solid var(--colorNeutralStroke1);
-    color: var(--colorNeutralForeground1);
-    font-size: var(--fontSizeBase200);
-    text-decoration: none;
-    transition: background-color var(--durationFast) var(--curveEasyEase);
+    padding: 8px 15px;
+    border: 1px solid var(--line-base);
+    border-radius: var(--r-md);
+    color: var(--c-body);
+    font-size: 14px;
+    font-weight: 600;
+    transition:
+      transform var(--m-quick),
+      border-color var(--m-quick),
+      background var(--m-quick),
+      color var(--m-quick);
   }
   .pager-link:hover {
-    background: var(--colorSubtleBackgroundHover);
     text-decoration: none;
+    transform: translateY(-2px);
+    color: var(--c-ink);
+    border-color: var(--line-strong);
+    background: var(--c-s2);
   }
-  .pager-link.disabled {
-    color: var(--colorNeutralForegroundDisabled);
-    pointer-events: none;
+  .pager-link:active {
+    transform: translateY(0) scale(0.98);
+    transition-duration: var(--m-snap);
+  }
+  /* 不可用的那一侧：保留位置，但明显退后 */
+  .pager-link.is-off {
+    color: var(--c-faint);
+    border-color: var(--line-soft);
+    background: transparent;
+    cursor: not-allowed;
+    transform: none;
   }
 
   .pager-info {
-    color: var(--colorNeutralForeground4);
-    font-size: var(--fontSizeBase200);
+    color: var(--c-faint);
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.4px;
+  }
+
+  /* ── 标签云 ──────────────────────────────────────────────
+     字号按词频缩放——看似随机，其实有规则。 */
+  .tags-band {
+    padding-top: var(--s-lg);
+  }
+
+  .tags-band .eyebrow {
+    color: var(--c-faint);
+    margin-bottom: var(--s-md);
+  }
+
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--s-sm) var(--s-md);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cloud {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    font-size: calc(13px * var(--scale));
+    font-weight: calc(400 + (var(--scale) - 0.86) * 1000);
+    color: var(--c-muted);
+    transition:
+      color var(--m-quick),
+      transform var(--m-quick);
+  }
+  .cloud:hover {
+    text-decoration: none;
+    color: var(--c-neon-volt);
+    transform: translateY(-2px);
+  }
+
+  .cloud sup {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--c-faint);
+  }
+
+  .page-title {
+    font-size: 28px;
+    padding: var(--s-xl) 0 var(--s-lg);
+  }
+
+  .empty {
+    color: var(--c-faint);
+    padding: var(--s-xl) 0;
+  }
+
+  @media (max-width: 720px) {
+    .hero {
+      padding-top: var(--s-xl);
+    }
+    .hero-title {
+      font-size: clamp(32px, 9vw, 44px);
+      letter-spacing: -1.4px;
+    }
+    .post-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 </style>

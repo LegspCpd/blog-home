@@ -36,30 +36,32 @@ jobs:
       - name: Build
         run: pnpm exec astro build
 
-      # ---- Fluent 组件必须在产物里 ----
-      # 背景：只用 Fluent 的色值时，组件库会被 Vite 整包 tree-shake 掉，
-      # 页面照样构建通过，但 <fluent-*> 永远是未定义空标签。
-      # 这类回归构建阶段看不出来，只能在产物上断言。
-      - name: Verify Fluent components are really shipped
+      # ---- 设计令牌必须真的注入到 HTML ----
+      # 背景：令牌内联在 <head> 的 <style>:root{} 里，是首屏配色的唯一来源。
+      # 如果这一步静默失败（变量名改了、designVars 返回空、style 被摇掉），
+      # 构建依然全绿，但页面会变成一块没有配色的白底 —— 只看构建结果发现不了。
+      - name: Verify design tokens are inlined
         run: |
           set -euo pipefail
           fail() { echo "::error::$1"; exit 1; }
 
-          # 1. markup 里必须有真实组件
-          grep -q '<fluent-switch' dist/index.html \
-            || fail "no <fluent-switch> in dist/index.html"
-          grep -q '<fluent-button' dist/404.html \
-            || fail "no <fluent-button> in dist/404.html"
+          # 1. 关键令牌必须存在，且值不能是空的或未解析的 var()
+          for v in --c-base --c-s1 --c-ink --c-body --c-muted \
+                   --c-neon-volt --r-md --s-lg --m-quick; do
+            grep -q -- "$v:" dist/index.html \
+              || fail "design token $v not inlined into dist/index.html"
+          done
 
-          # 2. 客户端脚本里必须有 Fluent 运行时（fast-element 特征串）
-          #    注意：组件标签名会被压缩，不能用 'fluent-switch' 去搜 bundle，
-          #    要用压缩不会改掉的库内部标识。
-          JS=$(ls dist/_astro/*.js | head -n 1)
-          [ -n "$JS" ] || fail "no client bundle emitted"
-          if ! grep -q 'fast-element\|FASTElement\|FormAssociated' "$JS"; then
-            fail "Fluent runtime missing from $JS -- components were tree-shaken"
-          fi
-          echo "OK: fluent markup present, runtime bundled ($(wc -c <"$JS") bytes)"
+          # 2. 至少要有一个真实色值（#rrggbb），否则说明注入的是变量名而不是值
+          grep -Eq -- '--c-base:#[0-9a-fA-F]{6}' dist/index.html \
+            || fail "no literal color value inlined -- tokens may be unresolved"
+
+          # 3. 字体必须自托管成功，否则会退回系统字体、字距全变
+          [ -f dist/fonts/inter-latin.woff2 ] || fail "Inter woff2 missing from dist"
+          grep -q 'inter-latin.woff2' dist/fonts/fonts.css \
+            || fail "fonts.css does not reference the downloaded woff2"
+
+          echo "OK: design tokens inlined with literal values, font self-hosted"
 
       # ---- 无障碍：对比度 / 语义结构 / 跳过导航链接 ----
       - name: Accessibility

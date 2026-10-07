@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/win/PostCard.astro";
+import { moodOf } from "../../styles/design";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -25,42 +26,110 @@ export async function getStaticPaths() {
 
 const { tag, posts } = Astro.props;
 const sorted = [...posts].sort(
-  (a, b) => b.data.published.valueOf() - a.data.published.valueOf(),
+  (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
 );
+
+/* 标签本身也分配一个情绪色，让每个标签页有自己的「身份」 */
+const accent = moodOf("tag:" + tag);
 ---
 
 <Base title={`#${tag}`} path={`/tags/${encodeURIComponent(tag)}/`}>
   <nav class="crumb">
-    <a href="/tags/">← 全部标签</a>
+    <a href="/tags/">
+      <span aria-hidden="true">←</span> 全部标签
+    </a>
   </nav>
 
-  <h1 class="page-title">#{tag}</h1>
-  <p class="total">共 {sorted.length} 篇</p>
+  <header class="head" style={`--accent:${accent}`}>
+    <h1 class="title">
+      <span class="hash" aria-hidden="true">#</span>{tag}
+    </h1>
+    <p class="total">
+      <span class="num">{sorted.length}</span> 篇
+    </p>
+  </header>
 
-  <div class="post-list">
-    {sorted.map((post) => (
-      <PostCard post={post} slug={post.id} />
+  <div class="post-grid">
+    {sorted.map((post, i) => (
+      <PostCard post={post} slug={post.id} hero={i === 0} />
     ))}
   </div>
 </Base>
 
 <style>
   .crumb {
-    margin-bottom: var(--spacingHorizontalM);
-    font-size: var(--fontSizeBase200);
+    padding-top: var(--s-lg);
+    margin-bottom: var(--s-lg);
   }
+
   .crumb a {
-    color: var(--colorNeutralForeground3);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 13px;
+    border: 1px solid var(--line-base);
+    border-radius: var(--r-pill);
+    color: var(--c-muted);
+    font-size: 13px;
+    transition:
+      color var(--m-quick),
+      border-color var(--m-quick),
+      background var(--m-quick),
+      transform var(--m-quick);
+  }
+
+  .crumb a:hover {
     text-decoration: none;
+    color: var(--c-ink);
+    border-color: var(--line-strong);
+    background: var(--c-s2);
+    transform: translateY(-2px);
   }
-  .crumb a:hover { color: var(--colorBrandForeground1); }
 
-  .page-title { margin-bottom: 4px; }
+  .head {
+    margin-bottom: var(--s-lg);
+    padding-bottom: var(--s-md);
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  /* 标题带情绪色辉光——每个标签页有自己的"色温" */
+  .title {
+    display: flex;
+    align-items: baseline;
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 600;
+    letter-spacing: -1.4px;
+    margin: 0 0 var(--s-xs);
+    color: var(--accent);
+    text-shadow: 0 0 30px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  .hash {
+    opacity: 0.45;
+    font-weight: 400;
+    margin-right: 2px;
+  }
+
   .total {
-    margin: 0 0 var(--spacingHorizontalXL);
-    color: var(--colorNeutralForeground4);
-    font-size: var(--fontSizeBase200);
+    margin: 0;
+    color: var(--c-muted);
+    font-size: 14px;
   }
 
-  .post-list { display: grid; gap: var(--spacingHorizontalL); }
+  .num {
+    font-family: var(--mono);
+    color: var(--c-ink);
+  }
+
+  .post-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-md);
+  }
+
+  @media (max-width: 720px) {
+    .post-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
 </style>

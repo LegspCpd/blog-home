@@ -1,20 +1,17 @@
 ---
 import { SITE, abs } from "../config/site";
-import { DEFAULT_THEME, themeToCss } from "../lib/theme/tokens";
+import { designVars } from "../styles/design";
 import NavBar from "../components/win/NavBar.astro";
 import Footer from "../components/win/Footer.astro";
 import "../styles/global.css";
 
 /**
- * 首屏令牌内联：把默认主题（暗色）直接吐进 HTML。
- *
- * 为什么必须这么做：令牌由 setTheme() 在客户端注入，如果只靠 JS，
- * 那么 SSR 出来的 HTML 里 --colorNeutralBackground1 等变量【不存在】——
- * 页面会闪一下白底，JS 失败或禁用 JS 时更是彻底失去配色。
- * 内联一份默认值，首屏即正确；运行时 setTheme() 接管同一套值，不会漂移
- * （两者同源于 tokens.ts，不存在「CSS 覆盖算法」的冲突）。
+ * 设计令牌内联进 HTML。
+ * 这套值是纯静态的（不随主题切换变化），但仍然必须内联：
+ * 否则首屏在 CSS 加载完成前会是一片白闪，
+ * 禁用 CSS 时则彻底失去配色。
  */
-const bootstrapTokens = themeToCss(DEFAULT_THEME);
+const vars = designVars();
 
 interface Props {
   title?: string;
@@ -90,11 +87,19 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
 ---
 
 <!doctype html>
-<html lang={SITE.lang} data-theme={DEFAULT_THEME}>
+<html lang={SITE.lang}>
   <head>
     <meta charset="UTF-8" />
-    <style set:html={`:root{${bootstrapTokens}}`}></style>
+    <style set:html={`:root{${vars}}`}></style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      Inter 自托管：不引Google Fonts 有两个理由——
+      国内访问 Google 域名不稳定，而首屏字体是最不能闪的东西；
+      顺带避免第三方请求拖慢 LCP。
+      只取需要的字重与子集，全量 Inter 有 2MB+。
+    -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin.woff2" crossorigin />
+    <link rel="stylesheet" href="/fonts/fonts.css" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
@@ -127,25 +132,6 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
 
     <meta name="generator" content={Astro.generator} />
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-
-    <!--
-      防闪烁：主题脚本在渲染前同步执行首屏取色。
-      默认暗色优先 —— 没有本地偏好就直接暗色。
-    -->
-    <script is:inline define:vars={{ storageKey: "winui-theme", fallback: DEFAULT_THEME }}>
-      (function () {
-        try {
-          var saved = localStorage.getItem(storageKey);
-          var t =
-            saved === "dark" || saved === "light"
-              ? saved
-              : fallback;
-          document.documentElement.setAttribute("data-theme", t);
-        } catch (e) {
-          document.documentElement.setAttribute("data-theme", fallback);
-        }
-      })();
-    </script>
   </head>
 
   <body>
@@ -163,9 +149,127 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
       </div>
     </main>
     <Footer />
-
-    <script>
-      import "../lib/theme/theme";
-    </script>
   </body>
 </html>
+
+<style is:global>
+  .container {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 var(--s-lg);
+  }
+
+  /* 文章页正文：窄栏 + 大行高，长文才读得下去。
+     这是 Cursor 的「杂志感」在博客上的落地。 */
+  .page-main {
+    min-height: 60dvh;
+  }
+
+  .prose {
+    max-width: 680px;
+    margin: 0 auto;
+    font-size: 16.5px;
+    line-height: 1.85;
+    color: var(--c-body);
+  }
+
+  .prose > * + * {
+    margin-top: 1.25em;
+  }
+
+  .prose h2 {
+    margin-top: 2.4em;
+    font-size: 26px;
+    letter-spacing: -0.8px;
+  }
+
+  .prose h3 {
+    margin-top: 2em;
+    font-size: 20px;
+    letter-spacing: -0.4px;
+  }
+
+  .prose a {
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--c-neon-volt) 45%, transparent);
+    text-decoration-thickness: 1px;
+  }
+
+  .prose a:hover {
+    text-decoration-color: var(--c-neon-volt);
+  }
+
+  /* 代码块：VoltAgent 的内嵌深色面板 + 发丝边框 */
+  .prose pre {
+    overflow-x: auto;
+    padding: var(--s-md) var(--s-lg);
+    border: 1px solid var(--line-base);
+    border-radius: var(--r-md);
+    background: var(--c-inset);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.72;
+    color: var(--c-body);
+  }
+
+  .prose :not(pre) > code {
+    padding: 2px 6px;
+    border: 1px solid var(--line-soft);
+    border-radius: var(--r-xs);
+    background: var(--c-inset);
+    color: var(--c-neon-mint);
+  }
+
+  .prose blockquote {
+    margin-left: 0;
+    padding: 2px 0 2px var(--s-lg);
+    border-left: 2px solid var(--c-neon-volt);
+    color: var(--c-muted);
+    font-style: normal;
+  }
+
+  .prose img {
+    max-width: 100%;
+    border-radius: var(--r-md);
+    border: 1px solid var(--line-base);
+  }
+
+  .prose hr {
+    height: 1px;
+    margin: 3em 0;
+    border: 0;
+    background: var(--line-base);
+  }
+
+  .prose ul,
+  .prose ol {
+    padding-left: 1.4em;
+  }
+
+  .prose li + li {
+    margin-top: 0.4em;
+  }
+
+  .prose li::marker {
+    color: var(--c-neon-volt);
+  }
+
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .prose th,
+  .prose td {
+    padding: 9px 12px;
+    border: 1px solid var(--line-base);
+    text-align: left;
+  }
+
+  .prose th {
+    background: var(--c-s1);
+    color: var(--c-ink);
+    font-weight: 600;
+  }
+</style>

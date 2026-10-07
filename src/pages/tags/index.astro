@@ -1,80 +1,157 @@
 ---
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
+import PostCard from "../../components/win/PostCard.astro";
 
-const posts = (await getCollection("posts", ({ data }) => !data.draft))
-  .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
+const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
+);
 
-// 统计每个标签的文章数，按数量降序
-const counts = new Map<string, number>();
-for (const post of posts) {
-  for (const tag of post.data.tags) {
-    counts.set(tag, (counts.get(tag) ?? 0) + 1);
-  }
-}
-const tags = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+const tally = new Map<string, number>();
+for (const p of posts) for (const t of p.data.tags) tally.set(t, (tally.get(t) ?? 0) + 1);
+
+/* 按热度排序，再按词频分三档决定字号。
+   看起来「乱」，其实完全由词频决定——规则藏在观感后面。 */
+const tags = [...tally.entries()].sort(
+  (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+);
+const max = tags[0]?.[1] ?? 1;
+
+/* 分档：>=0.6max 为大，>=0.3max 为中，其余为小 */
+const band = (n: number) => (n / max >= 0.6 ? "lg" : n / max >= 0.3 ? "md" : "sm");
 ---
 
 <Base title="标签" path="/tags/">
-  <h1 class="page-title">标签</h1>
-  <p class="total">共 {tags.length} 个标签</p>
+  <header class="head">
+    <p class="eyebrow">索引</p>
+    <h1 class="title">标签</h1>
+    <p class="sub">
+      共 <span class="num">{tags.length}</span> 个标签 /
+      <span class="num">{posts.length}</span> 篇文章
+    </p>
+  </header>
 
-  <ul class="tag-cloud">
+  <nav class="cloud" aria-label="全部标签">
     {
-      tags.map(([tag, n]) => (
-        <li>
-          <a href={`/tags/${encodeURIComponent(tag)}/`}>
-            <span class="name">#{tag}</span>
-            <span class="count">{n}</span>
-          </a>
-        </li>
+      tags.map(([name, n]) => (
+        <a class={`chip chip-${band(n)}`} href={`/tags/${encodeURIComponent(name)}/`}>
+          {name}
+          <sup>{n}</sup>
+        </a>
       ))
     }
-  </ul>
+  </nav>
+
+  <section class="latest">
+    <span class="eyebrow">最新一篇</span>
+    <PostCard post={posts[0]} slug={posts[0].id} hero />
+  </section>
 </Base>
 
 <style>
-  .page-title { margin-bottom: 4px; }
-  .total {
-    margin: 0 0 var(--spacingHorizontalXL);
-    color: var(--colorNeutralForeground4);
-    font-size: var(--fontSizeBase200);
+  .head {
+    max-width: 720px;
+    margin-bottom: var(--s-xl);
   }
 
-  .tag-cloud {
+  .head .eyebrow {
+    color: var(--c-faint);
+    margin-bottom: var(--s-sm);
+  }
+
+  .title {
+    font-size: clamp(30px, 5vw, 42px);
+    letter-spacing: -1.6px;
+    margin: 0 0 var(--s-sm);
+  }
+
+  .sub {
+    margin: 0;
+    color: var(--c-muted);
+    font-size: 15px;
+  }
+
+  .num {
+    color: var(--c-neon-volt);
+    font-family: var(--mono);
+    font-weight: 600;
+  }
+
+  /* ── 标签云：故意用基线对齐而不是居中，
+     造成参差的「随性」——但每个词本身的字号是有规则的 */
+  .cloud {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--spacingHorizontalM);
-    margin: 0;
-    padding: 0;
-    list-style: none;
+    align-items: baseline;
+    gap: var(--s-md) var(--s-lg);
+    padding-bottom: var(--s-xl);
+    margin-bottom: var(--s-xl);
+    border-bottom: 1px solid var(--line-soft);
   }
 
-  .tag-cloud a {
+  .chip {
     display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    border-radius: var(--borderRadiusMedium);
-    border: 1px solid var(--colorNeutralStroke1);
-    background: var(--colorNeutralBackground3);
-    color: var(--colorNeutralForeground2);
-    font-size: var(--fontSizeBase200);
-    text-decoration: none;
-    transition: background-color var(--durationFast) var(--curveEasyEase);
-  }
-  .tag-cloud a:hover {
-    background: var(--colorNeutralBackground4);
-    color: var(--colorNeutralForeground1);
-    text-decoration: none;
+    align-items: baseline;
+    gap: 4px;
+    color: var(--c-muted);
+    line-height: 1.25;
+    transition:
+      color var(--m-quick),
+      transform var(--m-quick),
+      text-shadow var(--m-quick);
   }
 
-  .count {
-    padding: 0 6px;
-    border-radius: var(--borderRadiusCircular);
-    background: var(--colorSubtleBackground);
-    color: var(--colorNeutralForeground4);
-    font-size: var(--fontSizeBase100);
-    font-variant-numeric: tabular-nums;
+  .chip:hover {
+    text-decoration: none;
+    color: var(--c-neon-volt);
+    transform: translateY(-3px) rotate(-1.2deg);
+    text-shadow: 0 0 18px rgba(0, 229, 154, 0.45);
+  }
+
+  .chip:active {
+    transform: translateY(0) scale(0.96);
+    transition-duration: var(--m-snap);
+  }
+
+  /* 三档字号 —— 乱序的来源，但分档本身是规则的 */
+  .chip-lg {
+    font-size: 27px;
+    font-weight: 600;
+    letter-spacing: -0.8px;
+  }
+  .chip-md {
+    font-size: 19px;
+    font-weight: 550;
+    letter-spacing: -0.4px;
+  }
+  .chip-sm {
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .chip sup {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--c-faint);
+    transition: color var(--m-quick);
+  }
+
+  .chip:hover sup {
+    color: var(--c-neon-volt);
+  }
+
+  .latest .eyebrow {
+    display: block;
+    color: var(--c-faint);
+    margin-bottom: var(--s-md);
+  }
+
+  @media (max-width: 640px) {
+    .chip-lg {
+      font-size: 22px;
+    }
+    .chip-md {
+      font-size: 16px;
+    }
   }
 </style>

@@ -2,37 +2,117 @@
 import Base from "../layouts/Base.astro";
 ---
 
-<Base title="404 · 页面不存在" path="/404/">
-  <div class="nf">
-    <p class="code">404</p>
-    <h1>页面不存在</h1>
-    <p class="hint">你访问的页面可能已被移动或删除。</p>
-    <!-- 真正的 Fluent Web Component；未升级时靠下方 :not(:defined) 兜底 -->
-    <fluent-button class="home" appearance="accent" href="/">返回首页</fluent-button>
-  </div>
+<Base title="页面不存在" path="/404/">
+  <section class="nf">
+    <p class="code" aria-hidden="true">404</p>
+
+    <p class="eyebrow">走岔了</p>
+    <h1>这里没有东西</h1>
+    <p class="hint">
+      地址可能变了，或者这篇内容已经被移走。回首页看看最新的，或者从归档里翻。
+    </p>
+
+    <div class="actions">
+      <a class="btn-primary" href="/">
+        回首页
+        <span aria-hidden="true">→</span>
+      </a>
+      <a class="btn-ghost" href="/archive/">翻归档</a>
+    </div>
+  </section>
 </Base>
 
 <style>
-  .nf { text-align: center; padding-block: 80px; }
-  .code {
-    margin: 0;
-    font-size: 72px;
-    font-weight: 700;
-    color: var(--colorBrandForeground1);
-    line-height: 1;
+  .nf {
+    /* 错位：代码与标题不居中对齐，往左偏——
+       404 本来就是「不在预期位置」，版式也跟着偏一下 */
+    max-width: 560px;
+    padding: var(--s-xxl) 0 var(--s-xl);
   }
-  h1 { margin: 12px 0 8px; font-size: var(--fontSizeBase500); }
-  .hint { margin: 0 0 28px; color: var(--colorNeutralForeground3); }
 
-  /* 升级前：custom element 是未定义的，给出接近最终态的降级外观 */
-  .home {
-    display: inline-block;
-    padding: 8px 20px;
-    border-radius: var(--borderRadiusMedium);
-    background: var(--colorBrandBackground);
-    color: var(--colorNeutralForegroundOnBrand);
-    font-size: var(--fontSizeBase200);
-    text-decoration: none;
+  .code {
+    margin: 0 0 var(--s-md);
+    font-family: var(--mono);
+    font-size: clamp(72px, 16vw, 132px);
+    font-weight: 700;
+    line-height: 0.86;
+    letter-spacing: -6px;
+    color: transparent;
+    -webkit-text-stroke: 1.5px color-mix(in srgb, var(--c-neon-volt) 55%, transparent);
+    text-shadow: 0 0 46px rgba(0, 229, 154, 0.22);
   }
-  .home:hover { background: var(--colorBrandBackgroundHover); text-decoration: none; }
+
+  .eyebrow {
+    color: var(--c-faint);
+    margin-bottom: var(--s-sm);
+  }
+
+  h1 {
+    font-size: clamp(28px, 5vw, 38px);
+    letter-spacing: -1.3px;
+    margin: 0 0 var(--s-sm);
+  }
+
+  .hint {
+    margin: 0 0 var(--s-lg);
+    max-width: 42ch;
+    color: var(--c-muted);
+    line-height: 1.72;
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: var(--s-sm);
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 19px;
+    border-radius: var(--r-md);
+    background: var(--c-neon-volt);
+    color: var(--c-on-neon);
+    font-size: 14px;
+    font-weight: 650;
+    transition:
+      transform var(--m-quick),
+      box-shadow var(--m-quick);
+  }
+  .btn-primary:hover {
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 26px -8px rgba(0, 229, 154, 0.6);
+  }
+  .btn-primary:active {
+    transform: translateY(0) scale(0.97);
+    transition-duration: var(--m-snap);
+  }
+  .btn-primary span {
+    transition: transform var(--m-quick);
+  }
+  .btn-primary:hover span {
+    transform: translateX(3px);
+  }
+
+  .btn-ghost {
+    padding: 10px 19px;
+    border: 1px solid var(--line-base);
+    border-radius: var(--r-md);
+    color: var(--c-muted);
+    font-size: 14px;
+    font-weight: 600;
+    transition:
+      color var(--m-quick),
+      border-color var(--m-quick),
+      background var(--m-quick);
+  }
+  .btn-ghost:hover {
+    text-decoration: none;
+    color: var(--c-ink);
+    border-color: var(--line-strong);
+    background: var(--c-s2);
+  }
 </style>
