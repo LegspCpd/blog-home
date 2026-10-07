@@ -34,7 +34,11 @@ const href = `/posts/${slug}/`;
       {data.updated && data.updated.getTime() !== data.published.getTime() && (
         <span class="updated">更新于 {dateFmt.format(data.updated)}</span>
       )}
-      {data.category && <span class="badge">{data.category}</span>}
+      {data.category && (
+        <fluent-badge appearance="tint" size="small">
+          {data.category}
+        </fluent-badge>
+      )}
     </div>
 
     <h2 class="title">{data.title}</h2>
