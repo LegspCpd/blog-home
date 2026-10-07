@@ -10,7 +10,7 @@
  *
  * 默认使用 siteConfig 中的站点 URL 拼接 sitemap 地址。
  * 也可以手动指定 sitemap URL：
- *   node scripts/ping-indexnow.js https://blog.legspcpd.top/sitemap-index.xml
+ *   node scripts/ping-indexnow.js https://legspcpd.asia/sitemap-index.xml
  */
 
 import fs from "node:fs";
@@ -18,7 +18,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const BING_INDEXNOW_URL = "https://www.bing.com/indexnow";
-const SITE_URL = process.env.SITE_URL || "https://blog.legspcpd.top";
+const SITE_URL = process.env.SITE_URL || "https://legspcpd.asia";
 
 /** 从 public 目录中查找 IndexNow key 文件 */
 function discoverIndexNowKey() {

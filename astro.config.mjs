@@ -101,7 +101,7 @@ const postLastmodMap = new Map();
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://blog.legspcpd.top',
+  site: 'https://legspcpd.asia',
   base: "/",
   trailingSlash: "always",
   // 输出目录：默认 dist，可用环境变量 OUT_DIR 覆盖（用于无痛验证或特殊部署）

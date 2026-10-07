@@ -16,7 +16,7 @@ export const siteConfig: SiteConfig = {
 	brand: "LegspCpd",
 
 	// 站点 URL
-	site_url: "https://blog.legspcpd.top",
+	site_url: "https://legspcpd.asia",
 
 	// 站点描述
 	description:

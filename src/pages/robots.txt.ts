@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 
 const robotsTxt = `
 # robots.txt - LegspCpd Blog
-# https://blog.legspcpd.top
+# https://legspcpd.asia
 
 # ============================================
 # 通用规则 - 适用于所有爬虫
