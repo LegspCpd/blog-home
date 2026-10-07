@@ -32,19 +32,25 @@ function contrast(a, b) {
   return (l1 + 0.05) / (l2 + 0.05);
 }
 
-// ---- 1. 从 tokens.ts 读取实际色值，算对比度 ----
+// ---- 1. 直接从官方 @fluentui/tokens 取实际色值，算对比度 ----
+// 之前这个脚本是用正则去解析 tokens.ts 里手写的色值表；
+// 令牌改为官方包驱动后那个结构不存在了，所以这里改成直接 import 官方包——
+// 检查的对象必须和页面真正用的数据是同一份，否则检查的就是幻觉。
 console.log("\n[1] Contrast ratios (WCAG AA needs 4.5 for body, 3.0 for large)");
-const tokensSrc = readFileSync("src/lib/theme/tokens.ts", "utf8");
+const official = {
+  dark: (await import("@fluentui/tokens")).webDarkTheme,
+  light: (await import("@fluentui/tokens")).webLightTheme,
+};
 for (const theme of ["dark", "light"]) {
-  const start = tokensSrc.indexOf(`const ${theme}: ThemeTokens = {`);
-  if (start < 0) {
-    fail(`cannot locate ${theme} tokens`);
+  const t = official[theme];
+  if (!t) {
+    fail(`cannot load ${theme} theme from @fluentui/tokens`);
     continue;
   }
-  const body = tokensSrc.slice(start);
-  const end = body.indexOf("\n};");
-  const block = body.slice(0, end);
-  const get = (k) => (block.match(new RegExp(k + ':\\s*"(#[0-9a-fA-F]{3,8})"')) || [])[1];
+  const get = (k) => {
+    const v = t[k];
+    return typeof v === "string" && v.startsWith("#") ? v : null;
+  };
 
   const bg = get("colorNeutralBackground1");
   const fg1 = get("colorNeutralForeground1");

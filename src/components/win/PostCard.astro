@@ -45,11 +45,13 @@ const href = `/posts/${slug}/`;
     {data.description && <p class="desc">{data.description}</p>}
 
     {data.tags.length > 0 && (
-      <ul class="tags">
+      <div class="tags">
         {data.tags.slice(0, 4).map((tag) => (
-          <li>{tag}</li>
+          <fluent-badge appearance="outline" size="tiny">
+            {tag}
+          </fluent-badge>
         ))}
-      </ul>
+      </div>
     )}
   </div>
 </a>
@@ -91,13 +93,6 @@ const href = `/posts/${slug}/`;
     font-size: var(--fontSizeBase100);
   }
 
-  .badge {
-    padding: 1px 8px;
-    border-radius: var(--borderRadiusCircular);
-    background: var(--colorSubtleBackground);
-    color: var(--colorBrandForeground1);
-  }
-
   .title {
     margin: 0 0 6px;
     font-size: var(--fontSizeBase500);
@@ -121,17 +116,9 @@ const href = `/posts/${slug}/`;
   .tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    align-items: center;
+    gap: var(--spacingHorizontalXS);
     margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .tags li {
-    padding: 1px 8px;
-    border-radius: var(--borderRadiusCircular);
-    border: 1px solid var(--colorNeutralStroke1);
-    color: var(--colorNeutralForeground4);
-    font-size: var(--fontSizeBase100);
   }
 
   @media (max-width: 640px) {
