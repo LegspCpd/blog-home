@@ -38,6 +38,22 @@ import {
   Divider,
   DividerDefinition,
 } from "@fluentui/web-components/divider/index.js";
+import {
+  Tab,
+  TabDefinition,
+} from "@fluentui/web-components/tab/index.js";
+import {
+  Tablist,
+  TablistDefinition,
+} from "@fluentui/web-components/tablist/index.js";
+import {
+  TextInput,
+  TextInputDefinition,
+} from "@fluentui/web-components/text-input/index.js";
+import {
+  ProgressBar,
+  ProgressBarDefinition,
+} from "@fluentui/web-components/progress-bar/index.js";
 import { setTheme } from "@fluentui/web-components";
 
 /** 注册全部用到的 Fluent 组件（幂等：已注册则跳过） */
@@ -47,6 +63,10 @@ function registerFluentComponents(): void {
     [Button, ButtonDefinition],
     [Badge, BadgeDefinition],
     [Divider, DividerDefinition],
+    [Tab, TabDefinition],
+    [Tablist, TablistDefinition],
+    [TextInput, TextInputDefinition],
+    [ProgressBar, ProgressBarDefinition],
   ] as const;
 
   for (const [ctor, definition] of pairs) {
@@ -56,11 +76,11 @@ function registerFluentComponents(): void {
   }
 }
 import {
-  themes,
   DEFAULT_THEME,
   THEME_STORAGE_KEY,
+  themeTokens,
   type ThemeName,
-} from "../../lib/theme/tokens";
+} from "./tokens";
 
 const VALID: ThemeName[] = ["dark", "light"];
 
@@ -68,9 +88,9 @@ function isTheme(v: string | null): v is ThemeName {
   return v !== null && (VALID as string[]).includes(v);
 }
 
-/** 应用主题：写令牌 + 同步 <html> 属性 */
+/** 应用主题：写官方令牌 + 同步 <html> 属性 */
 export function applyTheme(name: ThemeName): void {
-  setTheme(themes[name]);
+  setTheme(themeTokens(name));
   document.documentElement.setAttribute("data-theme", name);
 }
 

@@ -1,6 +1,6 @@
 ---
 import { SITE, abs } from "../config/site";
-import { DEFAULT_THEME, themes } from "../lib/theme/tokens";
+import { DEFAULT_THEME, themeToCss } from "../lib/theme/tokens";
 import NavBar from "../components/win/NavBar.astro";
 import Footer from "../components/win/Footer.astro";
 import "../styles/global.css";
@@ -14,9 +14,7 @@ import "../styles/global.css";
  * 内联一份默认值，首屏即正确；运行时 setTheme() 接管同一套值，不会漂移
  * （两者同源于 tokens.ts，不存在「CSS 覆盖算法」的冲突）。
  */
-const bootstrapTokens = Object.entries(themes[DEFAULT_THEME])
-  .map(([k, v]) => `${k}:${v}`)
-  .join(";");
+const bootstrapTokens = themeToCss(DEFAULT_THEME);
 
 interface Props {
   title?: string;
