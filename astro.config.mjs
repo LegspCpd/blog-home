@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import sitemap from "@astrojs/sitemap";
+import vue from "@astrojs/vue";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -61,7 +62,38 @@ export default defineConfig({
   outDir: process.env.OUT_DIR || "dist",
   compressHTML: true,
 
+  /**
+   * WinUIonWeb 的源码直连。
+   *
+   * 为什么必须这么绕：它的 package.json 只把 dist-lib 暴露为 exports，
+   * 而 NavigationViewItem / NavigationViewMenuItems 这些 XAML 属性组件
+   * 只存在于 src/components/*.ts，不在对外接口里。
+   * 用包根具名导入时它们是 MISSING_EXPORT，NavigationView 只能渲染空壳。
+   *
+   * pnpm 对 file: 依赖会按 files 字段裁剪，src 根本没被拷进 node_modules，
+   * 所以这里 alias 到克隆下来的上游源码目录，直接吃它的原始实现。
+   */
+  vite: {
+    resolve: {
+      alias: {
+        "winui-src": fileURLToPath(
+          new URL("../WinUIonWeb/WinUIonWeb/src", import.meta.url)
+        ),
+      },
+    },
+    // 上游是独立仓库、未经过本项目的 tsconfig，放宽排除
+    ssr: { noExternal: ["winuionweb"] },
+  },
+
   integrations: [
+    // Vue 岛：承载 WinUIonWeb 的 265 个控件。
+    // jsxImportSource 只影响 JSX 语法；模板编译由 @astrojs/vue 负责。
+    // 必须是相对路径（以 . 开头）：@astrojs/vue 只对 startsWith(".")
+    // 的值做 path.resolve(root, …)，否则会当成裸模块 specifier 丢给浏览器，
+    // 结果是入口永不执行、控件全部未注册（页面空白但构建照过）。
+    vue({
+      appEntrypoint: "./src/vue-app.js",
+    }),
     sitemap({
       filter: (page) => {
         const { pathname } = new URL(page);

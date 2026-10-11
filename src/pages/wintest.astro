@@ -1,0 +1,31 @@
+---
+import Base from "../layouts/Base.astro";
+import WinNav from "../components/win/WinNav.vue";
+---
+
+<Base title="WinUI 接通验证" path="/wintest/">
+  <h1 class="t">WinUI 接通验证</h1>
+  <p class="d">左侧是真正的 WinUI NavigationView（来自 WinUIonWeb）。</p>
+
+  <div class="win">
+    <WinNav client:only="vue" />
+  </div>
+</Base>
+
+<style>
+  .t {
+    font-size: 24px;
+    margin: 0 0 6px;
+  }
+  .d {
+    color: var(--c-muted);
+    margin: 0 0 20px;
+  }
+  .win {
+    height: 620px;
+    border: 1px solid var(--line-base);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    background: var(--c-s1);
+  }
+</style>

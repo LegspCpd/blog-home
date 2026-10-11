@@ -28,6 +28,7 @@
     "@astrojs/sitemap": "^3.7.4",
     "@astrojs/svelte": "^9.0.1",
     "@astrojs/vercel": "^11.0.11",
+    "@astrojs/vue": "^7.0.3",
     "@expressive-code/core": "^0.44.2",
     "@expressive-code/plugin-collapsible-sections": "^0.44.2",
     "@expressive-code/plugin-line-numbers": "^0.44.2",
@@ -91,7 +92,9 @@
     "tailwind-variants": "^0.3.0",
     "typescript": "^5.9.2",
     "unist-util-is": "^6.0.1",
-    "unist-util-visit": "^5.1.0"
+    "unist-util-visit": "^5.1.0",
+    "vue": "^3.5.32",
+    "winuionweb": "file:..\\WinUIonWeb\\WinUIonWeb"
   },
   "devDependencies": {
     "@astrojs/cloudflare": "^14.3.3",
@@ -109,6 +112,7 @@
     "cross-env": "^10.1.0",
     "postcss-import": "^16.1.1",
     "postcss-nesting": "^13.0.2",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "ws": "^8.22.0"
   }
 }
