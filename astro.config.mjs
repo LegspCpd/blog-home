@@ -8,6 +8,42 @@ import { fileURLToPath } from "node:url";
 import { SITE } from "./src/config/site";
 
 /**
+ * WinUIonWeb 的上游源码目录。
+ *
+ * 为什么是"仓库之外的本地路径"而不是 npm 依赖：
+ * 上游的 package.json 只把 dist-lib 暴露为 exports，而
+ * NavigationViewMenuItems / NavigationViewItem 这类 XAML 属性组件
+ * **只存在于 src/components/*.ts，不在包出口里**。用包根具名导入会得到
+ * MISSING_EXPORT，NavigationView 只能渲染空壳。
+ * pnpm 对 file: 依赖还会按 files 字段裁剪，src 根本不会进 node_modules。
+ *
+ * 历史上这里挂过一个 `"winuionweb": "file:..\\WinUIonWeb\\WinUIonWeb"` 依赖，
+ * 那个依赖**从来没被任何代码按包名 import 过**，却让
+ * `pnpm install` 在这个仓库以外的任何机器上直接失败：
+ *   ENOENT: no such file or directory, scandir '.../WinUIonWeb/WinUIonWeb'
+ * 也就是说 GitHub Actions 上 CI 与部署一直是红的。现已移除，
+ * 上游改由 CI 在构建前克隆（见 .github/workflows/*.yml）。
+ */
+const WINUI_SRC = fileURLToPath(
+  new URL("../WinUIonWeb/WinUIonWeb/src", import.meta.url)
+);
+if (!fs.existsSync(WINUI_SRC)) {
+  throw new Error(
+    [
+      "",
+      "找不到 WinUIonWeb 上游源码：",
+      "  " + WINUI_SRC,
+      "",
+      "这个目录不在本仓库里，需要先把它克隆到该位置：",
+      "  git clone https://github.com/Furry-Xiyi/WinUIonWeb.git ../WinUIonWeb",
+      "",
+      "（CI 会自动做这一步；本地开发需要手动执行一次。）",
+      "",
+    ].join("\n")
+  );
+}
+
+/**
  * 构建期扫描文章 frontmatter，建立 slug → lastmod 映射。
  * sitemap 的 lastmod 是搜索引擎判断内容新鲜度的主要信号，
  * 只给首页一条等于没有，所以这里必须从真实 frontmatter 取。
@@ -76,9 +112,7 @@ export default defineConfig({
   vite: {
     resolve: {
       alias: {
-        "winui-src": fileURLToPath(
-          new URL("../WinUIonWeb/WinUIonWeb/src", import.meta.url)
-        ),
+        "winui-src": WINUI_SRC,
       },
 
       /**
@@ -101,8 +135,6 @@ export default defineConfig({
        */
       dedupe: ["vue", "@vue/runtime-core", "@vue/runtime-dom", "@vue/reactivity", "@vue/shared"],
     },
-    // 上游是独立仓库、未经过本项目的 tsconfig，放宽排除
-    ssr: { noExternal: ["winuionweb"] },
   },
 
   integrations: [

@@ -91,8 +91,7 @@
     "typescript": "^5.9.2",
     "unist-util-is": "^6.0.1",
     "unist-util-visit": "^5.1.0",
-    "vue": "^3.5.32",
-    "winuionweb": "file:..\\WinUIonWeb\\WinUIonWeb"
+    "vue": "^3.5.32"
   },
   "devDependencies": {
     "@astrojs/cloudflare": "^14.3.3",

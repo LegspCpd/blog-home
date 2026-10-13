@@ -22,6 +22,19 @@ jobs:
 
       # 不声明 version —— action 会读 package.json 的 packageManager 字段。
       # 两处同时声明会直接报 "Multiple versions of pnpm specified"。
+      # ---- 克隆 WinUIonWeb 上游源码 ----
+      # 它不是 npm 依赖：NavigationViewMenuItems 这类 XAML 属性组件只在
+      # 上游的 src/ 里，不在包出口（package.json 只暴露 dist-lib）。
+      # 路径必须是 ../WinUIonWeb/WinUIonWeb，与 astro.config.mjs 的
+      # winui-src 别名一致。钉住 commit，保证构建可复现。
+      - name: Checkout WinUIonWeb upstream
+        run: |
+          set -euo pipefail
+          git clone --quiet https://github.com/Furry-Xiyi/WinUIonWeb.git ../WinUIonWeb
+          git -C ../WinUIonWeb checkout --quiet e3bef96
+          test -d ../WinUIonWeb/WinUIonWeb/src             || { echo "::error::上游 src 目录不存在，别名会解析失败"; exit 1; }
+          echo "WinUIonWeb @ $(git -C ../WinUIonWeb rev-parse --short HEAD)"
+
       - uses: pnpm/action-setup@v4
 
       # 必须 >= 22.12.0，与 package.json 的 engines 保持一致
