@@ -1,9 +1,9 @@
 ---
 import { getCollection, render } from "astro:content";
 import Base from "../../layouts/Base.astro";
-import PostCard from "../../components/win/PostCard.astro";
 import { SITE } from "../../config/site";
 import { moodOf } from "../../styles/design";
+import PageHeader from "../../components/win/PageHeader.astro";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -54,10 +54,16 @@ const readMinutes = Math.max(1, Math.round(words / 400));
   tags={data.tags}
 >
   <article class="post" style={`--mood:${mood}`}>
+    <PageHeader title={data.title} />
+
     <header class="head">
-      <p class="eyebrow">{data.category ?? "随笔"}</p>
-      <h1 class="title">{data.title}</h1>
       {data.description && <p class="desc">{data.description}</p>}
+      <!--
+        文章标题由 NavigationView 的 52px 页头显示（Base 会把 title 传上去），
+        页头里已经有一个语义 h1，正文再画一个就是两个大标题叠着。
+        这里保留分类眉标、摘要与元信息，标题不再重复。
+      -->
+      <p class="eyebrow">{data.category ?? "随笔"}</p>
 
       <div class="meta">
         <time datetime={data.published.toISOString()}>

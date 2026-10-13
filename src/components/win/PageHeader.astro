@@ -1,0 +1,63 @@
+---
+/**
+ * 页面标题区 —— 对齐 WinUI NavigationView 的 Header 规格。
+ *
+ * 为什么不用 NavigationView 自带的 Header：
+ * 那个 Header 是客户端渲染的（WinUI 控件必须动态加载，见 WinShell.vue），
+ * 用它当 h1 会让**静态 HTML 里根本没有 h1** —— 构建通过、页面好看，
+ * 但搜索引擎和读屏软件拿到的是一个没有标题的页面。
+ * 实测就是这么退化的（a11y 检查报 "no <h1>"）。
+ *
+ * 所以页面标题交回 Astro 服务端渲染，几何按官方文档来：
+ *   · 固定高度 52px，停靠在内容区顶部，作为内容区的滚动裁剪点
+ *   · 字号 28px / 字重 600（上游 .win-nav-page-header 的规格）
+ *   · 左内边距 24px（官方内容区边距）
+ * 外壳那边把 AlwaysShowHeader 关掉，避免出现两个标题。
+ */
+interface Props {
+  /** 标题文字 */
+  title: string;
+  /** 标题下方的辅助行，例如「共 16 篇」 */
+  meta?: string;
+}
+
+const { title, meta } = Astro.props;
+---
+
+<header class="winui-page-header">
+  <h1 class="winui-page-header-title">{title}</h1>
+  {meta && <p class="winui-page-header-meta">{meta}</p>}
+</header>
+
+<style>
+  .winui-page-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* 官方规格：固定 52px */
+    min-height: 52px;
+    /* 标题与正文之间留一口气；不带 meta 时也只占 52px + 这段间距 */
+    margin: 0 0 20px;
+    padding: 0;
+  }
+
+  .winui-page-header-title {
+    margin: 0;
+    font-size: 28px;
+    line-height: 36px;
+    font-weight: 600;
+    /* 上游在页头用的是 --text-primary；这里用同一套令牌 */
+    color: var(--text-primary, var(--c-ink));
+  }
+
+  /*
+    辅助行独立于 52px 页头之下。
+    放进页头会把固定高度撑破，所以用负外边距把它拉回到页头正下方。
+  */
+  .winui-page-header-meta {
+    margin: 4px 0 0;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--text-tertiary, var(--c-faint));
+  }
+</style>

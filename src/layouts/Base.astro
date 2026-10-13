@@ -1,9 +1,33 @@
 ---
-import { SITE, abs } from "../config/site";
+import { SITE, NAV, abs } from "../config/site";
 import { designVars } from "../styles/design";
-import NavBar from "../components/win/NavBar.astro";
+import { getSearchIndex } from "../lib/search";
 import Footer from "../components/win/Footer.astro";
+import WinShell from "../components/win/WinShell.vue";
 import "../styles/global.css";
+
+/**
+ * 导航数据交给 Vue 外壳。
+ *
+ * 图标用 Segoe Fluent Icons 的字形码 —— 上游 NavigationView 直接吃字符串。
+ * 注意：该字体**不可随网站分发**（上游 docs/icon-font.md 有说明），
+ * 只能依赖 Windows 系统已安装的那一份。Windows 之外的平台字形会缺失，
+ * 这是整个 WinUIonWeb 的既有约束，不是本项目引入的。
+ */
+const navItems = NAV.map((item, i) => ({
+  Tag: item.href,
+  Content: item.label,
+  Icon: ["\uE80F", "\uE8F1", "\uE8EC"][i] ?? "\uE8A5",
+}));
+
+/** 页脚项：官方规范里 FooterMenuItems 显示在「设置」项之前 */
+const footerItems = [
+  { Tag: SITE.links.rss, Content: "RSS" },
+  { Tag: SITE.links.github, Content: "GitHub" },
+];
+
+/** 构建期生成的站内搜索索引，供标题栏的 AutoSuggestBox 使用 */
+const searchIndex = await getSearchIndex();
 
 /**
  * 设计令牌内联进 HTML。
@@ -41,7 +65,9 @@ const canonical = abs(path);
 
 // JSON-LD：统一从 SITE 派生，杜绝手写域名出错。
 // 文章页额外给 BlogPosting —— 少了它就没有作者信息与文章富媒体摘要。
-const graph = [
+// 显式标注元素类型：否则 TS 会按前两个字面量收窄，
+// 后面 push 带 author/publisher 的 BlogPosting 会报 2353。
+const graph: Record<string, unknown>[] = [
   {
     "@type": "WebSite",
     "@id": `${SITE.url}/#website`,
@@ -87,19 +113,27 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
 ---
 
 <!doctype html>
-<html lang={SITE.lang}>
+<!--
+  html 上必须显式带 theme-dark。
+  WinUIonWeb 的 theme.css 把浅色令牌定义在 `:root`，深色定义在 `.theme-dark`。
+  不声明主题类时是**混合状态**：--app-bg 有 `:root:not(.theme-light)` 的深色兜底，
+  但 --text-primary / ControlStroke 等仍是浅色值 ——
+  实测表现为窗格里的搜索框是黑字黑边，在深色底上完全看不清。
+-->
+<html lang={SITE.lang} class="theme-dark">
   <head>
     <meta charset="UTF-8" />
     <style set:html={`:root{${vars}}`}></style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!--
-      Inter 自托管：不引Google Fonts 有两个理由——
-      国内访问 Google 域名不稳定，而首屏字体是最不能闪的东西；
-      顺带避免第三方请求拖慢 LCP。
-      只取需要的字重与子集，全量 Inter 有 2MB+。
+      字体：**不再自托管任何 webfont**。
+      --sans 换成 WinUI 的字体栈（Segoe UI Variable / Segoe UI）之后，
+      Inter 已经没有任何地方在用，但这里原来仍每页 preload 一个 48KB 的 woff2
+      —— 白付一次首屏往返，还拖慢 LCP。
+      Segoe UI Variable 在 Windows 上是系统字体（零下载），
+      其它平台按 --sans 的回落链走各自的系统 UI 字体；
+      代码字体用 Cascadia Mono / Consolas，同样是系统字体。
     -->
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/inter-latin.woff2" crossorigin />
-    <link rel="stylesheet" href="/fonts/fonts.css" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
@@ -111,7 +145,27 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
       title={`${SITE.title} RSS`}
       href={abs("/rss.xml")}
     />
-    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <!--
+      图标。注意路径是 /favicon/favicon.ico ——
+      这里原来写的是 /favicon.ico，全站 54 个页面每次访问都在请求一个不存在的文件。
+      深浅两套分开声明，跟随系统主题。
+    -->
+    <link rel="icon" href="/favicon/favicon.ico" sizes="any" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="/favicon/favicon-light-32.png"
+      sizes="32x32"
+      media="(prefers-color-scheme: light)"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      href="/favicon/favicon-dark-32.png"
+      sizes="32x32"
+      media="(prefers-color-scheme: dark)"
+    />
+    <link rel="apple-touch-icon" href="/favicon/favicon-dark-180.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <!-- Open Graph -->
@@ -142,13 +196,26 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
     -->
     <a class="skip-link" href="#main">跳到主内容</a>
 
-    <NavBar />
-    <main id="main" class="page-main" tabindex="-1">
-      <div class="container">
+    <!--
+      WinUI 3 应用壳（TitleBar + NavigationView）。
+      用 client:load 而不是 client:only：子内容会被 Astro 渲染成
+      astro-slot 注入 island，<slot /> 拿到之后正文就是服务端渲染的
+      静态 HTML，SEO 与 RSS 都不受影响。
+      （WinUI 控件本身在客户端动态加载，见 WinShell.vue 的说明。）
+    -->
+    <WinShell
+      client:load
+      path={path}
+      items={navItems}
+      footerItems={footerItems}
+      siteTitle={SITE.title}
+      searchIndex={searchIndex}
+    >
+      <main id="main" class="page-main" tabindex="-1">
         <slot />
-      </div>
-    </main>
-    <Footer />
+      </main>
+      <Footer />
+    </WinShell>
   </body>
 </html>
 

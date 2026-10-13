@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/win/PostCard.astro";
+import PageHeader from "../../components/win/PageHeader.astro";
 
 const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
@@ -22,14 +23,9 @@ const band = (n: number) => (n / max >= 0.6 ? "lg" : n / max >= 0.3 ? "md" : "sm
 ---
 
 <Base title="标签" path="/tags/">
-  <header class="head">
-    <p class="eyebrow">索引</p>
-    <h1 class="title">标签</h1>
-    <p class="sub">
-      共 <span class="num">{tags.length}</span> 个标签 /
-      <span class="num">{posts.length}</span> 篇文章
-    </p>
-  </header>
+  <!-- 页面名由 NavigationView 的 52px 页头承担（WinUI 的做法），
+       正文只留统计信息，避免出现两个「标签」大标题。 -->
+  <PageHeader title="标签" meta={`共 ${tags.length} 个标签 / ${posts.length} 篇文章`} />
 
   <nav class="cloud" aria-label="全部标签">
     {
@@ -65,7 +61,7 @@ const band = (n: number) => (n / max >= 0.6 ? "lg" : n / max >= 0.3 ? "md" : "sm
     margin: 0 0 var(--s-sm);
   }
 
-  .sub {
+  .lede {
     margin: 0;
     color: var(--c-muted);
     font-size: 15px;

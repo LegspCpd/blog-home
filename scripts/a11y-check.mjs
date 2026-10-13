@@ -13,22 +13,84 @@ const fail = (m) => {
 };
 const pass = (m) => console.log("  ok   " + m);
 
-/** 相对亮度（WCAG 2.1） */
-function luminance(hex) {
-  const c = hex.replace("#", "");
-  const full =
-    c.length === 3
-      ? c
-          .split("")
-          .map((x) => x + x)
-          .join("")
-      : c;
-  const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16) / 255);
-  const f = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
-  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+/**
+ * 解析设计令牌里的颜色。
+ *
+ * 令牌值现在有两种形态，都必须支持：
+ *   · var(--app-bg, #202020)          WinUIonWeb 的 Fluent 变量 + 官方暗色兜底
+ *   · rgba(255, 255, 255, 0.0512)     半透明图层填充
+ *
+ * 半透明是 Fluent 的核心手法（卡片、hover 全是叠一层白），
+ * 所以对比度必须先把颜色按 alpha 合到不透明底上再算，
+ * 直接拿 rgba 的 RGB 分量去算会得出偏乐观的结果。
+ */
+function parseColor(input) {
+  if (!input) return null;
+  let s = String(input).trim();
+
+  // var(--name, fallback) -> 取 fallback；没有 fallback 就无法静态求值
+  const varMatch = s.match(/^var\(\s*--[\w-]+\s*(?:,\s*([\s\S]+))?\)$/);
+  if (varMatch) {
+    if (!varMatch[1]) return null;
+    return parseColor(varMatch[1]);
+  }
+
+  const hex = s.match(/^#([0-9a-f]{3,8})$/i);
+  if (hex) {
+    let c = hex[1];
+    if (c.length === 3 || c.length === 4)
+      c = c
+        .split("")
+        .map((x) => x + x)
+        .join("");
+    return {
+      r: parseInt(c.slice(0, 2), 16),
+      g: parseInt(c.slice(2, 4), 16),
+      b: parseInt(c.slice(4, 6), 16),
+      a: c.length === 8 ? parseInt(c.slice(6, 8), 16) / 255 : 1,
+    };
+  }
+
+  const rgb = s.match(/^rgba?\(([^)]+)\)$/i);
+  if (rgb) {
+    const parts = rgb[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+    return { r: parts[0], g: parts[1], b: parts[2], a: parts.length > 3 ? parts[3] : 1 };
+  }
+
+  return null;
 }
-function contrast(a, b) {
-  const [l1, l2] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+
+/** 把带 alpha 的前景压到不透明背景上，得到实际呈现的颜色 */
+function flatten(fg, bg) {
+  if (!fg) return null;
+  if (fg.a >= 1) return fg;
+  return {
+    r: fg.r * fg.a + bg.r * (1 - fg.a),
+    g: fg.g * fg.a + bg.g * (1 - fg.a),
+    b: fg.b * fg.a + bg.b * (1 - fg.a),
+    a: 1,
+  };
+}
+
+/** 相对亮度（WCAG 2.1） */
+function luminance(color) {
+  const f = (v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  const [r, g, b] = [color.r / 255, color.g / 255, color.b / 255].map(f);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/**
+ * 对比度。
+ * fg 压到 bg 上，bg 再压到页面底色（--app-bg）上 —— 卡片这类半透明面
+ * 下面并非纯色，只有先落到不透明底才算得准。
+ */
+function contrast(fgRaw, bgRaw) {
+  const page = parseColor(bgRaw) ?? { r: 32, g: 32, b: 32, a: 1 };
+  const opaquePage = flatten(page, { r: 32, g: 32, b: 32, a: 1 });
+  const bg = flatten(parseColor(bgRaw), opaquePage);
+  const fg = flatten(parseColor(fgRaw), bg);
+  if (!fg || !bg) return NaN;
+  const [l1, l2] = [luminance(fg), luminance(bg)].sort((x, y) => y - x);
   return (l1 + 0.05) / (l2 + 0.05);
 }
 
@@ -56,6 +118,12 @@ for (const [label, fg, bgc, min] of checks) {
     continue;
   }
   const r = contrast(fg, bgc);
+  if (Number.isNaN(r)) {
+    // 走到这里说明令牌既不是字面色值、也不是带兜底的 var()，
+    // 静态检查无法求值 —— 明确报出来，别让它悄悄"通过"。
+    fail(`${label}: 无法静态解析颜色 (fg=${fg}, bg=${bgc})`);
+    continue;
+  }
   const ok = r >= min;
   (ok ? pass : fail)(`${label} = ${r.toFixed(2)} (need ${min})`);
 }

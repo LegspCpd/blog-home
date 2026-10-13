@@ -7,23 +7,25 @@
    ============================================================ */
 
 :root {
-  /* Inter 只覆盖拉丁；中文交给系统字体。
-     硬给中文套 Inter 会掉进 fallback，混排反而更难看。 */
-  --sans: "Inter var", system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", sans-serif;
-  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  /* WinUI 3 的字体栈。
+     上游 theme.css 给控件用的也是 Segoe UI Variable，站点正文跟着用同一套，
+     控件与正文的字形、字重、行高才会是一体的。
+     CSS 里首次使用某字族时会延迟加载，所以把 Display/Text/Small 三种光学尺寸
+     都写进首位，让浏览器挑最合适的一档。
+     中文回落到系统字体（负字距对中文会把字切掉，全局一律不用）。 */
+  --sans: "Segoe UI Variable Display", "Segoe UI Variable Text",
+    "Segoe UI Variable Small", "Segoe UI Variable", "Segoe UI", system-ui,
+    "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  --mono: "Cascadia Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
 
   color-scheme: dark;
 }
 
-/* Raycast 的招牌：ss03 替换单层 g */
 html {
-  font-feature-settings: "calt", "kern", "liga", "ss03";
+  font-feature-settings: "kern", "liga";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  /* 禁止整页横向滚动，霓虹光晕容易溢出 */
   overflow-x: hidden;
 }
 
@@ -33,42 +35,10 @@ body {
   background: var(--c-base);
   color: var(--c-body);
   font-family: var(--sans);
-  font-size: 15.5px;
-  line-height: 1.72;
+  /* WinUI 的 Body 是 14px，不是网页常见的 16px —— 这是它看起来"密"的原因 */
+  font-size: 14px;
+  line-height: 1.6;
   letter-spacing: 0;
-}
-
-/* 底噪：几乎看不见的一层网格，让纯黑不死板。
-   这是"整洁但不死"的关键——没有它，大面积深色会显得像空。 */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.4;
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.016) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.016) 1px, transparent 1px);
-  background-size: 68px 68px;
-}
-
-/* 顶部霓虹晕：VoltAgent 的电光绿 × Superhuman 的大气背景 */
-body::after {
-  content: "";
-  position: fixed;
-  top: -30vh;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 120vw;
-  height: 70vh;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(60% 50% at 22% 40%, rgba(0, 229, 154, 0.09), transparent 70%),
-    radial-gradient(50% 45% at 78% 30%, rgba(139, 141, 255, 0.08), transparent 70%),
-    radial-gradient(45% 40% at 50% 75%, rgba(203, 176, 245, 0.05), transparent 70%);
-  filter: blur(24px);
 }
 
 main,

@@ -80,6 +80,26 @@ export default defineConfig({
           new URL("../WinUIonWeb/WinUIonWeb/src", import.meta.url)
         ),
       },
+
+      /**
+       * 必须显式去重，否则生产构建会打进**两份 Vue**。
+       *
+       * 实测：dist/_astro 里 runtime-core.esm-bundler.*.js（67 KB）是一份，
+       * 而 vue-app.*.js（2.27 MB）里还内联着完整一份（__v_skip ×11、
+       * __v_isRef ×7、defineComponent ×9 都出现在该分块内）。
+       *
+       * 两份 Vue 各有自己的模块级 currentRenderingInstance。WinUI 组件里的
+       * h() 走的是第二份，渲染却由第一份驱动，于是第二份的
+       * currentRenderingInstance 恒为 null —— 带 ref 的 vnode 得到 owner=null，
+       * patch 时 setRef 读 null.refs 直接抛异常：
+       *   TypeError: Cannot read properties of null (reading 'refs')
+       * dev 模式模块实例唯一，所以"开发正常、构建白屏"。
+       *
+       * plugin-vue 自己只 dedupe "vue"，而 vue 的运行时是拆成
+       * @vue/runtime-core、@vue/runtime-dom、@vue/reactivity、@vue/shared
+       * 几个包再 re-export 的，所以这几个都要点名。
+       */
+      dedupe: ["vue", "@vue/runtime-core", "@vue/runtime-dom", "@vue/reactivity", "@vue/shared"],
     },
     // 上游是独立仓库、未经过本项目的 tsconfig，放宽排除
     ssr: { noExternal: ["winuionweb"] },
@@ -93,6 +113,30 @@ export default defineConfig({
     // 结果是入口永不执行、控件全部未注册（页面空白但构建照过）。
     vue({
       appEntrypoint: "./src/vue-app.js",
+
+      /**
+       * 必须开这个开关，否则 WinUIonWeb 在生产构建里整个崩掉。
+       *
+       * 上游 vite.config.ts 用同一行，注释写得很明白：
+       *   "The XAML runtime resolves page bindings from Vue setupState.
+       *    Production template inlining otherwise hides that scope."
+       *
+       * 链路：features.prodDevtools → @vitejs/plugin-vue 的 define
+       * __VUE_PROD_DEVTOOLS__ = true，同时把 compiler-sfc 的
+       * devToolsEnabled 置为 true。生产环境下若 devToolsEnabled 为 false，
+       * SFC 编译器会把模板内联进 setup()，setupState 作用域随之消失；
+       * WinUIonWeb 的 XAML 运行时正是从这个作用域解析页面绑定的。
+       *
+       * 缺失时的症状极具迷惑性：页面全白，控制台只有
+       *   TypeError: Cannot read properties of null (reading 'refs')
+       *        at setRef ← patch ← componentUpdateFn ← setupRenderEffect
+       * 看着像 Vue 内部 bug 或重复运行时，实际是模板内联导致的。
+       * dev 模式不受影响（isProduction 为 false 时 devToolsEnabled 恒为 true），
+       * 所以"开发正常、构建白屏"。
+       *
+       * 验证方式：构建后 dist 里 NavigationView 能渲染出 .win-nav-item。
+       */
+      features: { prodDevtools: true },
     }),
     sitemap({
       filter: (page) => {

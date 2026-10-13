@@ -1,6 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
+import PageHeader from "../components/win/PageHeader.astro";
 
 const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
@@ -24,13 +25,13 @@ const fmt = new Intl.DateTimeFormat("zh-CN", {
 ---
 
 <Base title="归档" path="/archive/">
-  <header class="head">
-    <p class="eyebrow">全部文章</p>
-    <h1 class="title">归档</h1>
-    <p class="total">
-      共 <span class="num">{posts.length}</span> 篇，按时间倒序
-    </p>
-  </header>
+  <!--
+    这里原来是「全部文章」眉标 + 一个 40px 的「归档」大标题。
+    WinUI 的页面名已经在 NavigationView 的 52px 页头里显示过一次了
+    （官方 Gallery 的每个页面都是这个做法），正文再画一次就是两个大标题叠着。
+    所以正文只保留统计信息，标题交给页头。
+  -->
+  <PageHeader title="归档" meta={`共 ${posts.length} 篇，按时间倒序`} />
 
   <div class="timeline">
     {
@@ -84,7 +85,11 @@ const fmt = new Intl.DateTimeFormat("zh-CN", {
     margin: 0 0 var(--s-sm);
   }
 
-  .total {
+  .lede {
+    margin: 0 0 var(--s-lg);
+    color: var(--c-muted);
+    font-size: var(--t-small-size);
+  }.lede .num {
     margin: 0;
     color: var(--c-muted);
     font-size: 15px;

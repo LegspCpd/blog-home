@@ -52,16 +52,23 @@ jobs:
               || fail "design token $v not inlined into dist/index.html"
           done
 
-          # 2. 至少要有一个真实色值（#rrggbb），否则说明注入的是变量名而不是值
-          grep -Eq -- '--c-base:#[0-9a-fA-F]{6}' dist/index.html \
-            || fail "no literal color value inlined -- tokens may be unresolved"
+          # 2. 令牌必须有**可用的兜底色值**。
+          #    现在的形态是 `--c-base:var(--app-bg, #202020)` ——
+          #    引用上游 WinUIonWeb 的 Fluent 变量，并带 WinUI 3 暗色官方兜底值。
+          #    所以这里找的是 var(...) 里的 #rrggbb，同时也接受纯字面色值。
+          #    （旧断言写死 `--c-base:#rrggbb`，令牌改成 var() 之后必然误报。）
+          grep -Eq -- '--c-base:(var\([^)]*#[0-9a-fA-F]{6}\)|#[0-9a-fA-F]{6})' dist/index.html \
+            || fail "no usable fallback color for --c-base -- tokens may be unresolved"
 
-          # 3. 字体必须自托管成功，否则会退回系统字体、字距全变
-          [ -f dist/fonts/inter-latin.woff2 ] || fail "Inter woff2 missing from dist"
-          grep -q 'inter-latin.woff2' dist/fonts/fonts.css \
-            || fail "fonts.css does not reference the downloaded woff2"
+          # 3. 字体走纯系统栈（Segoe UI Variable），不应再有任何 webfont 预加载。
+          #    这是**反向断言**：一旦有人在 <head> 里 preload 字体，
+          #    说明字体策略被改回去了，必须同时确认那个字体真的被使用 ——
+          #    否则就是每页白付一次首屏往返（之前 Inter 就是这个情况）。
+          if grep -Eq '<link[^>]+rel="preload"[^>]+as="font"' dist/index.html; then
+            fail "发现 webfont preload，但当前字体栈是纯系统字体，属于无用下载"
+          fi
 
-          echo "OK: design tokens inlined with literal values, font self-hosted"
+          echo "OK: design tokens inlined with usable fallbacks, system font stack"
 
       # ---- 无障碍：对比度 / 语义结构 / 跳过导航链接 ----
       - name: Accessibility

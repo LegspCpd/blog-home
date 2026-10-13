@@ -45,3 +45,6 @@ cache/
 package/
 .obsidian/
 dist-win/
+
+# 本地密钥与私密笔记 —— 绝不提交（内含真实 token）
+.notes/

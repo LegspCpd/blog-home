@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/win/PostCard.astro";
 import { moodOf } from "../../styles/design";
+import PageHeader from "../../components/win/PageHeader.astro";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -40,14 +41,11 @@ const accent = moodOf("tag:" + tag);
     </a>
   </nav>
 
-  <header class="head" style={`--accent:${accent}`}>
-    <h1 class="title">
-      <span class="hash" aria-hidden="true">#</span>{tag}
-    </h1>
-    <p class="total">
-      <span class="num">{sorted.length}</span> 篇
-    </p>
-  </header>
+  <!--
+    标签名由 NavigationView 的页头显示（页面通过 pageTitle 传 `#标签名` 上去），
+    正文不再重复画一次大标题，只保留篇数与返回入口。
+  -->
+  <PageHeader title={`#${tag}`} meta={`共 ${sorted.length} 篇`} />
 
   <div class="post-grid">
     {sorted.map((post, i) => (
@@ -110,7 +108,7 @@ const accent = moodOf("tag:" + tag);
     margin-right: 2px;
   }
 
-  .total {
+  .lede {
     margin: 0;
     color: var(--c-muted);
     font-size: 14px;
