@@ -309,6 +309,51 @@ NavigationView 的 `Header` 是客户端渲染的。把页面标题放进它，�
 每次访问都产生一条 404，在探针日志里伪装成"无关噪音"，实际是真实缺陷。
 现已改为正确的路径，并补上深浅两套 PNG 与 apple-touch-icon。
 
+### 5.13 ★ CI 与部署从来就没成功过（上游在仓库之外带来的一连串问题）
+
+这一条是排查 CI 时逐个撞出来的，四个问题环环相扣，**每个都是"本机能跑、
+CI 必挂"**。根因只有一个：**上游不在这个仓库里，而本机恰好拥有 CI 没有的东西**。
+
+**① `file:` 依赖指向仓库之外 → 安装直接失败**
+```json
+"winuionweb": "file:..\WinUIonWeb\WinUIonWeb"
+```
+CI 上不存在该目录：
+`ENOENT ... scandir '/home/runner/work/blog-home/WinUIonWeb/WinUIonWeb'`。
+而且排查确认**没有任何代码按包名 import 过它** —— 所有引用都走 `winui-src`
+别名。它从头到尾只是负担，删掉即可。
+
+**② 上游 tsconfig extends 它自己的 devDependency**
+`Tsconfig not found @tsconfig/node24/tsconfig.json`。
+上游的 `tsconfig*` extends `@tsconfig/node24` / `@vue/tsconfig`，
+而我们不装上游依赖。Vite 8 的 `OxcOptions` 明确 `Omit<..., "tsconfig">`，
+**没有官方开关可绕**，所以不在上游保留 tsconfig：
+CI 克隆后删掉，本地由 `node scripts/setup-winui.mjs` 做同样的事。
+上游组件全部用相对导入、没有 paths 别名，删掉无副作用（已实测）。
+
+**③ 上游的裸模块导入解析不到我们的 node_modules**
+`Rolldown failed to resolve import "mathlive/ssr"`。
+Vite 解析裸导入是从**引用方所在目录**向上找 node_modules；从
+`../WinUIonWeb/WinUIonWeb/src/` 上溯走不到 `Supabase/node_modules`
+（两者是兄弟目录，不是祖先关系）。本机不报只是因为上游目录里有它自己的
+node_modules。
+
+`astro.config.mjs` 里加了一个 `resolveId` 钩子：凡是从上游目录发出的裸导入，
+改用本仓库内的路径作为引用方重新解析，强制命中我们的 node_modules。
+同时把上游的运行时依赖 `mathlive`、`rtf.js` 声明到本仓库。
+
+> 踩到的坑：`fileURLToPath` 在 Windows 给的是反斜杠，而 Vite 传进钩子的
+> `importer` 是正斜杠 —— `startsWith` 永远不成立，**插件静默失效**。
+> 必须统一成斜杠再比较（`WINUI_DIR_SLASH`）。
+
+**④ 诊断这类问题必须先让本机等价于 CI**
+只在"本机有上游 node_modules"的状态下试，永远看不到 ③。
+有效做法是把上游的 `node_modules` 与 tsconfig 临时移走再构建 ——
+这才是 CI 的真实环境。本项目的验证就是这么完成的。
+
+**当前状态：`Build Check` 与 `Deploy to EdgeOne Pages` 均已通过**
+（这是该仓库第一次两个 workflow 全绿）。
+
 ## 6. 验证方法（**必须这么做，不要用截图代替**）
 
 ### 主力工具：`scripts/probe-page.cjs`
@@ -389,9 +434,13 @@ GitHub 仓库：`LegspCpd/blog-home`，主分支 `main`。
 1. **设置页**：`IsSettingsVisible` 目前是 `false`。
    重新打开它需要一个真实的 `/settings/` 页面（官方 Gallery 有这个入口，
    纯装饰的空菜单项反而是坏体验）。
-2. **CI 的「Verify design tokens are inlined」步骤需要复核**：
-   它断言 `--c-base:#[0-9a-fA-F]{6}`（字面色值），而现在 `--c-base` 是
-   `var(--app-bg, #202020)`，该断言**会失败**。这是当前最可能让 CI 变红的点。
+2. ~~CI 的设计令牌断言~~ **已修**：改为接受 `var(--x, #rrggbb)`，
+   并加了一条反向断言（字体是系统栈时不得有 webfont 预加载）。
+3. **★ 域名 `legspcpd.asia` 仍在提供旧构建**。
+   实测线上首页还带着 `/favicon.ico` 与 `inter-latin.woff2` ——
+   两者都已在新构建里删除，说明**该域名没有指向这个 EdgeOne 项目的最新部署**。
+   EdgeOne 的部署步骤本身是成功的（workflow 绿），所以问题在域名绑定/DNS，
+   不在构建。需要到腾讯云 EdgeOne 控制台核对项目的域名绑定与解析记录。
 3. **首页之外的页面排版还能再贴近官方**：归档页现在已对齐；文章详情页的
    正文排版（标题层级、代码块、引用）仍是通用样式，可再按 Fluent 收紧。
 4. **依赖瘦身**：`package.json` 里还留着上一代主题的依赖
