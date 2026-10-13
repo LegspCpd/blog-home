@@ -27,6 +27,18 @@ import { SITE } from "./src/config/site";
 const WINUI_SRC = fileURLToPath(
   new URL("../WinUIonWeb/WinUIonWeb/src", import.meta.url)
 );
+/** 上游仓库根目录（src 的上一层），用于判断某个文件是否属于上游 */
+const WINUI_DIR = path.dirname(WINUI_SRC);
+/** 本仓库根目录 */
+const ROOT_DIR = fileURLToPath(new URL(".", import.meta.url));
+
+/**
+ * 统一的路径比较用的前缀。
+ * Windows 上 fileURLToPath 给的是反斜杠（F:\web\...），而 Vite 传进
+ * 解析钩子的 importer 用的是正斜杠（F:/web/...）——
+ * 直接 startsWith 会永远不成立，插件静默失效。
+ */
+const WINUI_DIR_SLASH = WINUI_DIR.replace(/\\/g, "/");
 if (!fs.existsSync(WINUI_SRC)) {
   throw new Error(
     [
@@ -110,6 +122,47 @@ export default defineConfig({
    * 所以这里 alias 到克隆下来的上游源码目录，直接吃它的原始实现。
    */
   vite: {
+    plugins: [
+      /**
+       * 让上游源码的裸模块导入走**我们的** node_modules。
+       *
+       * 上游目录在仓库之外，而 Vite 解析裸导入是从**引用方所在目录**向上找
+       * node_modules —— 从 `../WinUIonWeb/WinUIonWeb/src/` 一路上溯，
+       * 根本走不到 `Supabase/node_modules`（两者是兄弟目录，不是祖先关系）。
+       *
+       * 本机之所以一直没暴露：上游目录里恰好有它自己的 node_modules。
+       * CI 只克隆源码、不装上游依赖，于是构建直接失败：
+       *   Rolldown failed to resolve import "mathlive/ssr"
+       *     from ".../WinUIonWeb/WinUIonWeb/src/components/richEditDocument.ts"
+       *
+       * 这里把「上游文件发出的裸导入」用本仓库内的一个路径作为引用方重新解析，
+       * 强制命中我们的 node_modules。这样上游的运行时依赖
+       * （mathlive、rtf.js）只需在本仓库声明一次即可。
+       */
+      {
+        name: "winui-upstream-deps",
+        enforce: "pre",
+        async resolveId(source, importer) {
+          if (!importer) return null;
+          if (!importer.replace(/\\/g, "/").startsWith(WINUI_DIR_SLASH)) return null;
+          // 相对 / 绝对 / 虚拟模块，以及别名，都交给默认解析
+          if (
+            source.startsWith(".") ||
+            source.startsWith("/") ||
+            source.startsWith("\0") ||
+            source.startsWith("winui-src")
+          ) {
+            return null;
+          }
+          const resolved = await this.resolve(
+            source,
+            path.join(ROOT_DIR, "package.json"),
+            { skipSelf: true }
+          );
+          return resolved ?? null;
+        },
+      },
+    ],
     resolve: {
       alias: {
         "winui-src": WINUI_SRC,
