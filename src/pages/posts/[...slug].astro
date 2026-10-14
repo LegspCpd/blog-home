@@ -129,7 +129,9 @@ const readMinutes = Math.max(1, Math.round(words / 400));
 </Base>
 
 <style>
+  /* 短文章别显得空 —— 这条原来放在通用容器上会波及首页，挪到这里才合身 */
   .post {
+    min-height: 60dvh;
     padding: var(--s-xl) 0 0;
   }
 
