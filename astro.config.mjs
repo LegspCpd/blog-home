@@ -222,7 +222,18 @@ export default defineConfig({
 
   markdown: {
     shikiConfig: {
-      themes: { light: "github-light", dark: "github-dark" },
+      /**
+       * 单主题，不能用 themes:{light,dark}。
+       *
+       * 双主题会输出靠 `prefers-color-scheme` 切换的样式，而本站的深色是
+       * 用 class 声明的（html.theme-dark），两者不是一回事 ——
+       * 结果就是：操作系统偏好为浅色时，代码块渲染成近白底深字，
+       * 在深色页面上非常突兀。无头浏览器默认浅色，所以截图一眼就能看到。
+       *
+       * 站点是纯深色的（color-scheme: dark + html.theme-dark），
+       * 所以只需要一个深色主题，行为完全确定。
+       */
+      theme: "github-dark",
       wrap: true,
     },
   },

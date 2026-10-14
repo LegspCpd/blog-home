@@ -70,10 +70,24 @@ const prefixMatch = computed(() =>
     .sort((a, b) => b.Tag.length - a.Tag.length)[0]
 );
 
-const selected = computed(() => exactMatch.value ?? prefixMatch.value ?? null);
+const selected = computed(() =>
+  // 设置页由 NavigationView 自己高亮「设置」项，
+  // 这里返回 null，免得同时又高亮一个普通菜单项。
+  props.path === "/settings/" ? null : (exactMatch.value ?? prefixMatch.value ?? null)
+);
 
-/** 点击菜单项 → 跳转。参数形状由上游决定，逐层回退取值。 */
+/**
+ * 点击菜单项 → 跳转。
+ *
+ * 分两种：普通项带 Tag；「设置」项是 WinUI 内置的，
+ * 它没有 Tag，只把 IsSettingsInvoked 置真 —— 所以要单独认它，
+ * 否则会得到一个点了没反应的菜单项。
+ */
 function onItemInvoked(args: any) {
+  if (args?.IsSettingsInvoked) {
+    if (props.path !== "/settings/") location.href = "/settings/";
+    return;
+  }
   const tag =
     args?.InvokedItemContainer?.Tag ??
     args?.InvokedItem?.Tag ??
@@ -138,7 +152,7 @@ function onQuerySubmitted(args: any) {
       :MenuItemsSource="items"
       :FooterMenuItemsSource="footerItems ?? []"
       :SelectedItem="selected"
-      :IsSettingsVisible="false"
+      :IsSettingsVisible="true"
       :AlwaysShowHeader="false"
       IsBackButtonVisible="Collapsed"
       ItemInvoked="onItemInvoked"

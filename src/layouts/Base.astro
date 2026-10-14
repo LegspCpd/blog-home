@@ -232,11 +232,13 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
     min-height: 60dvh;
   }
 
+  /* 正文用"左对齐 + 限制行宽"，不做 margin:0 auto 居中。
+     WinUI 的内容区一律左对齐；居中会让正文与页头标题对不齐。
+     行宽限制仍然保留 —— 长文一行太长会难读。 */
   .prose {
-    max-width: 680px;
-    margin: 0 auto;
-    font-size: 16.5px;
-    line-height: 1.85;
+    max-width: var(--readable-prose, 680px);
+    font-size: 14px;
+    line-height: 1.75;
     color: var(--c-body);
   }
 
@@ -266,16 +268,20 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
     text-decoration-color: var(--c-neon-volt);
   }
 
-  /* 代码块：VoltAgent 的内嵌深色面板 + 发丝边框 */
+  /* 代码块：Fluent 的内嵌表面 + 发丝边框
+     背景必须加 !important —— Shiki 会把 background-color 写成 <pre> 上的
+     内联样式（如 #24292e），内联样式优先级高于样式表，不加就盖不掉。
+     语法高亮里每个 token 的颜色仍然留给 Shiki，只有"表面"归我们，
+     这样代码块和卡片、对话框用的是同一套层级色。 */
   .prose pre {
     overflow-x: auto;
     padding: var(--s-md) var(--s-lg);
     border: 1px solid var(--line-base);
     border-radius: var(--r-md);
-    background: var(--c-inset);
+    background: var(--c-inset) !important;
     font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.72;
+    font-size: 12.5px;
+    line-height: 1.7;
     color: var(--c-body);
   }
 

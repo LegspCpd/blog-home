@@ -135,12 +135,13 @@ const readMinutes = Math.max(1, Math.round(words / 400));
     padding: var(--s-xl) 0 0;
   }
 
-  /* ── 文章头部：不居中，左对齐并压到 720px。
-     MiniMax 的居中 hero 用在首页；文章页改为左对齐，
-     长文本的阅读起点固定在左上更符合直觉。 ── */
+  /* ── 文章头部 ──────────────────────────────────────────
+     一度是居中（margin: 0 auto），但 WinUI 的内容一律左对齐。
+     居中的副作用很显眼：页头标题贴左边、正文却缩进去一大截，
+     两者对不齐。现在统一左对齐，只用 max-width 控制行宽。 ── */
   .head {
-    max-width: 720px;
-    margin: 0 auto var(--s-xl);
+    max-width: var(--readable-head, 720px);
+    margin: 0 0 var(--s-xl);
   }
 
   .head .eyebrow {
@@ -179,7 +180,7 @@ const readMinutes = Math.max(1, Math.round(words / 400));
   /* 封面：比正文更宽，打破 680px 的窄栏——刻意的宽度不对称 */
   .cover {
     max-width: 1000px;
-    margin: var(--s-xl) auto 0;
+    margin: var(--s-xl) 0 0;
     border: 1px solid var(--line-base);
     border-radius: var(--r-lg);
     overflow: hidden;
@@ -195,8 +196,8 @@ const readMinutes = Math.max(1, Math.round(words / 400));
 
   /* ── 标签 ─────────────────────────────────────────────── */
   .tags {
-    max-width: 680px;
-    margin: var(--s-xl) auto 0;
+    max-width: var(--readable-prose, 680px);
+    margin: var(--s-xl) 0 0;
     padding-top: var(--s-lg);
     border-top: 1px solid var(--line-soft);
   }

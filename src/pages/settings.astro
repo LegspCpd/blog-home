@@ -1,0 +1,35 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import PageHeader from "../components/win/PageHeader.astro";
+import WinSettings from "../components/win/WinSettings.vue";
+
+/**
+ * 设置页。
+ *
+ * 为什么要有它：NavigationView 的「设置」项是 WinUI 的固定组成部分
+ * （官方 Gallery 也有）。之前它一直是关着的 —— 因为打开它会得到一个
+ * 点了没反应的菜单项，那比没有更糟。现在这里是真实内容，所以可以打开。
+ *
+ * 页面名由 PageHeader 承担（与其它页面一致：页头即标题），
+ * 内容交给 WinUI 的 SettingsCard 渲染。
+ */
+const posts = await getCollection("posts", ({ data }) => !data.draft);
+
+const tags = new Set<string>();
+for (const post of posts) for (const t of post.data.tags) tags.add(t);
+
+/** 构建时间：取本页产物的生成时刻，作为"这一版是什么时候构建的" */
+const buildTime = new Date().toISOString();
+---
+
+<Base title="设置" path="/settings/">
+  <PageHeader title="设置" meta="订阅方式、站点信息与外观" />
+
+  <WinSettings
+    client:load
+    postCount={posts.length}
+    tagCount={tags.size}
+    buildTime={buildTime}
+  />
+</Base>

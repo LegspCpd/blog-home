@@ -434,13 +434,21 @@ GitHub 仓库：`LegspCpd/blog-home`，主分支 `main`。
 - ✅ 修掉 4 个真实缺陷：favicon 404、标签大小写冲突、搜索框浅色令牌、页头 SEO 退化
 - ✅ **仓库自包含**：组件库内联进 `vendor/winuionweb`，任何只拿仓库的构建器
   （包括 EdgeOne 的 Git 自动部署）都能独立构建成功
-- ✅ **线上已更新**：https://legspcpd.asia 实测 `shell=1 / navItem=5 /
-  titleBar=7 / island 33867 字节 / 1 个 h1`
+- ✅ **线上已更新**：https://legspcpd.asia 实测 `shell=1 / navItem=6 /
+  titleBar=7 / 1 个 h1`
+- ✅ **设置页** `/settings/`，用上游 `SettingsCard`；导航里的设置项已打开
+- ✅ **文章详情排版**：去掉 `margin:0 auto` 改左对齐（居中会让正文与
+  页头标题错位）；正文回到 WinUI 的 14px
+- ✅ **修掉代码块浅色 bug**：`shikiConfig.themes:{light,dark}` 是双主题，
+  靠 `prefers-color-scheme` 切换，而本站的深色是用 class 声明的 ——
+  系统偏好为浅色时代码块渲染成白底深字。改成单主题，
+  并用 `!important` 盖掉 Shiki 写在 `<pre>` 上的内联背景色
 
 ### 待办
-1. **设置页**：`IsSettingsVisible` 目前是 `false`。
-   重新打开它需要一个真实的 `/settings/` 页面（官方 Gallery 有这个入口，
-   纯装饰的空菜单项反而是坏体验）。
+1. ~~设置页~~ **已完成**：新增 `/settings/`，用上游的 `SettingsCard`
+   渲染（可点项带右箭头、不可点项没有），`IsSettingsVisible` 已打开。
+   `ItemInvoked` 里单独认 `IsSettingsInvoked` —— 设置项没有 `Tag`，
+   不单独处理就会得到一个"点了没反应"的菜单项。
 2. ~~CI 的设计令牌断言~~ **已修**：改为接受 `var(--x, #rrggbb)`，
    并加了一条反向断言（字体是系统栈时不得有 webfont 预加载）。
 3. ~~域名仍在提供旧构建~~ **已解决**：根因是仓库依赖外部目录，

@@ -143,6 +143,20 @@ export const radius = {
   pill: 999,
 } as const;
 
+/**
+ * 长文可读行宽。
+ *
+ * WinUI 的内容是左对齐的，所以正文不再用 margin:0 auto 居中 ——
+ * 居中会让正文与页头标题对不齐。行宽仍然要限制：
+ * 中文长文一行超过 40 字左右就很难回行阅读。
+ */
+export const readable = {
+  /** 正文 */
+  prose: 720,
+  /** 文章头部的摘要等 */
+  head: 760,
+} as const;
+
 /** 间距：WinUI 的 4 的倍数栅格 */
 export const space = {
   xs: 4,
