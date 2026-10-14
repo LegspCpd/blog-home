@@ -133,13 +133,8 @@ const max = tags[0]?.[1] ?? 1;
     color: var(--c-faint);
     margin-bottom: var(--s-md);
   }
-
-  @media (max-width: 640px) {
-    .chip-lg {
-      font-size: 22px;
-    }
-    .chip-md {
-      font-size: 16px;
-    }
-  }
+  /*
+    这里原来还有一段 @media (max-width: 640px) 覆写 .chip-lg / .chip-md 的字号。
+    chip 改成一档字号之后那两个类已经没有任何元素在用，是死规则，删掉。
+  */
 </style>
