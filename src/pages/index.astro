@@ -76,11 +76,21 @@ const posts = await getCollection("posts", ({ data }) => !data.draft);
   }
 
   /* 主按钮：hover 抬起，active 缩回。触感全在这两行 */
+  /*
+   * 两个按钮共用同一套盒子。
+   *
+   * 之前 .btn-primary 与 .btn-ghost 各写各的 padding，而 .btn-ghost 还多一圈
+   * 1px border、又没设 box-sizing —— 实测同一行里一个高 42px、一个高 44px，
+   * 垂直方向还错开 1px。看起来就是"按钮没对齐"。
+   * 统一成 border-box + 固定最小高 + 相同内边距，边框就不再影响尺寸。
+   */
   .btn-primary {
+    box-sizing: border-box;
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 10px 19px;
+    min-height: 36px;
+    padding: 0 16px;
     border-radius: var(--r-md);
     background: var(--c-neon-volt);
     color: var(--c-on-neon);
@@ -110,7 +120,11 @@ const posts = await getCollection("posts", ({ data }) => !data.draft);
 
   /* 次按钮：描边 + hover 时霓虹描边 */
   .btn-ghost {
-    padding: 10px 19px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 16px;
     border: 1px solid var(--line-base);
     border-radius: var(--r-md);
     color: var(--c-muted);
