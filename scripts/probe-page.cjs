@@ -246,6 +246,10 @@ function launchChrome() {
 
   const errs = [];
   for (const e of evs) {
+    if (e.method === "Runtime.consoleAPICalled" && process.env.PROBE_CLICK) {
+      errs.push(`[${e.params.type}] ` + e.params.args.map((a) => a.value ?? a.description).join(" ").slice(0, 500));
+      continue;
+    }
     if (e.method === "Runtime.consoleAPICalled" && e.params.type === "error") {
       errs.push("[console] " + e.params.args.map((a) => a.value ?? a.description).join(" ").slice(0, 900));
     }
@@ -260,6 +264,57 @@ function launchChrome() {
   if (errs.length) {
     console.log("=== 错误 ===");
     for (const e of [...new Set(errs)]) console.log(e);
+  }
+
+  // PROBE_EVAL=<expression> 时先执行一段任意表达式（用来做判别性实验）
+  if (process.env.PROBE_EVAL) {
+    const r = await send("Runtime.evaluate", {
+      returnByValue: true,
+      awaitPromise: true,
+      expression: process.env.PROBE_EVAL,
+    });
+    console.log("EVAL: " + JSON.stringify(r.result?.result?.value ?? r.result?.exceptionDetails?.exception?.description ?? r.result));
+    await sleep(1200);
+    const after = await send("Runtime.evaluate", { returnByValue: true, expression: "location.href" });
+    console.log("EVAL: 执行后 URL = " + after.result?.result?.value);
+  }
+
+  // PROBE_CLICK=<selector> 时，在目标元素中心派发一次**真实**鼠标点击
+  // （Input.dispatchMouseEvent，不是 element.click()）——
+  // 后者会绕过命中测试，测不出"被别的东西挡住"这类问题。
+  const clickSel = process.env.PROBE_CLICK;
+  if (clickSel) {
+    const box = await send("Runtime.evaluate", {
+      returnByValue: true,
+      expression: `(() => {
+        const el = document.querySelector(${JSON.stringify(clickSel)});
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: Math.round(r.width), h: Math.round(r.height),
+                 text: (el.textContent || '').trim().slice(0, 40),
+                 topAtPoint: (document.elementFromPoint(r.left + r.width/2, r.top + r.height/2) || {}).className || null };
+      })()`,
+    });
+    const b = box.result?.result?.value;
+    if (!b) {
+      console.log(`CLICK: 找不到 ${clickSel}`);
+    } else {
+      console.log(`CLICK: 目标="${b.text}" 尺寸=${b.w}x${b.h} 该点最上层元素=${b.topAtPoint}`);
+      // buttons 必须给：mousePressed 时是 1、release 时是 0。
+      // 缺了它 Chrome 不会合成出真正的 click 事件 —— 我就这么白跑了一轮。
+      await send("Input.dispatchMouseEvent", {
+        type: "mouseMoved", x: b.x, y: b.y, button: "none", buttons: 0,
+      });
+      await send("Input.dispatchMouseEvent", {
+        type: "mousePressed", x: b.x, y: b.y, button: "left", buttons: 1, clickCount: 1,
+      });
+      await send("Input.dispatchMouseEvent", {
+        type: "mouseReleased", x: b.x, y: b.y, button: "left", buttons: 0, clickCount: 1,
+      });
+      await sleep(1500);
+      const after = await send("Runtime.evaluate", { returnByValue: true, expression: "location.href" });
+      console.log(`CLICK: 点击后 URL = ${after.result?.result?.value}`);
+    }
   }
 
   // PROBE_SCROLL=bottom 时先滚到底再截图（看页脚、上一篇/下一篇这类底部内容）

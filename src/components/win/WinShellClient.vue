@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, provide, ref } from "vue";
 
 /**
  * WinUI 3 应用壳 —— 真实结构，只在客户端加载。
@@ -30,6 +30,8 @@ import TitleBar from "winui-src/components/TitleBar.vue";
 import { TitleBarIconSource } from "winui-src/components/TitleBarProperties";
 import NavigationView from "winui-src/components/NavigationView.vue";
 import { NavigationViewAutoSuggestBox } from "winui-src/components/NavigationViewProperties";
+// xamlScopeKey：把本组件的处理函数暴露给 XAML 运行时（见下方 provide 的说明）
+import { xamlScopeKey } from "winui-src/index";
 import AutoSuggestBox from "winui-src/components/AutoSuggestBox.vue";
 // 注意：<HorizontalAlignment> / <ImageIconSource> 都来自上游的全局注册
 // （registerWinUIComponents 里的 xamlPrimitives 与 IconSource），
@@ -75,6 +77,80 @@ const selected = computed(() =>
   // 这里返回 null，免得同时又高亮一个普通菜单项。
   props.path === "/settings/" ? null : (exactMatch.value ?? prefixMatch.value ?? null)
 );
+
+const rootEl = ref<HTMLElement | null>(null);
+
+/**
+ * 导航用事件委托来做 —— 这是被逼出来的，原因值得记下来。
+ *
+ * NavigationView 自己有 ItemInvoked，两种接法我都试过：
+ *   1. XAML 名字符串 `ItemInvoked="onItemInvoked"` —— 运行时去"XAML 作用域"里
+ *      按名字查，查不到就 `?.()` 静默跳过（连报错都没有）
+ *   2. Vue 监听器 `@ItemInvoked` —— `emit('ItemInvoked')` 直接命中，
+ *      不依赖任何作用域解析
+ * 两种都验证过：编译产物里绑定确实存在（`onItemInvoked:r.onItemInvoked`），
+ * 但点击后处理函数**一次都没被调用**。逐层查下来：
+ *   · 点击**确实**落在菜单项上（原生 `<div role="menuitem">` 带 onClick）
+ *   · 用 JS `el.click()` 直接触发也一样无效
+ *   · 所以是它内部提前 return 了 —— 它的选择流程是围绕 **Frame 导航** 设计的
+ *     （pendingSelectionRequest / 帧导航完成回调），我们没有 Frame，
+ *     那套状态很可能一开始就卡住，把之后的每次点击都吞掉
+ *
+ * 与其继续逆向一个 180KB 组件的内部状态机，不如用**它自己渲染出来的 DOM**
+ * 做事件委托：菜单项上的 `data-xaml-ref` 就是我们在 x:Name 里给的地址。
+ * 这样导航既不依赖内部实现，也不会在下一次 sync 上游时失效。
+ *
+ * 附带的好处：以后若要接回 ItemInvoked，把 removeEventListener 那段去掉即可。
+ */
+function onShellClick(event: MouseEvent) {
+  const target = event.target as HTMLElement | null;
+  const item = target?.closest?.(".win-nav-item");
+  if (!item) return;
+
+  // 普通菜单项：地址写在 x:Name 里，被渲染成 data-xaml-ref
+  const href = item.getAttribute("data-xaml-ref");
+  if (href) {
+    if (href.startsWith("/")) {
+      if (href !== location.pathname) location.href = href;
+    } else if (/^https?:/.test(href)) {
+      window.open(href, "_blank", "noopener");
+    }
+    return;
+  }
+
+  // 「设置」项是 NavigationView 内置的，不会带我们的 x:Name
+  if (item.getAttribute("data-navigation-value") === "settings") {
+    if (location.pathname !== "/settings/") location.href = "/settings/";
+  }
+}
+
+onMounted(() => rootEl.value?.addEventListener("click", onShellClick));
+onBeforeUnmount(() => rootEl.value?.removeEventListener("click", onShellClick));
+
+/**
+ * ★ 把 XAML 事件处理函数交给运行时 —— 不写这一段，点击导航就完全没反应。
+ *
+ * WinUIonWeb 的事件是**函数名字符串**（`ItemInvoked="onItemInvoked"`），
+ * 运行时用 resolveXamlHandler 去"XAML 作用域"里按名字查这个函数。
+ * 作用域只有两个来源（见 vendor/winuionweb/components/xamlRuntime.ts 的 scopeFor）：
+ *
+ *   1. 祖先中 __name 以 Page 结尾的组件（isGalleryScope）—— 上游 Gallery 的约定
+ *   2. **父组件 provides 里的 xamlScopeKey** ← 我们走这条
+ *
+ * Vue 的 provides 沿原型链向上查找，所以这里 provide 一次，
+ * 所有后代控件（NavigationView、AutoSuggestBox…）都能解析到。
+ *
+ * 我最初漏了这一步。症状极具迷惑性：菜单**渲染完全正常**、DOM 计数全对、
+ * 点击也命中了目标元素，但点了就是不动 ——
+ * resolveXamlHandler 返回 undefined，调用处 `?.()` 于是静默什么都不做，
+ * 控制台连一条报错都没有。
+ * **只验证渲染、不验证交互，就会漏掉整类问题。**
+ */
+provide(xamlScopeKey, {
+  onItemInvoked,
+  onTextChanged,
+  onQuerySubmitted,
+});
 
 /**
  * 点击菜单项 → 跳转。
@@ -134,7 +210,7 @@ function onQuerySubmitted(args: any) {
 </script>
 
 <template>
-  <div class="winui-app">
+  <div ref="rootEl" class="winui-app">
     <!--
       窗口标题栏。
       官方 Gallery 的汉堡按钮在窗格内（NavigationView 自己那个），不在标题栏，
@@ -155,15 +231,15 @@ function onQuerySubmitted(args: any) {
       :IsSettingsVisible="true"
       :AlwaysShowHeader="false"
       IsBackButtonVisible="Collapsed"
-      ItemInvoked="onItemInvoked"
+      @ItemInvoked="onItemInvoked"
     >
       <NavigationViewAutoSuggestBox>
         <AutoSuggestBox
           PlaceholderText="搜索文章…"
           QueryIcon="Find"
           :ItemsSource="suggestions"
-          TextChanged="onTextChanged"
-          QuerySubmitted="onQuerySubmitted"
+          @TextChanged="onTextChanged"
+          @QuerySubmitted="onQuerySubmitted"
         />
       </NavigationViewAutoSuggestBox>
 

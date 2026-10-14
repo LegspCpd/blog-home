@@ -18,12 +18,20 @@ const navItems = NAV.map((item, i) => ({
   Tag: item.href,
   Content: item.label,
   Icon: ["\uE80F", "\uE8F1", "\uE8EC"][i] ?? "\uE8A5",
+  /**
+   * x:Name 会被 NavigationView 渲染成 DOM 上的 data-xaml-ref。
+   *
+   * 它是**事件委托导航**唯一可靠的锚点：NavigationView 自己的 ItemInvoked
+   * 在这套环境里不触发（详见 WinShellClient.vue 里 attachNavigationFallback 的说明），
+   * 而 data-navigation-value 只是它内部的序号（nvi-1 / nvi-2…），拿不到我们想要的地址。
+   */
+  "x:Name": item.href,
 }));
 
 /** 页脚项：官方规范里 FooterMenuItems 显示在「设置」项之前 */
 const footerItems = [
-  { Tag: SITE.links.rss, Content: "RSS" },
-  { Tag: SITE.links.github, Content: "GitHub" },
+  { Tag: SITE.links.rss, Content: "RSS", "x:Name": SITE.links.rss },
+  { Tag: SITE.links.github, Content: "GitHub", "x:Name": SITE.links.github },
 ];
 
 /** 构建期生成的站内搜索索引，供标题栏的 AutoSuggestBox 使用 */
