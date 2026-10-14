@@ -113,7 +113,7 @@ async function main() {
   const { spawn: sp } = require("node:child_process");
   const proc = sp(chrome, [
     "--headless=new", "--disable-gpu", "--remote-debugging-port=9333",
-    "--no-first-run", "--user-data-dir=" + path.join(ROOT, ".chrome-audit"),
+    "--no-first-run", "--user-data-dir=" + require("node:os").tmpdir() + "/dsh-chrome-audit",
     "about:blank",
   ], { stdio: "ignore" });
 

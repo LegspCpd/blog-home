@@ -48,3 +48,6 @@ dist-win/
 
 # 本地密钥与私密笔记 —— 绝不提交（内含真实 token）
 .notes/
+
+# 多视口审计脚本产生的 Chrome 用户目录（scripts/audit-viewports.cjs）
+.chrome-audit/
