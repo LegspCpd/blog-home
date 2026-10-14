@@ -309,50 +309,53 @@ NavigationView 的 `Header` 是客户端渲染的。把页面标题放进它，�
 每次访问都产生一条 404，在探针日志里伪装成"无关噪音"，实际是真实缺陷。
 现已改为正确的路径，并补上深浅两套 PNG 与 apple-touch-icon。
 
-### 5.13 ★ CI 与部署从来就没成功过（上游在仓库之外带来的一连串问题）
+### 5.13 ★ 上游在仓库之外 —— CI 与线上部署一直失败的真正原因
 
-这一条是排查 CI 时逐个撞出来的，四个问题环环相扣，**每个都是"本机能跑、
-CI 必挂"**。根因只有一个：**上游不在这个仓库里，而本机恰好拥有 CI 没有的东西**。
+这一条是整轮排查的终点。**四个问题环环相扣，根因只有一个**：
+组件库指向仓库之外的兄弟目录，而**任何"只拿这个仓库"的构建器都拿不到它**。
 
-**① `file:` 依赖指向仓库之外 → 安装直接失败**
-```json
-"winuionweb": "file:..\WinUIonWeb\WinUIonWeb"
-```
-CI 上不存在该目录：
-`ENOENT ... scandir '/home/runner/work/blog-home/WinUIonWeb/WinUIonWeb'`。
-而且排查确认**没有任何代码按包名 import 过它** —— 所有引用都走 `winui-src`
-别名。它从头到尾只是负担，删掉即可。
+**症状**：GitHub Actions 的 Build Check 与 Deploy 都是绿的（CLI 部署成功），
+但线上 `legspcpd.asia` 一直是旧界面 —— 实测首页还带着 `/favicon.ico` 与
+`inter-latin.woff2`，这两个文件在构建里早就删掉了。
 
-**② 上游 tsconfig extends 它自己的 devDependency**
-`Tsconfig not found @tsconfig/node24/tsconfig.json`。
-上游的 `tsconfig*` extends `@tsconfig/node24` / `@vue/tsconfig`，
-而我们不装上游依赖。Vite 8 的 `OxcOptions` 明确 `Omit<..., "tsconfig">`，
-**没有官方开关可绕**，所以不在上游保留 tsconfig：
-CI 克隆后删掉，本地由 `node scripts/setup-winui.mjs` 做同样的事。
-上游组件全部用相对导入、没有 paths 别名，删掉无副作用（已实测）。
+**真因**：EdgeOne Pages 是**直连仓库自动部署**的。它的构建器只拿这个仓库，
+跑不了我们 workflow 里那步 `git clone`，于是每次自动构建都失败，
+线上就一直停在**最后一个构建成功的版本**（接入 WinUIonWeb 之前的旧版）。
+我们 workflow 里的 CLI 部署去的是另一个项目，域名并不指它 ——
+所以"部署成功"和"线上更新"是两件事。
 
-**③ 上游的裸模块导入解析不到我们的 node_modules**
-`Rolldown failed to resolve import "mathlive/ssr"`。
-Vite 解析裸导入是从**引用方所在目录**向上找 node_modules；从
-`../WinUIonWeb/WinUIonWeb/src/` 上溯走不到 `Supabase/node_modules`
-（两者是兄弟目录，不是祖先关系）。本机不报只是因为上游目录里有它自己的
-node_modules。
+**排查路上撞到的四个问题**（都是"本机能跑、别处必挂"）：
 
-`astro.config.mjs` 里加了一个 `resolveId` 钩子：凡是从上游目录发出的裸导入，
-改用本仓库内的路径作为引用方重新解析，强制命中我们的 node_modules。
-同时把上游的运行时依赖 `mathlive`、`rtf.js` 声明到本仓库。
+1. `"winuionweb": "file:..\WinUIonWeb\WinUIonWeb"` ——
+   `pnpm install` 直接 `ENOENT`。而且**没有任何代码按包名 import 过它**，
+   所有引用都走 `winui-src` 别名。纯负担，删。
+2. 上游 tsconfig `extends @tsconfig/node24`（它自己的 devDependency）——
+   Vite 解析失败，且 Vite 8 的 `OxcOptions` 明确 `Omit<..., "tsconfig">`，
+   **没有官方开关可绕**。
+3. 上游的裸导入解析不到我们的 `node_modules` ——
+   Vite 从**引用方所在目录**向上找，而两者是兄弟目录不是祖先关系。
+4. 诊断这类问题的正确姿势：**先把本机做成别的构建器的等价环境**再试。
+   只在"本机有上游 node_modules"的状态下试，永远看不到 3。
 
-> 踩到的坑：`fileURLToPath` 在 Windows 给的是反斜杠，而 Vite 传进钩子的
-> `importer` 是正斜杠 —— `startsWith` 永远不成立，**插件静默失效**。
-> 必须统一成斜杠再比较（`WINUI_DIR_SLASH`）。
+**最终改法：把组件库内联进仓库** —— `vendor/winuionweb`（4.8 MB / 297 文件）
 
-**④ 诊断这类问题必须先让本机等价于 CI**
-只在"本机有上游 node_modules"的状态下试，永远看不到 ③。
-有效做法是把上游的 `node_modules` 与 tsconfig 临时移走再构建 ——
-这才是 CI 的真实环境。本项目的验证就是这么完成的。
+| 取了什么 | 为什么 |
+| --- | --- |
+| `components/ utils/ styles/ index.ts shims-vue.d.ts` | 这是 `index.ts` 的完整依赖闭包；`components` 只反向依赖 `utils/navigationTransitionInfo` |
+| **源码**而不是上游的 `dist-lib` | 上游的库构建只导出主控件，`NavigationViewMenuItems` / `NavigationViewItem` 这类 XAML 属性组件**只在 `src/` 里**，用包出口的具名导入会 `MISSING_EXPORT`，NavigationView 只能渲染空壳 |
+| `LICENSE` + `THIRD_PARTY_NOTICES.md` | 许可证信息随源码走（上游是 GPL-3.0-only） |
+| **不取** `assets/`(5.6M) 与 `gallery/`(3.5M) | 那是上游自己的 demo 应用，与本项目无关 |
 
-**当前状态：`Build Check` 与 `Deploy to EdgeOne Pages` 均已通过**
-（这是该仓库第一次两个 workflow 全绿）。
+连带简化：
+- 两个 workflow 删掉「克隆上游」与「删上游 tsconfig」两步
+- 删掉 `winui-upstream-deps` 解析插件（当初就是为了解决仓库外文件的裸导入）
+  —— 文件进了仓库，Node 天然能解析；构建从 18.6s 降到 5.4s
+- `scripts/setup-winui.mjs` → `scripts/sync-winui.mjs`（`pnpm sync:winui`），
+  语义从"构建前置"变成"更新上游"
+
+**验证方式（重要）**：把一个干净克隆拉到没有 `../WinUIonWeb` 的目录里
+再 `pnpm install && pnpm build` —— 这才是别的构建器的真实环境。
+实测 53 页、产物齐全。推送后 **15 秒内线上就更新了**。
 
 ## 6. 验证方法（**必须这么做，不要用截图代替**）
 
@@ -429,6 +432,10 @@ GitHub 仓库：`LegspCpd/blog-home`，主分支 `main`。
 - ✅ 删除死代码 `src/lib/theme/` 与死依赖 `@fluentui/tokens`、`@fluentui/web-components`
 - ✅ 删除全部调试页面与脚本（`navtest` / `navmount` / `NavDiag` / `WinProbe` / `_deep` / `_nav` / `glyphs`）
 - ✅ 修掉 4 个真实缺陷：favicon 404、标签大小写冲突、搜索框浅色令牌、页头 SEO 退化
+- ✅ **仓库自包含**：组件库内联进 `vendor/winuionweb`，任何只拿仓库的构建器
+  （包括 EdgeOne 的 Git 自动部署）都能独立构建成功
+- ✅ **线上已更新**：https://legspcpd.asia 实测 `shell=1 / navItem=5 /
+  titleBar=7 / island 33867 字节 / 1 个 h1`
 
 ### 待办
 1. **设置页**：`IsSettingsVisible` 目前是 `false`。
@@ -436,11 +443,9 @@ GitHub 仓库：`LegspCpd/blog-home`，主分支 `main`。
    纯装饰的空菜单项反而是坏体验）。
 2. ~~CI 的设计令牌断言~~ **已修**：改为接受 `var(--x, #rrggbb)`，
    并加了一条反向断言（字体是系统栈时不得有 webfont 预加载）。
-3. **★ 域名 `legspcpd.asia` 仍在提供旧构建**。
-   实测线上首页还带着 `/favicon.ico` 与 `inter-latin.woff2` ——
-   两者都已在新构建里删除，说明**该域名没有指向这个 EdgeOne 项目的最新部署**。
-   EdgeOne 的部署步骤本身是成功的（workflow 绿），所以问题在域名绑定/DNS，
-   不在构建。需要到腾讯云 EdgeOne 控制台核对项目的域名绑定与解析记录。
+3. ~~域名仍在提供旧构建~~ **已解决**：根因是仓库依赖外部目录，
+   EdgeOne 的自动构建拿不到 → 一直停在旧版本。内联组件库后已更新
+   （见 §5.13）。**教训：以后凡是"只拿仓库"的构建器，都必须能独立构建成功。**
 3. **首页之外的页面排版还能再贴近官方**：归档页现在已对齐；文章详情页的
    正文排版（标题层级、代码块、引用）仍是通用样式，可再按 Fluent 收紧。
 4. **依赖瘦身**：`package.json` 里还留着上一代主题的依赖
