@@ -2,26 +2,24 @@
 import { SITE } from "../../config/site";
 
 /**
- * 页脚
+ * 页脚。
  *
- * Superhuman 的系统里每个页面都以一个深青色带收尾——
- * 那是「和弦的解决」。我这里把它换成霓虹绿的极窄光带：
- * 不用整块深色收尾，而是在页脚上方留一条会发光的细线，
- * 既是收尾标记，也让长页面滚到底时有个视觉落点。
+ * 上一版是「霓虹绿收尾光带 + 大写宽字距眉标 + 霓虹描边按钮」，
+ * 属于 VoltAgent / Superhuman 那套语言。WinUI 里没有这些东西：
+ * 页脚就是一条发丝分隔线加若干列普通文字，唯一的动作是一个标准按钮。
+ * 这里换成 Fluent 的做法 —— 结构不动，只换表现。
  */
 const year = new Date().getFullYear();
 ---
 
 <footer class="site-footer">
-  <div class="glow" aria-hidden="true"></div>
-
   <div class="inner">
     <div class="lead">
-      <p class="eyebrow">保持联系</p>
+      <p class="lead-title">保持联系</p>
       <p class="pitch">有新文章就写在这儿。</p>
       <a class="rss" href="/rss.xml">
         订阅 RSS
-        <span class="arrow" aria-hidden="true">→</span>
+        <span class="arrow" aria-hidden="true">&#xE76C;</span>
       </a>
     </div>
 
@@ -50,27 +48,12 @@ const year = new Date().getFullYear();
 <style>
   .site-footer {
     margin-top: var(--s-xxl);
-    border-top: 1px solid var(--line-soft);
+    /* WinUI 用一条发丝分隔线划分区域，不用渐变光带 */
+    border-top: 1px solid var(--line-base);
     background: var(--c-s1);
   }
 
-  /* 霓虹细线：页脚的「解决和弦」 */
-  .glow {
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      var(--c-neon-volt) 22%,
-      var(--c-neon-lilac) 50%,
-      var(--c-neon-volt) 78%,
-      transparent
-    );
-    opacity: 0.65;
-  }
-
   .inner {
-    max-width: 1180px;
-    margin: 0 auto;
     padding: var(--s-xl) var(--s-lg) var(--s-lg);
     display: grid;
     grid-template-columns: 1.4fr 1fr;
@@ -78,55 +61,54 @@ const year = new Date().getFullYear();
     align-items: start;
   }
 
-  .lead .eyebrow {
+  /* 小节标题：WinUI 的 Caption 是 12px、常规字距，不做大写宽字距 */
+  .lead-title,
+  .col-title {
+    margin: 0 0 var(--s-md);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
     color: var(--c-faint);
-    margin-bottom: var(--s-sm);
   }
 
   .pitch {
     margin: 0 0 var(--s-md);
-    font-size: 19px;
-    font-weight: 500;
-    letter-spacing: -0.5px;
+    font-size: var(--t-heading-size);
+    font-weight: 600;
+    letter-spacing: 0;
     color: var(--c-ink);
   }
 
-  /* RSS 是这里唯一的强调动作：描边 + hover 转霓虹实心 */
+  /* 标准按钮：WinUI 的 4px 圆角、淡表面、1px 描边，hover 只叠一层填充 */
   .rss {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 16px;
+    padding: 6px 16px;
+    min-height: 32px;
     border: 1px solid var(--line-base);
-    border-radius: var(--r-md);
-    color: var(--c-body);
+    border-radius: var(--r-sm);
+    background: var(--c-s3);
+    color: var(--c-ink);
     font-size: 14px;
     font-weight: 600;
     transition:
-      transform var(--m-quick),
-      background var(--m-quick),
-      border-color var(--m-quick),
-      color var(--m-quick),
-      box-shadow var(--m-quick);
+      background var(--m-snap),
+      border-color var(--m-snap);
   }
 
   .rss:hover {
     text-decoration: none;
-    transform: translateY(-2px);
-    color: var(--c-on-neon);
-    background: var(--c-neon-volt);
-    border-color: var(--c-neon-volt);
-    box-shadow: 0 8px 24px -10px rgba(0, 229, 154, 0.65);
-  }
-
-  .rss:active {
-    transform: translateY(0) scale(0.97);
-    transition-duration: var(--m-snap);
+    background: var(--c-s2);
+    border-color: var(--line-strong);
   }
 
   .arrow {
+    font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets", sans-serif;
+    font-size: 11px;
     transition: transform var(--m-quick);
   }
+
   .rss:hover .arrow {
     transform: translateX(3px);
   }
@@ -140,44 +122,29 @@ const year = new Date().getFullYear();
   .col {
     display: flex;
     flex-direction: column;
-    gap: 7px;
-  }
-
-  .col-title {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--c-faint);
-    margin-bottom: 2px;
+    gap: 6px;
   }
 
   .col a {
     color: var(--c-muted);
     font-size: 14px;
-    transition:
-      color var(--m-snap),
-      transform var(--m-quick);
+    transition: color var(--m-snap);
   }
 
   .col a:hover {
     text-decoration: none;
-    color: var(--c-neon-volt);
-    transform: translateX(3px);
+    color: var(--c-ink);
   }
 
   .legal {
-    max-width: 1180px;
-    margin: 0 auto;
+    margin: 0;
     padding: var(--s-md) var(--s-lg) var(--s-lg);
     display: flex;
     align-items: center;
     gap: 8px;
     border-top: 1px solid var(--line-soft);
     color: var(--c-faint);
-    font-family: var(--mono);
     font-size: 12px;
-    letter-spacing: 0.2px;
   }
 
   .sep {

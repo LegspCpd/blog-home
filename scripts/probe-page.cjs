@@ -262,14 +262,28 @@ function launchChrome() {
     for (const e of [...new Set(errs)]) console.log(e);
   }
 
+  // PROBE_SCROLL=bottom 时先滚到底再截图（看页脚、上一篇/下一篇这类底部内容）
+  if (process.env.PROBE_SCROLL === "bottom") {
+    await send("Runtime.evaluate", {
+      expression: "window.scrollTo(0, document.body.scrollHeight)",
+    });
+    await sleep(600);
+  }
+
   // 需要看观感时设 PROBE_SHOT=<输出 png 路径>
   const shot = process.env.PROBE_SHOT;
   if (shot) {
     // PROBE_CLIP=<高度> 时只截顶部那一块 ——
     // 整页截图非常长，标题栏与 52px 页头的细节会被压缩到看不清。
     const clipH = Number(process.env.PROBE_CLIP || 0);
-    const params = { format: "png", captureBeyondViewport: !clipH };
-    if (clipH) params.clip = { x: 0, y: 0, width: W, height: clipH, scale: 1 };
+    const scrolled = process.env.PROBE_SCROLL === "bottom";
+    // 注意：CDP 的 clip 用的是**页面坐标**，不是视口坐标。
+    // 滚动到底之后再按 y=0 裁剪，取到的是页面顶部而不是当前看到的地方 ——
+    // 那正是我第一次截出全黑图的原因。所以滚动之后只截视口，不加 clip。
+    const params = scrolled
+      ? { format: "png", captureBeyondViewport: false }
+      : { format: "png", captureBeyondViewport: !clipH };
+    if (clipH && !scrolled) params.clip = { x: 0, y: 0, width: W, height: clipH, scale: 1 };
     const cap = await send("Page.captureScreenshot", params);
     if (cap.result?.data) {
       fs.writeFileSync(shot, Buffer.from(cap.result.data, "base64"));

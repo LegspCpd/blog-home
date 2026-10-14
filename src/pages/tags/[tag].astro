@@ -2,7 +2,6 @@
 import { getCollection } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/win/PostCard.astro";
-import { moodOf } from "../../styles/design";
 import PageHeader from "../../components/win/PageHeader.astro";
 
 export async function getStaticPaths() {
@@ -30,8 +29,6 @@ const sorted = [...posts].sort(
   (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
 );
 
-/* 标签本身也分配一个情绪色，让每个标签页有自己的「身份」 */
-const accent = moodOf("tag:" + tag);
 ---
 
 <Base title={`#${tag}`} path={`/tags/${encodeURIComponent(tag)}/`}>
@@ -45,7 +42,7 @@ const accent = moodOf("tag:" + tag);
     标签名由 NavigationView 的页头显示（页面通过 pageTitle 传 `#标签名` 上去），
     正文不再重复画一次大标题，只保留篇数与返回入口。
   -->
-  <PageHeader title={`#${tag}`} meta={`共 ${sorted.length} 篇`} />
+  <PageHeader title={tag} meta={`共 ${sorted.length} 篇`} />
 
   <!--
     这里原来给第一篇传了 hero={i === 0}。hero 会跨两列，
@@ -89,29 +86,8 @@ const accent = moodOf("tag:" + tag);
     transform: translateY(-2px);
   }
 
-  .head {
-    margin-bottom: var(--s-lg);
-    padding-bottom: var(--s-md);
-    border-bottom: 1px solid var(--line-soft);
-  }
-
-  /* 标题带情绪色辉光——每个标签页有自己的"色温" */
-  .title {
-    display: flex;
-    align-items: baseline;
-    font-size: clamp(28px, 5vw, 40px);
-    font-weight: 600;
-    letter-spacing: -1.4px;
-    margin: 0 0 var(--s-xs);
-    color: var(--accent);
-    text-shadow: 0 0 30px color-mix(in srgb, var(--accent) 35%, transparent);
-  }
-
-  .hash {
-    opacity: 0.45;
-    font-weight: 400;
-    margin-right: 2px;
-  }
+  /* 这里原来有 .head / .title / .hash 三条规则（标题带情绪色辉光）。
+     页面标题已经交给 PageHeader 组件，模板里不再有这些类 —— 是死 CSS，删掉。 */
 
   .lede {
     margin: 0;

@@ -2,7 +2,6 @@
 import { getCollection, render } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import { SITE } from "../../config/site";
-import { moodOf } from "../../styles/design";
 import PageHeader from "../../components/win/PageHeader.astro";
 
 export async function getStaticPaths() {
@@ -31,7 +30,6 @@ const i = all.findIndex((p) => p.id === post.id);
 const newer = i > 0 ? all[i - 1] : null;
 const older = i >= 0 && i < all.length - 1 ? all[i + 1] : null;
 
-const mood = moodOf(post.id);
 
 /* 阅读时长：用 frontmatter 的 summary 不准，正文在 post.body。
    注意是 post.body 而不是 data.body —— 后者是 frontmatter，不含正文。 */
@@ -53,7 +51,7 @@ const readMinutes = Math.max(1, Math.round(words / 400));
   }
   tags={data.tags}
 >
-  <article class="post" style={`--mood:${mood}`}>
+  <article class="post">
     <PageHeader title={data.title} />
 
     <header class="head">
@@ -144,8 +142,11 @@ const readMinutes = Math.max(1, Math.round(words / 400));
     margin: 0 0 var(--s-xl);
   }
 
+  /* 分类眉标用统一的强调色。
+     以前这里用 --mood（按文章 id 哈希取色），WinUI 没有"每个内容换一个颜色"
+     这种做法 —— 同一个界面里出现五六种强调色会显得没有体系。 */
   .head .eyebrow {
-    color: var(--mood);
+    color: var(--c-neon-volt);
     margin-bottom: var(--s-sm);
   }
 
@@ -216,26 +217,29 @@ const readMinutes = Math.max(1, Math.round(words / 400));
     list-style: none;
   }
 
+  /* 与 /tags/ 页同一套 chip：4px 圆角、淡表面、1px 描边，
+     hover 只叠一层更亮的填充（不做位移、不换色） */
   .tags a {
-    display: inline-block;
-    padding: 4px 12px;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
     border: 1px solid var(--line-base);
-    border-radius: var(--r-pill);
-    color: var(--c-muted);
+    border-radius: var(--r-sm);
+    background: var(--c-s3);
+    color: var(--c-body);
     font-size: 13px;
+    font-weight: 500;
     transition:
-      transform var(--m-quick),
-      color var(--m-quick),
-      border-color var(--m-quick),
-      background var(--m-quick);
+      background var(--m-snap),
+      border-color var(--m-snap),
+      color var(--m-snap);
   }
 
   .tags a:hover {
     text-decoration: none;
-    transform: translateY(-2px);
-    color: var(--mood);
-    border-color: color-mix(in srgb, var(--mood) 50%, transparent);
-    background: color-mix(in srgb, var(--mood) 9%, transparent);
+    color: var(--c-ink);
+    background: var(--c-s2);
+    border-color: var(--line-strong);
   }
 
   /* ── 上下篇：左右不对称地撑开，鼠标移上去才显出方向 ───── */
@@ -277,11 +281,10 @@ const readMinutes = Math.max(1, Math.round(words / 400));
     background: transparent;
   }
 
+  /* WinUI 的 Caption 是 12px、常规字距，不做大写宽字距 */
   .pn-dir {
-    font-family: var(--mono);
-    font-size: 11.5px;
-    letter-spacing: 1.4px;
-    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0;
     color: var(--c-faint);
   }
 

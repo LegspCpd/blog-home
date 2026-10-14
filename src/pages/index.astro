@@ -3,7 +3,6 @@ import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
 import PostCard from "../components/win/PostCard.astro";
 import { POSTS_PER_PAGE, SITE } from "../config/site";
-import { moodOf } from "../styles/design";
 
 const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
@@ -23,14 +22,12 @@ for (const p of posts) for (const t of p.data.tags) tally.set(t, (tally.get(t) ?
 const tags = [...tally.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
 const maxCount = tags[0]?.[1] ?? 1;
 
-/* 页面的整体情绪色取自最新一篇文章 */
-const accent = moodOf(slice[0]?.id ?? "home");
 ---
 
 <Base title={current > 1 ? `第 ${current} 页` : undefined}>
   {
     current === 1 ? (
-      <section class="hero" style={`--accent:${accent}`}>
+      <section class="hero">
         <p class="eyebrow">{SITE.subtitle}</p>
         <h1 class="hero-title">
           写点<span class="accent">有意思</span>的东西
@@ -134,22 +131,12 @@ const accent = moodOf(slice[0]?.id ?? "home");
     color: var(--c-ink);
   }
 
+  /* 强调词：统一强调色 + 拉丁词紧字距。
+     原来是"每个内容取一个情绪色 + 发光"，WinUI 没有文字发光，
+     也没有按内容换色。 */
   .accent {
+    color: var(--c-neon-volt);
     letter-spacing: -0.6px;
-  }
-
-  /* 一个词的霓虹：带辉光，悬停时更亮 */
-  .accent {
-    color: var(--accent);
-    text-shadow: 0 0 22px color-mix(in srgb, var(--accent) 45%, transparent);
-    transition:
-      text-shadow var(--m-quick),
-      filter var(--m-quick);
-  }
-
-  .hero-title:hover .accent {
-    text-shadow: 0 0 34px color-mix(in srgb, var(--accent) 75%, transparent);
-    filter: brightness(1.12);
   }
 
   .hero-sub {
