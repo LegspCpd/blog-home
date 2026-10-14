@@ -124,8 +124,31 @@ function onShellClick(event: MouseEvent) {
   }
 }
 
-onMounted(() => rootEl.value?.addEventListener("click", onShellClick));
-onBeforeUnmount(() => rootEl.value?.removeEventListener("click", onShellClick));
+onMounted(() => {
+  rootEl.value?.addEventListener("click", onShellClick);
+  /**
+   * 打开「固定视口」模式。
+   *
+   * 上游的 NavigationView 本来就是按**固定高度的应用框架**设计的：
+   *   .win-nav-shell      height:100%           ← 要求父容器有确定高度
+   *   .win-nav-left-panel display:flex; column  ← 页脚靠它贴底
+   *   .win-nav-content    flex:1 1 auto; min-height:0
+   *
+   * 而本站原先把外壳留在普通文档流里（.winui-app 的高度 = 内容高度），
+   * 整套模型就塌了：侧边栏跟着长到 1982px，RSS / GitHub / 设置
+   * 被推到 y=1979 —— 也就是必须把页面拉到最底部才看得见。
+   *
+   * 这里给 <html> 加一个标记，由 Base 的全局样式把它变成
+   * 「100vh 的 flex 框架 + 内容区自己滚」。
+   * 用标记而不是直接写死样式，是为了**静态 HTML 的回退内容不被裁掉** ——
+   * JS 没跑起来时不会加上这个类，页面仍是普通可滚动的文档。
+   */
+  document.documentElement.classList.add("shell-ready");
+});
+onBeforeUnmount(() => {
+  rootEl.value?.removeEventListener("click", onShellClick);
+  document.documentElement.classList.remove("shell-ready");
+});
 
 /**
  * ★ 把 XAML 事件处理函数交给运行时 —— 不写这一段，点击导航就完全没反应。
@@ -267,15 +290,76 @@ function onQuerySubmitted(args: any) {
 }
 
 
-.win-nav-content-inner {
-  padding-left: 24px;
-  padding-right: 24px;
+/*
+ * 固定视口框架 —— 这几条是整个界面的地基。
+ *
+ * 上游的 NavigationView 本来就是按「固定高度的应用框架」设计的：
+ *   .win-nav-shell      height:100%           ← 要求父容器有确定高度
+ *   .win-nav-left-panel display:flex; column  ← 页脚靠它贴底
+ *   .win-nav-content    flex:1 1 auto; min-height:0
+ *
+ * 这里原来写的是 `.winui-app { min-height: 100dvh }`。min-height 会随内容长高，
+ * 于是父容器始终没有确定高度，整套模型就塌了 —— 实测：
+ *   页面总高 2020px、侧边栏 1982px（而不是视口 900px）、
+ *   RSS/GitHub/设置 被推到 y=1899/1939/1979。
+ * 也就是必须把页面拉到最底部才看得见「设置」，而它本该常驻左下角。
+ *
+ * 规则挂在 html.shell-ready 下（由本组件 onMounted 时加上这个类）：
+ * JS 没跑起来时不会加，静态回退内容仍是普通可滚动的文档，不会被裁掉。
+ */
+html.shell-ready,
+html.shell-ready body {
+  height: 100%;
+  overflow: hidden;
 }
 
-.winui-app {
+/* 确定高度，而不是 min-height。
+   display:flex 必须留着：外壳靠它把标题栏和 NavigationView 竖排，
+   并让 NavigationView 收缩到「视口高度 − 标题栏高度」。
+   （我上一版替换这段样式时把 display:flex 一起删掉了，
+     结果 flex 收缩不发生、侧边栏又长回内容高度 —— 是量出来才发现的。） */
+html.shell-ready .winui-app {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 标题栏不参与收缩。
+   上游给的是 flex:0 1 auto（可收缩），而 NavigationView 的基准高度远大于容器，
+   两者按比例一起被压缩 —— 实测标题栏从 32px 被压成 14px。 */
+html.shell-ready .win-titlebar {
+  flex: 0 0 auto;
+}
+
+/* NavigationView 吃掉标题栏以下的全部高度。
+   height:auto 必须显式写：上游那句 height:100% 是相对 .winui-app 算的，
+   会把标题栏的高度也算进去 —— 实测底边落到 932px、超出视口 32px，
+   于是最底下的「设置」被裁掉。flex:1 自己会算出正确的剩余高度。 */
+html.shell-ready .win-nav-shell {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+
+/* 侧边栏撑满这块高度，页脚（RSS / GitHub / 设置）就能常驻底部 */
+html.shell-ready .win-nav-left-panel {
+  height: 100%;
+}
+
+/* 内容区自己滚。
+   上游把这一层设成 overflow:hidden —— 它假设页面内容被放进一个 Frame 由 Frame 滚。
+   我们没有 Frame，就由这一层当滚动容器。 */
+html.shell-ready .win-nav-content-inner {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-left: 24px;
+  padding-right: 24px;
+  /* 这一层的子元素被上游设了 max-height:100%，会把内容压扁到视口高度、滚不动 */
+  > * {
+    max-height: none;
+  }
 }
 
 .winui-content {

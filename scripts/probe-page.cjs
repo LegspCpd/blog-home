@@ -319,8 +319,14 @@ function launchChrome() {
 
   // PROBE_SCROLL=bottom 时先滚到底再截图（看页脚、上一篇/下一篇这类底部内容）
   if (process.env.PROBE_SCROLL === "bottom") {
+    // 注意：WinUI 外壳是固定视口框架，页面本身不滚 ——
+    // 滚动发生在内容区 .win-nav-content-inner 内部。
     await send("Runtime.evaluate", {
-      expression: "window.scrollTo(0, document.body.scrollHeight)",
+      expression: `(() => {
+        const inner = document.querySelector(".win-nav-content-inner");
+        if (inner && inner.scrollHeight > inner.clientHeight) { inner.scrollTop = inner.scrollHeight; return; }
+        window.scrollTo(0, document.body.scrollHeight);
+      })()`,
     });
     await sleep(600);
   }
