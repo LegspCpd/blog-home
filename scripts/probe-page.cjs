@@ -246,7 +246,7 @@ function launchChrome() {
 
   const errs = [];
   for (const e of evs) {
-    if (e.method === "Runtime.consoleAPICalled" && process.env.PROBE_CLICK) {
+    if (e.method === "Runtime.consoleAPICalled" && (process.env.PROBE_CLICK || process.env.PROBE_EVAL)) {
       errs.push(`[${e.params.type}] ` + e.params.args.map((a) => a.value ?? a.description).join(" ").slice(0, 500));
       continue;
     }
@@ -274,7 +274,10 @@ function launchChrome() {
       expression: process.env.PROBE_EVAL,
     });
     console.log("EVAL: " + JSON.stringify(r.result?.result?.value ?? r.result?.exceptionDetails?.exception?.description ?? r.result));
-    await sleep(1200);
+    // 表达式里如果触发了跳转，执行上下文会被销毁、awaitPromise 永远不返回，
+    // 于是这里读到 undefined —— 那本身往往就是"跳转成功"的信号。
+    // 想拿到确定的答案，用 PROBE_SETTLE 给足新文档提交的时间，再看下面的 URL。
+    await sleep(Number(process.env.PROBE_SETTLE || 1200));
     const after = await send("Runtime.evaluate", { returnByValue: true, expression: "location.href" });
     console.log("EVAL: 执行后 URL = " + after.result?.result?.value);
   }

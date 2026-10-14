@@ -1,10 +1,38 @@
 ---
+import { ClientRouter } from "astro:transitions";
 import { SITE, NAV, abs } from "../config/site";
 import { designVars } from "../styles/design";
 import { getSearchIndex } from "../lib/search";
 import Footer from "../components/win/Footer.astro";
 import WinShell from "../components/win/WinShell.vue";
 import "../styles/global.css";
+
+/**
+ * ★ 页面转场 —— 对标 WinUI 3 的 drill-in。
+ *
+ * WinUI 的页面切换不是简单的淡入淡出，而是有**方向感**的：
+ *   · 前进（点进下一层）：新内容从右侧滑入，旧内容淡出
+ *   · 后退（回上一层）：反过来，从左侧滑入
+ * 这正是"像是在导航层级里移动"而不是"换了一页"的来源。
+ *
+ * Astro 的 transition:animate 正好支持有方向的动画
+ * （TransitionDirectionalAnimations：forwards / backwards）。
+ *
+ * 数值取 Fluent 的运动规范：
+ *   进入 300ms + 减速曲线 cubic-bezier(0, 0, 0, 1)
+ *   退出 167ms + 加速曲线 cubic-bezier(0.8, 0, 0.2, 1)
+ * 关键帧定义在 src/styles/global.css（要全局可见）。
+ */
+const pageTransition = {
+  forwards: {
+    old: { name: "winui-page-out", duration: "167ms", easing: "cubic-bezier(0.8, 0, 0.2, 1)", fillMode: "both" },
+    new: { name: "winui-page-in", duration: "300ms", easing: "cubic-bezier(0, 0, 0, 1)", fillMode: "both" },
+  },
+  backwards: {
+    old: { name: "winui-page-out", duration: "167ms", easing: "cubic-bezier(0.8, 0, 0.2, 1)", fillMode: "both" },
+    new: { name: "winui-page-in-back", duration: "300ms", easing: "cubic-bezier(0, 0, 0, 1)", fillMode: "both" },
+  },
+};
 
 /**
  * 导航数据交给 Vue 外壳。
@@ -128,7 +156,13 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
   但 --text-primary / ControlStroke 等仍是浅色值 ——
   实测表现为窗格里的搜索框是黑字黑边，在深色底上完全看不清。
 -->
-<html lang={SITE.lang} class="theme-dark">
+<!--
+  shell-ready：把外壳变成「固定视口框架」。
+  这个类从前是客户端挂载后才加的，现在**服务端就加上** ——
+  因为服务端已经能渲染出一份几何一致的静态骨架（见 WinShell.vue），
+  首屏就必须是固定框架，否则骨架会先按普通文档流铺一遍、再跳成框架。
+-->
+<html lang={SITE.lang} class="theme-dark shell-ready">
   <head>
     <meta charset="UTF-8" />
     <style set:html={`:root{${vars}}`}></style>
@@ -145,6 +179,17 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+
+    <!--
+      ★ 站内跳转（客户端路由）。
+      没有它，每次点导航都是一次整页重载：重新下载 HTML/CSS/JS、
+      重新水合那套 WinUI 组件（约 2.2MB）—— 慢，而且一定会闪。
+      有了它，导航 = fetch 新页面的 HTML + 换掉 <body>，外壳不动。
+
+      动画对标 WinUI 3 的页面转场：内容是淡入 + 轻微上移，
+      时长 300ms、用 Fluent 的减速曲线（见下方 pageTransition）。
+    -->
+    <ClientRouter />
 
     <!-- RSS：博客必备 -->
     <link
@@ -205,11 +250,34 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
     <a class="skip-link" href="#main">跳到主内容</a>
 
     <!--
+      ★ 把手动导航暴露给 WinUI 外壳。
+
+      ClientRouter 只拦截 <a> 的点击，而 NavigationView 的菜单项渲染出来是
+      <div role="menuitem">，命中不了 —— 所以外壳必须自己发起导航。
+
+      为什么不直接在 Vue 组件里 import：`astro:transitions/client` 是 Astro 的
+      **虚拟模块**，只有 Astro 处理的脚本能静态解析它。我在 Vue 里写成
+      `await import(...)` 时运行时是 "Failed to fetch dynamically imported module"，
+      写成静态 import 也拿不到可靠结果。放在这里最稳，也顺带避免了两套解析路径。
+
+      兜底：脚本没跑起来时 Vue 那边会用 location.href，功能不受影响。
+    -->
+    <script>
+      import { navigate } from "astro:transitions/client";
+      (window as any).__winuiNavigate = (href: string) => navigate(href);
+    </script>
+
+    <!--
       WinUI 3 应用壳（TitleBar + NavigationView）。
       用 client:load 而不是 client:only：子内容会被 Astro 渲染成
       astro-slot 注入 island，<slot /> 拿到之后正文就是服务端渲染的
       静态 HTML，SEO 与 RSS 都不受影响。
       （WinUI 控件本身在客户端动态加载，见 WinShell.vue 的说明。）
+
+      transition:persist 让这个 island 在站内跳转时**不重建**：
+      侧边栏、搜索框、滚动位置都保持，只有 <slot/> 里的正文被换掉。
+      不写它的话，每次导航外壳都会先消失再重新挂载 —— 那一下闪烁
+      正是"不像原生应用"的主要来源。
     -->
     <WinShell
       client:load
@@ -219,7 +287,7 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
       siteTitle={SITE.title}
       searchIndex={searchIndex}
     >
-      <main id="main" class="page-main" tabindex="-1">
+      <main id="main" class="page-main" tabindex="-1" transition:animate={pageTransition}>
         <slot />
       </main>
       <Footer />

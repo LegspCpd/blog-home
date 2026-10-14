@@ -134,3 +134,31 @@ kbd {
   background: rgba(0, 229, 154, 0.26);
   color: #fff;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   页面转场的关键帧（对标 WinUI 3 的 drill-in）
+   —— 由 Base.astro 的 pageTransition 引用，名字必须对得上。
+   前进：从右侧滑入；后退：从左侧滑入。位移刻意小（28px），
+   WinUI 的层次感来自方向 + 缓动，不是大幅度位移。
+   ══════════════════════════════════════════════════════════════ */
+@keyframes winui-page-in {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes winui-page-in-back {
+  from { opacity: 0; transform: translateX(-28px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes winui-page-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* 尊重系统的"减少动态效果"：直接关掉，而不是播一个很短的动画 */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

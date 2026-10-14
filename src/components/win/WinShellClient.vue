@@ -102,6 +102,27 @@ const rootEl = ref<HTMLElement | null>(null);
  *
  * 附带的好处：以后若要接回 ItemInvoked，把 removeEventListener 那段去掉即可。
  */
+/**
+ * 站内跳转。
+ *
+ * 不能再用 `location.href = href` —— 那是**整页重载**：
+ * 重新下载 HTML/CSS/JS、重新水合整套 WinUI 组件（约 2.2MB），
+ * 又慢又一定会闪一下，这是"不像原生应用"最主要的来源。
+ *
+ * Astro 的 navigate() 走客户端路由：fetch 新页面的 HTML、只换 <body>，
+ * 外壳因为有 transition:persist 而完全不重建
+ * （侧边栏、搜索词、滚动位置全都留着）。
+ *
+ * 注意必须**静态导入**：`astro:transitions/client` 是 Astro 的虚拟模块，
+ * 只在构建期解析 —— 我一开始写成 `await import(...)`，运行时直接
+ * "Failed to fetch dynamically imported module"，导航静默失败。
+ */
+function goTo(href: string) {
+  const router = (window as unknown as { __winuiNavigate?: (h: string) => void }).__winuiNavigate;
+  if (router) router(href);
+  else location.href = href;   // 兜底：脚本没跑起来时退回整页跳转
+}
+
 function onShellClick(event: MouseEvent) {
   const target = event.target as HTMLElement | null;
   const item = target?.closest?.(".win-nav-item");
@@ -111,7 +132,7 @@ function onShellClick(event: MouseEvent) {
   const href = item.getAttribute("data-xaml-ref");
   if (href) {
     if (href.startsWith("/")) {
-      if (href !== location.pathname) location.href = href;
+      if (href !== location.pathname) void goTo(href);
     } else if (/^https?:/.test(href)) {
       window.open(href, "_blank", "noopener");
     }
@@ -120,34 +141,15 @@ function onShellClick(event: MouseEvent) {
 
   // 「设置」项是 NavigationView 内置的，不会带我们的 x:Name
   if (item.getAttribute("data-navigation-value") === "settings") {
-    if (location.pathname !== "/settings/") location.href = "/settings/";
+    if (location.pathname !== "/settings/") void goTo("/settings/");
   }
 }
 
 onMounted(() => {
   rootEl.value?.addEventListener("click", onShellClick);
-  /**
-   * 打开「固定视口」模式。
-   *
-   * 上游的 NavigationView 本来就是按**固定高度的应用框架**设计的：
-   *   .win-nav-shell      height:100%           ← 要求父容器有确定高度
-   *   .win-nav-left-panel display:flex; column  ← 页脚靠它贴底
-   *   .win-nav-content    flex:1 1 auto; min-height:0
-   *
-   * 而本站原先把外壳留在普通文档流里（.winui-app 的高度 = 内容高度），
-   * 整套模型就塌了：侧边栏跟着长到 1982px，RSS / GitHub / 设置
-   * 被推到 y=1979 —— 也就是必须把页面拉到最底部才看得见。
-   *
-   * 这里给 <html> 加一个标记，由 Base 的全局样式把它变成
-   * 「100vh 的 flex 框架 + 内容区自己滚」。
-   * 用标记而不是直接写死样式，是为了**静态 HTML 的回退内容不被裁掉** ——
-   * JS 没跑起来时不会加上这个类，页面仍是普通可滚动的文档。
-   */
-  document.documentElement.classList.add("shell-ready");
 });
 onBeforeUnmount(() => {
   rootEl.value?.removeEventListener("click", onShellClick);
-  document.documentElement.classList.remove("shell-ready");
 });
 
 /**
@@ -183,7 +185,7 @@ provide(xamlScopeKey, {
  * 否则会得到一个点了没反应的菜单项。
  */
 function onItemInvoked(args: any) {
-  if (args?.IsSettingsInvoked) {
+    if (args?.IsSettingsInvoked) {
     if (props.path !== "/settings/") location.href = "/settings/";
     return;
   }
@@ -247,7 +249,7 @@ function onQuerySubmitted(args: any) {
     </TitleBar>
 
     <NavigationView
-      PaneDisplayMode="Left"
+      PaneDisplayMode="Auto"
       :MenuItemsSource="items"
       :FooterMenuItemsSource="footerItems ?? []"
       :SelectedItem="selected"
