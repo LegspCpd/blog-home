@@ -357,6 +357,99 @@ NavigationView 的 `Header` 是客户端渲染的。把页面标题放进它，�
 再 `pnpm install && pnpm build` —— 这才是别的构建器的真实环境。
 实测 53 页、产物齐全。推送后 **15 秒内线上就更新了**。
 
+
+## 20. 布局根因、断点、站内跳转、外壳骨架（本轮）
+
+### 20.1 ★ 外壳没有脱离文档流 —— "很多位置都是错误的"的共同根因
+
+我把 `.winui-app` 写成了 `min-height: 100dvh`。**min-height 会随内容长高**，
+父容器于是永远没有确定高度 —— 而上游的 NavigationView 整个建立在确定高度上：
+
+```
+.win-nav-shell       height:100%          ← 要求父容器有确定高度
+.win-nav-left-panel  display:flex; column ← 页脚靠它贴底
+.win-nav-content     flex:1 1 auto; min-height:0
+```
+
+实测症状：页面总高 2020px、侧边栏 1982px（而不是视口 900px）、
+RSS/GitHub/设置 被推到 y=1899/1939/1979 —— 必须把页面拉到底部才看得见「设置」。
+
+改法：`html.shell-ready` 下面变成确定的 100vh flex 框架，只有内容区自己滚。
+**这个类现在由服务端渲染时加上**（见 20.4，骨架需要它）。
+
+连带量出来两个：`.win-nav-shell` 的 `height:100%` 把标题栏也算进去、
+底边落到 932px 超出视口（设置被裁）；标题栏上游是 `flex:0 1 auto`
+可收缩，基准高度远大于容器时被压成 14px。都要显式覆盖。
+
+### 20.2 ★ 断点完全失效（我一开始就写错的）
+
+模板里是 `PaneDisplayMode="Left"`，而上游：
+
+```js
+if (normalizedPaneDisplayMode.value !== 'Auto') return normalizedPaneDisplayMode.value;  // ← 直接返回
+if (width >= 1008) return 'Left'; if (width >= 641) return 'LeftCompact'; return 'LeftMinimal';
+```
+
+**只有 `Auto`（WinUI 的默认值）才会走到断点分支。** 改成 `Auto` 后：
+1440/1100 展开、1000/900/700 紧凑（48px 图标栏）、600/480 最小（抽屉）。
+之前 480px 手机上侧边栏还占 322px，正文只剩 160px、h1 跑到视口外。
+
+### 20.3 站内跳转（ClientRouter）与两个坑
+
+加 `ClientRouter`，导航不再用 `location.href`（整页重载会重新水合
+约 2.2MB 的 WinUI 组件）。两个坑：
+
+1. **`astro:transitions/client` 是虚拟模块**：在 Vue 组件里
+   `await import(...)` 运行时是 "Failed to fetch dynamically imported module"，
+   静态 import 也不可靠。改成在 `Base.astro` 的页面脚本里暴露
+   `window.__winuiNavigate`，Vue 侧只调用它 —— 菜单项本来就是 div，
+   ClientRouter 的 `<a>` 拦截命中不了它们，必须手动导航。
+2. **`transition:persist` 会让站内跳转直接失效**：title 换了、body 没换、
+   URL 不变。因为被 persist 的 island 里正装着要替换的正文。
+   去掉它，转场立刻正常。
+
+### 20.4 ★ 服务端外壳骨架（消除 155ms 闪空）
+
+实测导航时外壳消失 **155ms**（22ms 消失、177ms 恢复）。冷启动同理：
+先看到光秃秃的正文，然后侧边栏才长出来 —— 这正是"不像原生应用"的主因。
+
+`WinShell.vue` 的 SSR 分支现在渲染一份**几何完全一致**的静态骨架
+（类名与真实外壳相同，所以吃到同一套框架样式），挂载后由真实外壳原样接管。
+骨架里的菜单项用**真正的 `<a>`**：刻意的渐进增强 ——
+JS 没起来时侧边栏照样能导航（真实外壳的菜单项是 div，没 JS 完全点不动）。
+
+结果：外壳消失时间 = null，间隙 = 0ms。
+
+### 20.5 页面转场对标 WinUI 的 drill-in
+
+Astro 的 `transition:animate` 支持有方向的动画（forwards/backwards），
+正好是 drill-in 的语义。前进：新内容从右侧滑入 28px + 淡入，
+300ms + `cubic-bezier(0,0,0,1)`；退出：167ms + `cubic-bezier(0.8,0,0.2,1)`。
+位移刻意小 —— WinUI 的层次感来自方向与缓动，不是大幅度位移。
+另用 `prefers-reduced-motion` 直接关掉。
+
+### 20.6 新增工具：`scripts/audit-viewports.cjs`
+
+多视口几何审计。**之前只在 1440px 下量，漏掉了整类窄屏塌陷** ——
+断点失效就是这么漏过去的。用法：`node scripts/audit-viewports.cjs /`。
+
+### 20.7 教训汇总（本轮）
+
+- **只在一个视口下量，会漏掉整类问题**；WinUI 是自适应的，必须多视口。
+- **验收要放在行为之后、并给足时间**：我说过"线上导航无效"，
+  其实是只等了 1200ms、新文档还没提交；加可调等待后一切正常。
+- **失败不要归因于外部**：我一度以为是 EdgeOne 的问题，
+  实际是 `transition:persist` 挡住了 body 交换。
+- 别把临时产物提交进仓库：`scripts/audit-viewports.cjs` 第一次跑
+  把 `.chrome-audit/`（785 个文件）带进了提交，已清除并改到系统临时目录。
+
+## 21. 工作区约定
+
+`F:\web
+ew blog\Supabase` 与 DSH 自带的默认工作区**并列**，两者都算工作区。
+用户明确说「原有的工作区文件不算」—— 两边文件不要混为一谈。
+（已写进持久记忆 mem_1791969068074_eb4cae。）
+
 ## 6. 验证方法（**必须这么做，不要用截图代替**）
 
 ### 主力工具：`scripts/probe-page.cjs`
