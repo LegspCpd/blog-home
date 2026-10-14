@@ -49,27 +49,6 @@ jobs:
 
       # 顺序要紧：pnpm/action-setup 必须在 setup-node 之前，
       # 否则 setup-node 的 cache: pnpm 找不到 pnpm 可执行文件而失败。
-      # ---- 克隆 WinUIonWeb 上游源码 ----
-      # 它不是 npm 依赖：NavigationViewMenuItems 这类 XAML 属性组件只在
-      # 上游的 src/ 里，不在包出口（package.json 只暴露 dist-lib）。
-      # 路径必须是 ../WinUIonWeb/WinUIonWeb，与 astro.config.mjs 的
-      # winui-src 别名一致。钉住 commit，保证构建可复现。
-      - name: Checkout WinUIonWeb upstream
-        run: |
-          set -euo pipefail
-          git clone --quiet https://github.com/Furry-Xiyi/WinUIonWeb.git ../WinUIonWeb
-          git -C ../WinUIonWeb checkout --quiet e3bef96
-          test -d ../WinUIonWeb/WinUIonWeb/src             || { echo "::error::上游 src 目录不存在，别名会解析失败"; exit 1; }
-
-          # 删掉上游的 tsconfig。它们 extends 的是上游自己的 devDependency
-          # （@tsconfig/node24、@vue/tsconfig），而我们只克隆源码、不装上游依赖，
-          # 于是 Vite 处理 ../WinUIonWeb/... 下的文件时解析失败：
-          #   Tsconfig not found @tsconfig/node24/tsconfig.json
-          # 我们不需要它们：上游组件全部用相对导入，没有 paths 别名。
-          # 删掉之后 Vite 回退到本仓库的 tsconfig —— 本机已实测同样能构建。
-          rm -f ../WinUIonWeb/WinUIonWeb/tsconfig*.json
-          echo "WinUIonWeb @ $(git -C ../WinUIonWeb rev-parse --short HEAD)"
-
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4

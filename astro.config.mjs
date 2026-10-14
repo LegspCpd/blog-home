@@ -8,27 +8,29 @@ import { fileURLToPath } from "node:url";
 import { SITE } from "./src/config/site";
 
 /**
- * WinUIonWeb 的上游源码目录。
+ * WinUIonWeb 组件库 —— **已内联进本仓库**（vendor/winuionweb）。
  *
- * 为什么是"仓库之外的本地路径"而不是 npm 依赖：
- * 上游的 package.json 只把 dist-lib 暴露为 exports，而
- * NavigationViewMenuItems / NavigationViewItem 这类 XAML 属性组件
- * **只存在于 src/components/*.ts，不在包出口里**。用包根具名导入会得到
- * MISSING_EXPORT，NavigationView 只能渲染空壳。
- * pnpm 对 file: 依赖还会按 files 字段裁剪，src 根本不会进 node_modules。
+ * 为什么内联而不是从外部目录读：
+ * 这台机器上原本是 alias 到 `../WinUIonWeb/WinUIonWeb/src`（仓库之外的兄弟目录）。
+ * 本机能跑，但**任何只拿这个仓库的构建器都会失败** ——
+ * 包括 EdgeOne Pages 的 Git 自动部署（它只拿仓库本身，跑不了克隆步骤）。
+ * 现象极具迷惑性：本地一切正常、我们自己的 CI 也能过（因为 CI 里加了克隆），
+ * 但线上一直停在"最后一个构建成功的版本"，也就是加 WinUIonWeb 之前的旧界面。
  *
- * 历史上这里挂过一个 `"winuionweb": "file:..\\WinUIonWeb\\WinUIonWeb"` 依赖，
- * 那个依赖**从来没被任何代码按包名 import 过**，却让
- * `pnpm install` 在这个仓库以外的任何机器上直接失败：
- *   ENOENT: no such file or directory, scandir '.../WinUIonWeb/WinUIonWeb'
- * 也就是说 GitHub Actions 上 CI 与部署一直是红的。现已移除，
- * 上游改由 CI 在构建前克隆（见 .github/workflows/*.yml）。
+ * 为什么内联"源码"而不是上游的 dist-lib：
+ * 上游的库构建只导出主控件，`NavigationViewMenuItems` / `NavigationViewItem`
+ * 这类 XAML 属性组件**只在 src/ 里**，用包出口的具名导入会 MISSING_EXPORT，
+ * NavigationView 只能渲染空壳。所以必须吃源码。
+ *
+ * 内联范围（4.8 MB / 297 文件）：components、utils、styles、index.ts。
+ * 上游的 assets(5.6M) 与 gallery(3.5M) 是它自己的 demo 应用，与本项目无关，
+ * 已排除；components 只反向依赖 utils/navigationTransitionInfo，不碰那两块。
+ *
+ * 更新上游：node scripts/sync-winui.mjs
  */
-const WINUI_SRC = fileURLToPath(
-  new URL("../WinUIonWeb/WinUIonWeb/src", import.meta.url)
-);
-/** 上游仓库根目录（src 的上一层），用于判断某个文件是否属于上游 */
-const WINUI_DIR = path.dirname(WINUI_SRC);
+const WINUI_SRC = fileURLToPath(new URL("./vendor/winuionweb", import.meta.url));
+/** 内联目录（用于判断某个文件是否属于组件库） */
+const WINUI_DIR = WINUI_SRC;
 /** 本仓库根目录 */
 const ROOT_DIR = fileURLToPath(new URL(".", import.meta.url));
 
@@ -122,47 +124,6 @@ export default defineConfig({
    * 所以这里 alias 到克隆下来的上游源码目录，直接吃它的原始实现。
    */
   vite: {
-    plugins: [
-      /**
-       * 让上游源码的裸模块导入走**我们的** node_modules。
-       *
-       * 上游目录在仓库之外，而 Vite 解析裸导入是从**引用方所在目录**向上找
-       * node_modules —— 从 `../WinUIonWeb/WinUIonWeb/src/` 一路上溯，
-       * 根本走不到 `Supabase/node_modules`（两者是兄弟目录，不是祖先关系）。
-       *
-       * 本机之所以一直没暴露：上游目录里恰好有它自己的 node_modules。
-       * CI 只克隆源码、不装上游依赖，于是构建直接失败：
-       *   Rolldown failed to resolve import "mathlive/ssr"
-       *     from ".../WinUIonWeb/WinUIonWeb/src/components/richEditDocument.ts"
-       *
-       * 这里把「上游文件发出的裸导入」用本仓库内的一个路径作为引用方重新解析，
-       * 强制命中我们的 node_modules。这样上游的运行时依赖
-       * （mathlive、rtf.js）只需在本仓库声明一次即可。
-       */
-      {
-        name: "winui-upstream-deps",
-        enforce: "pre",
-        async resolveId(source, importer) {
-          if (!importer) return null;
-          if (!importer.replace(/\\/g, "/").startsWith(WINUI_DIR_SLASH)) return null;
-          // 相对 / 绝对 / 虚拟模块，以及别名，都交给默认解析
-          if (
-            source.startsWith(".") ||
-            source.startsWith("/") ||
-            source.startsWith("\0") ||
-            source.startsWith("winui-src")
-          ) {
-            return null;
-          }
-          const resolved = await this.resolve(
-            source,
-            path.join(ROOT_DIR, "package.json"),
-            { skipSelf: true }
-          );
-          return resolved ?? null;
-        },
-      },
-    ],
     resolve: {
       alias: {
         "winui-src": WINUI_SRC,
