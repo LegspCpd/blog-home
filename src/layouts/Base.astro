@@ -201,9 +201,19 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
     <!--
       图标。注意路径是 /favicon/favicon.ico ——
       这里原来写的是 /favicon.ico，全站 54 个页面每次访问都在请求一个不存在的文件。
-      深浅两套分开声明，跟随系统主题。
+
+      这一组原来的问题是"各处显示的不是同一个东西"：
+        · favicon.ico 声明成 sizes="any"，浏览器会**优先选它**（any 被当成可缩放、
+          优先级最高），而它是深色底 —— 深色主题的标签栏上几乎看不见，
+          又和标题栏用的白色图标对不上。
+        · ico 本身还是坏的：33x32、单尺寸、BMP。宽度都不是 32。
+        · 128 / 192 两张图导出了但**从来没有被引用过**。
+        · 没有 manifest，安卓加到主屏只能拿到一个模糊的兜底图标。
+        · apple-touch-icon 四角是透明的，iOS 会把透明角落填成黑色。
+      现在：ico 改成多尺寸内嵌 PNG 并去掉 sizes="any"（让主题化的 PNG 优先），
+      补齐 192 / manifest / maskable / Windows 磁贴。
     -->
-    <link rel="icon" href="/favicon/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon/favicon.ico" sizes="16x16 32x32 48x48" />
     <link
       rel="icon"
       type="image/png"
@@ -218,7 +228,16 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
       sizes="32x32"
       media="(prefers-color-scheme: dark)"
     />
-    <link rel="apple-touch-icon" href="/favicon/favicon-dark-180.png" />
+    <!-- 安卓 / PWA：声明出来，否则并入主屏会用兜底图标 -->
+    <link rel="icon" type="image/png" href="/favicon/favicon-light-192.png" sizes="192x192" />
+    <link rel="icon" type="image/png" href="/favicon/favicon-dark-512.png" sizes="512x512" />
+    <!-- 满幅不透明版：iOS 会自己加圆角遮罩，不能用带透明角落的图 -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <!-- Windows 开始菜单磁贴（本站主题就是 WinUI，顺手补上） -->
+    <meta name="msapplication-TileColor" content="#1e212b" />
+    <meta name="msapplication-TileImage" content="/favicon/maskable-192.png" />
+    <meta name="theme-color" content="#1e212b" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <!-- Open Graph -->
@@ -250,6 +269,25 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
     <a class="skip-link" href="#main">跳到主内容</a>
 
     <!--
+      ★ 顶部加载条。
+
+      为什么需要它：线上实测站内跳转取 HTML 要 65–736ms（延迟全在取 HTML 这一步，
+      其余环节都在 20ms 内），而这段时间**页面上没有任何反馈** —— 点下去像没反应。
+      加载条把"死等"变成"看得见在进行"。
+
+      动效用的是 Google Material 的不确定进度条：两条滑块各自
+      先伸长再缩短地扫过，比单纯左右来回更耐看，也是用户点名要的那种。
+
+      transition:persist 让它跨页存活 —— 否则每次导航 body 一换，
+      进度条就被重置成隐藏状态，等它重新出现时加载早就结束了。
+      它只是个普通 div（不是 island），所以不会像外壳那样挡住 body 交换。
+    -->
+    <div id="nav-progress" class="nav-progress" transition:persist aria-hidden="true">
+      <div class="nav-progress-bar"></div>
+      <div class="nav-progress-bar nav-progress-bar--second"></div>
+    </div>
+
+    <!--
       ★ 把手动导航暴露给 WinUI 外壳。
 
       ClientRouter 只拦截 <a> 的点击，而 NavigationView 的菜单项渲染出来是
@@ -264,7 +302,74 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
     -->
     <script>
       import { navigate } from "astro:transitions/client";
+
       (window as any).__winuiNavigate = (href: string) => navigate(href);
+
+      /**
+       * 预取。
+       *
+       * 线上实测：站内跳转的耗时**全在取 HTML**（65–736ms），
+       * 交换与渲染合起来不到 20ms。也就是说"慢"是网络往返，不是我们算得慢。
+       *
+       * HTML 的缓存头是 `public,max-age=0,must-revalidate` —— 浏览器每次都要
+       * 回源验证，所以预取不能把往返完全消掉，但能让导航那次拿到的是
+       * 缓存里的副本（304 即可），省掉重新下载正文的那一段。
+       * 鼠标移上菜单项时就开始取，等真点下去通常已经就绪。
+       */
+      const prefetched = new Set<string>();
+      (window as any).__winuiPrefetch = (href: string) => {
+        if (!href || prefetched.has(href)) return;
+        prefetched.add(href);
+        fetch(href, { credentials: "same-origin", priority: "low" } as RequestInit).catch(() =>
+          prefetched.delete(href)
+        );
+      };
+
+      /**
+       * 顶部加载条。
+       *
+       * 注意它**不能**用 Astro 的导航事件之外的时机来显示：
+       * 首次进入页面时浏览器有自己的加载指示，我们只在站内跳转时显示，
+       * 否则会变成"永远在转"的噪音。
+       *
+       * 至少显示 MIN_VISIBLE 毫秒：网络快的时候（实测最快 65ms）
+       * 如果按真实耗时闪一下，反而像抽搐 —— 这是进度条类组件的常规做法。
+       */
+      const bar = document.getElementById("nav-progress");
+      const MIN_VISIBLE = 420;
+      /** 安全上限：导航万一卡住/被取消，别让进度条永远转下去 */
+      const MAX_VISIBLE = 8000;
+      let shownAt = 0;
+      let hideTimer = 0;
+      let failSafeTimer = 0;
+
+      const show = () => {
+        if (!bar) return;
+        clearTimeout(hideTimer);
+        clearTimeout(failSafeTimer);
+        shownAt = performance.now();
+        bar.dataset.state = "loading";
+        failSafeTimer = window.setTimeout(() => {
+          bar.dataset.state = "done";
+        }, MAX_VISIBLE);
+      };
+
+      const hide = () => {
+        if (!bar) return;
+        clearTimeout(failSafeTimer);
+        const elapsed = performance.now() - shownAt;
+        // 网络快的时候（实测最快 65ms）按真实耗时闪一下反而像抽搐，
+        // 所以给一个最短展示时间 —— 进度条类组件的常规做法。
+        hideTimer = window.setTimeout(
+          () => {
+            bar.dataset.state = "done";
+          },
+          Math.max(0, MIN_VISIBLE - elapsed)
+        );
+      };
+
+      document.addEventListener("astro:before-preparation", show);
+      document.addEventListener("astro:page-load", hide);
     </script>
 
     <!--

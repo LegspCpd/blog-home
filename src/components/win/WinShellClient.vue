@@ -123,6 +123,26 @@ function goTo(href: string) {
   else location.href = href;   // 兜底：脚本没跑起来时退回整页跳转
 }
 
+/**
+ * 悬停即预取。
+ *
+ * 线上实测：站内跳转的耗时**全在取 HTML**（65–736ms），
+ * 交换与渲染合计不到 20ms。这个延迟修不掉（HTML 的缓存头是
+ * must-revalidate，每次都要回源验证），但可以**提前开始**：
+ * 鼠标移到菜单项上就先取一次，等真点下去通常已经就绪。
+ *
+ * 实测典型场景：手移到菜单再点下去，中间至少 200–300ms，
+ * 正好够一个往返。
+ */
+function onShellPointerOver(event: PointerEvent) {
+  const item = (event.target as HTMLElement | null)?.closest?.(".win-nav-item");
+  if (!item) return;
+  const href = item.getAttribute("data-xaml-ref");
+  if (!href || !href.startsWith("/")) return;
+  const prefetch = (window as unknown as { __winuiPrefetch?: (h: string) => void }).__winuiPrefetch;
+  prefetch?.(href);
+}
+
 function onShellClick(event: MouseEvent) {
   const target = event.target as HTMLElement | null;
   const item = target?.closest?.(".win-nav-item");
@@ -147,9 +167,12 @@ function onShellClick(event: MouseEvent) {
 
 onMounted(() => {
   rootEl.value?.addEventListener("click", onShellClick);
+  // pointerover 会冒泡，所以委托在根节点上就够了
+  rootEl.value?.addEventListener("pointerover", onShellPointerOver);
 });
 onBeforeUnmount(() => {
   rootEl.value?.removeEventListener("click", onShellClick);
+  rootEl.value?.removeEventListener("pointerover", onShellPointerOver);
 });
 
 /**
@@ -244,6 +267,18 @@ function onQuerySubmitted(args: any) {
     -->
     <TitleBar :Title="siteTitle" :IsPaneToggleButtonVisible="false" :IsBackButtonVisible="false">
       <TitleBarIconSource>
+        <!--
+          标题栏图标固定用 dark 那套（白色标志）。
+
+          为什么固定：应用自身永远是深色主题（<html class="theme-dark">），
+          标题栏也是深色，所以白色标志在任何系统主题下都是对的。
+          浏览器标签页的图标则相反 —— 它跟随**浏览器/系统**主题切换
+          （Base.astro 里用 prefers-color-scheme 声明了两套）。
+
+          这两者看起来"颜色不同"不属于不统一：各自都在为自己的背景选对的那一套。
+          真正要避免的是同一个背景下出现两种标志 —— 那正是 favicon.ico
+          之前写 sizes="any" 造成的问题（浏览器优先选它，深色底在深色标签栏上看不见）。
+        -->
         <ImageIconSource ImageSource="/favicon/favicon-dark-128.png" />
       </TitleBarIconSource>
     </TitleBar>

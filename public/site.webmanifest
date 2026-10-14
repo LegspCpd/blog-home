@@ -1,0 +1,37 @@
+{
+  "name": "LegspCpd Blog",
+  "short_name": "LegspCpd",
+  "description": "记录技术、生活与思考。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1e212b",
+  "theme_color": "#1e212b",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/favicon/favicon-light-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon/favicon-light-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -162,3 +162,89 @@ kbd {
     animation: none !important;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   顶部加载条（站内跳转时显示）
+
+   动效是 Google Material 的不确定进度条：两条滑块各自先伸长、
+   扫过、再缩短，比单纯左右来回更耐看。关键帧取自 Material 规范
+   （2.1s，两条错开 1.15s）。
+
+   为什么需要它：线上实测站内跳转取 HTML 要 65–736ms，
+   而这段时间页面毫无反馈 —— 点下去像没反应。
+   ══════════════════════════════════════════════════════════════ */
+.nav-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 9999;
+  overflow: hidden;
+  pointer-events: none;
+  /* 默认隐藏；加上 data-state="loading" 才出现 */
+  opacity: 0;
+  transition: opacity 220ms linear;
+}
+
+.nav-progress[data-state="loading"] {
+  opacity: 1;
+  /* 出现要立刻，不要淡入 —— 否则前 220ms 仍然是"没反应" */
+  transition: none;
+}
+
+.nav-progress-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  /*
+    宽度必须留给 left/right 决定，**不能写 width: 0**。
+    绝对定位下 left、right、width 三者同时有值时 width 优先，
+    于是条子被压成零宽、动画再怎么跑也看不见 —— 我第一版就是这么写的，
+    截图时顶部一片空白才发现。
+  */
+  width: auto;
+  background: var(--accent-base, var(--c-neon-volt, #4cc2ff));
+}
+
+.nav-progress[data-state="loading"] .nav-progress-bar {
+  animation: nav-progress-bar-1 2.1s cubic-bezier(0.65, 0.815, 0.735, 0.395) infinite;
+}
+
+.nav-progress[data-state="loading"] .nav-progress-bar--second {
+  animation: nav-progress-bar-2 2.1s cubic-bezier(0.165, 0.84, 0.44, 1) infinite;
+  animation-delay: 1.15s;
+}
+
+@keyframes nav-progress-bar-1 {
+  0%   { left: -35%; right: 100%; }
+  60%  { left: 100%; right: -90%; }
+  100% { left: 100%; right: -90%; }
+}
+
+@keyframes nav-progress-bar-2 {
+  0%   { left: -200%; right: 100%; }
+  60%  { left: 107%; right: -8%; }
+  100% { left: 107%; right: -8%; }
+}
+
+/*
+  减少动态效果：不扫动，改成整条轻轻呼吸。
+  仍然传达"正在进行"，但不做大面积位移（WCAG 2.3.3）。
+*/
+@media (prefers-reduced-motion: reduce) {
+  .nav-progress[data-state="loading"] .nav-progress-bar {
+    animation: nav-progress-pulse 1.4s ease-in-out infinite;
+    left: 0;
+    right: 0;
+    width: auto;
+  }
+  .nav-progress[data-state="loading"] .nav-progress-bar--second {
+    display: none;
+  }
+}
+
+@keyframes nav-progress-pulse {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 1; }
+}

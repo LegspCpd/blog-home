@@ -274,6 +274,9 @@ function launchChrome() {
       expression: process.env.PROBE_EVAL,
     });
     console.log("EVAL: " + JSON.stringify(r.result?.result?.value ?? r.result?.exceptionDetails?.exception?.description ?? r.result));
+    // PROBE_EVAL_THEN_WAIT：表达式跑完后额外等一会儿再截图。
+    // 动画类效果必须等它跑起来再截，否则截到的是 t=0 那一帧（往往还在屏幕外）。
+    if (process.env.PROBE_EVAL_THEN_WAIT) await sleep(Number(process.env.PROBE_EVAL_THEN_WAIT));
     // 表达式里如果触发了跳转，执行上下文会被销毁、awaitPromise 永远不返回，
     // 于是这里读到 undefined —— 那本身往往就是"跳转成功"的信号。
     // 想拿到确定的答案，用 PROBE_SETTLE 给足新文档提交的时间，再看下面的 URL。
