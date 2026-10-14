@@ -1,63 +1,48 @@
 ---
 import Base from "../layouts/Base.astro";
+import PageHeader from "../components/win/PageHeader.astro";
+
+/**
+ * 404。
+ *
+ * 原来这里有一个巨大的「404」—— 描边透明字 + 青色辉光，
+ * 是上一版霓虹风格的遗留。WinUI 完全没有这种处理，
+ * 放在现在的应用壳里非常突兀。
+ *
+ * 改成 WinUI 的常规版式：一张页面标题（PageHeader）、一段说明、
+ * 两个按钮（强调色 + 描边）。说明里的「404」降级成普通文字。
+ */
 ---
 
 <Base title="页面不存在" path="/404/">
-  <section class="nf">
-    <p class="code" aria-hidden="true">404</p>
+  <div class="nf">
+    <PageHeader title="这里没有东西" meta="404 · 地址可能变了，或者这篇内容已经被移走" />
 
-    <p class="eyebrow">走岔了</p>
-    <h1>这里没有东西</h1>
     <p class="hint">
-      地址可能变了，或者这篇内容已经被移走。回首页看看最新的，或者从归档里翻。
+      回首页看看最新的，或者从归档里翻。
     </p>
 
     <div class="actions">
-      <a class="btn-primary" href="/">
+      <a class="btn-accent" href="/">
         回首页
-        <span aria-hidden="true">→</span>
+        <span class="glyph" aria-hidden="true">&#xE76C;</span>
       </a>
-      <a class="btn-ghost" href="/archive/">翻归档</a>
+      <a class="btn-standard" href="/archive/">翻归档</a>
+      <a class="btn-standard" href="/tags/">看标签</a>
     </div>
-  </section>
+  </div>
 </Base>
 
 <style>
   .nf {
-    /* 错位：代码与标题不居中对齐，往左偏——
-       404 本来就是「不在预期位置」，版式也跟着偏一下 */
-    max-width: 560px;
-    padding: var(--s-xxl) 0 var(--s-xl);
-  }
-
-  .code {
-    margin: 0 0 var(--s-md);
-    font-family: var(--mono);
-    font-size: clamp(72px, 16vw, 132px);
-    font-weight: 700;
-    line-height: 0.86;
-    letter-spacing: -6px;
-    color: transparent;
-    -webkit-text-stroke: 1.5px color-mix(in srgb, var(--c-neon-volt) 55%, transparent);
-    text-shadow: 0 0 46px rgba(0, 229, 154, 0.22);
-  }
-
-  .eyebrow {
-    color: var(--c-faint);
-    margin-bottom: var(--s-sm);
-  }
-
-  h1 {
-    font-size: clamp(28px, 5vw, 38px);
-    letter-spacing: -1.3px;
-    margin: 0 0 var(--s-sm);
+    /* 与其它页面一致：左对齐、限制行宽 */
+    max-width: var(--readable-prose, 680px);
   }
 
   .hint {
-    margin: 0 0 var(--s-lg);
-    max-width: 42ch;
+    margin: 0 0 var(--s-xl);
     color: var(--c-muted);
-    line-height: 1.72;
+    line-height: 1.7;
   }
 
   .actions {
@@ -67,52 +52,54 @@ import Base from "../layouts/Base.astro";
     flex-wrap: wrap;
   }
 
-  .btn-primary {
+  /*
+    按钮用 WinUI 的两档：
+      强调色实心（AccentButtonStyle）与标准描边
+    圆角统一 4px（ControlCornerRadius），不是上一版的 11px 大圆角。
+  */
+  .btn-accent,
+  .btn-standard {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 10px 19px;
-    border-radius: var(--r-md);
-    background: var(--c-neon-volt);
-    color: var(--c-on-neon);
-    font-size: 14px;
-    font-weight: 650;
-    transition:
-      transform var(--m-quick),
-      box-shadow var(--m-quick);
-  }
-  .btn-primary:hover {
-    text-decoration: none;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 26px -8px rgba(0, 229, 154, 0.6);
-  }
-  .btn-primary:active {
-    transform: translateY(0) scale(0.97);
-    transition-duration: var(--m-snap);
-  }
-  .btn-primary span {
-    transition: transform var(--m-quick);
-  }
-  .btn-primary:hover span {
-    transform: translateX(3px);
-  }
-
-  .btn-ghost {
-    padding: 10px 19px;
-    border: 1px solid var(--line-base);
-    border-radius: var(--r-md);
-    color: var(--c-muted);
+    gap: 6px;
+    padding: 6px 16px;
+    min-height: 32px;
+    border-radius: var(--r-sm);
     font-size: 14px;
     font-weight: 600;
     transition:
-      color var(--m-quick),
-      border-color var(--m-quick),
-      background var(--m-quick);
+      background var(--m-snap),
+      border-color var(--m-snap);
   }
-  .btn-ghost:hover {
+
+  /* 强调色按钮：WinUI 暗色下前景是纯黑 */
+  .btn-accent {
+    border: 1px solid transparent;
+    background: var(--c-neon-volt);
+    color: var(--c-on-neon);
+  }
+  .btn-accent:hover {
     text-decoration: none;
+    background: color-mix(in srgb, var(--c-neon-volt) 90%, #fff);
+  }
+
+  .btn-standard {
+    border: 1px solid var(--line-base);
+    background: var(--c-s1);
     color: var(--c-ink);
-    border-color: var(--line-strong);
+  }
+  .btn-standard:hover {
+    text-decoration: none;
     background: var(--c-s2);
+    border-color: var(--line-strong);
+  }
+
+  .glyph {
+    font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets", sans-serif;
+    font-size: 11px;
+    transition: transform var(--m-quick);
+  }
+  .btn-accent:hover .glyph {
+    transform: translateX(3px);
   }
 </style>

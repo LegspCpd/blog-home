@@ -47,9 +47,14 @@ const accent = moodOf("tag:" + tag);
   -->
   <PageHeader title={`#${tag}`} meta={`共 ${sorted.length} 篇`} />
 
+  <!--
+    这里原来给第一篇传了 hero={i === 0}。hero 会跨两列，
+    而标签页通常只有两三篇 —— 结果就是第一张通栏、第二张半宽、
+    右边空一大块。hero 是首页的"头版"版式，标签页是列表，不该用。
+  -->
   <div class="post-grid">
-    {sorted.map((post, i) => (
-      <PostCard post={post} slug={post.id} hero={i === 0} />
+    {sorted.map((post) => (
+      <PostCard post={post} slug={post.id} />
     ))}
   </div>
 </Base>

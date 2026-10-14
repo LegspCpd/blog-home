@@ -18,8 +18,6 @@ const tags = [...tally.entries()].sort(
 );
 const max = tags[0]?.[1] ?? 1;
 
-/* 分档：>=0.6max 为大，>=0.3max 为中，其余为小 */
-const band = (n: number) => (n / max >= 0.6 ? "lg" : n / max >= 0.3 ? "md" : "sm");
 ---
 
 <Base title="标签" path="/tags/">
@@ -30,7 +28,7 @@ const band = (n: number) => (n / max >= 0.6 ? "lg" : n / max >= 0.3 ? "md" : "sm
   <nav class="cloud" aria-label="全部标签">
     {
       tags.map(([name, n]) => (
-        <a class={`chip chip-${band(n)}`} href={`/tags/${encodeURIComponent(name)}/`}>
+        <a class="chip" href={`/tags/${encodeURIComponent(name)}/`}>
           {name}
           <sup>{n}</sup>
         </a>
@@ -75,11 +73,18 @@ const band = (n: number) => (n / max >= 0.6 ? "lg" : n / max >= 0.3 ? "md" : "sm
 
   /* ── 标签云：故意用基线对齐而不是居中，
      造成参差的「随性」——但每个词本身的字号是有规则的 */
+  /*
+    标签云：WinUI 的 chip 组。
+    原来是三档字号（27/19/14px）+ hover 旋转 + 发光 text-shadow ——
+    那是上一版霓虹风格的做法，WinUI 里没有。现在统一成等大的 chip：
+    4px 圆角、淡表面、1px 描边，hover 只叠一层更亮的填充。
+    频次信息保留在右上角的小数字里，不再用字号表达。
+  */
   .cloud {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--s-md) var(--s-lg);
+    align-items: center;
+    gap: 8px;
     padding-bottom: var(--s-xl);
     margin-bottom: var(--s-xl);
     border-bottom: 1px solid var(--line-soft);
@@ -87,49 +92,36 @@ const band = (n: number) => (n / max >= 0.6 ? "lg" : n / max >= 0.3 ? "md" : "sm
 
   .chip {
     display: inline-flex;
-    align-items: baseline;
-    gap: 4px;
-    color: var(--c-muted);
-    line-height: 1.25;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--line-base);
+    border-radius: var(--r-sm);
+    background: var(--c-s3);
+    color: var(--c-body);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
     transition:
-      color var(--m-quick),
-      transform var(--m-quick),
-      text-shadow var(--m-quick);
+      background var(--m-snap),
+      border-color var(--m-snap),
+      color var(--m-snap);
   }
 
   .chip:hover {
     text-decoration: none;
-    color: var(--c-neon-volt);
-    transform: translateY(-3px) rotate(-1.2deg);
-    text-shadow: 0 0 18px rgba(0, 229, 154, 0.45);
+    color: var(--c-ink);
+    background: var(--c-s2);
+    border-color: var(--line-strong);
   }
 
-  .chip:active {
-    transform: translateY(0) scale(0.96);
-    transition-duration: var(--m-snap);
-  }
-
-  /* 三档字号 —— 乱序的来源，但分档本身是规则的 */
-  .chip-lg {
-    font-size: 27px;
-    font-weight: 600;
-    letter-spacing: -0.8px;
-  }
-  .chip-md {
-    font-size: 19px;
-    font-weight: 550;
-    letter-spacing: -0.4px;
-  }
-  .chip-sm {
-    font-size: 14px;
-    font-weight: 400;
-  }
-
+  /* 频次做成 chip 内的小徽标，不参与字号变化 */
   .chip sup {
     font-family: var(--mono);
-    font-size: 10px;
+    font-size: 10.5px;
+    font-variant-numeric: tabular-nums;
     color: var(--c-faint);
-    transition: color var(--m-quick);
+    transition: color var(--m-snap);
   }
 
   .chip:hover sup {
