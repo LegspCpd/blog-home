@@ -432,6 +432,17 @@ GitHub 仓库：`LegspCpd/blog-home`，主分支 `main`。
 - ✅ 删除死代码 `src/lib/theme/` 与死依赖 `@fluentui/tokens`、`@fluentui/web-components`
 - ✅ 删除全部调试页面与脚本（`navtest` / `navmount` / `NavDiag` / `WinProbe` / `_deep` / `_nav` / `glyphs`）
 - ✅ 修掉 4 个真实缺陷：favicon 404、标签大小写冲突、搜索框浅色令牌、页头 SEO 退化
+- ✅ **上一版"霓虹"遗留全部清干净**（只查 DOM 计数看不出来，必须把每种页面
+  当一张图完整看一遍）：
+  · 404 的巨大描边透明字 + 青色辉光 → Fluent 版式（页头 + 说明 + 两档按钮）
+  · 标签云 27/19/14px 三档字号 + hover 旋转 + 发光 → 等大 Fluent chip
+  · 标签页第一张卡片跨两列（`hero={i===0}`，篇数少时右边空一半）→ 等宽两列
+  · 页脚渐变光带 + 大写宽字距眉标 + 霓虹描边按钮 → 发丝线 + Caption + 标准按钮
+  · **按条换色 `--mood` 全部移除**：同一个界面里出现五六种强调色没有体系，
+    WinUI 也没有"每个内容换一个颜色"这种做法；统一用强调色令牌
+  · 代码块在深色主题下是白底 → shiki 双主题靠 `prefers-color-scheme` 切换，
+    而本站深色是用 class 声明的；改单主题 + `!important` 盖掉内联背景
+  · 三处死 CSS（首页重复的 `.accent`、标签页已删标题的规则、chip 旧媒体查询）
 - ✅ **仓库自包含**：组件库内联进 `vendor/winuionweb`，任何只拿仓库的构建器
   （包括 EdgeOne 的 Git 自动部署）都能独立构建成功
 - ✅ **线上已更新**：https://legspcpd.asia 实测 `shell=1 / navItem=6 /
