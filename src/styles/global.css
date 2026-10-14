@@ -282,3 +282,197 @@ kbd {
 :focus-visible {
   outline-color: var(--accent-base);
 }
+
+/* ==============================================================
+   ★ 外壳骨架的「首屏样式」—— 解决手机/慢网打开先一堆乱码
+
+   问题：服务端渲染的外壳骨架用的是上游 WinUI 的类名
+   （.win-titlebar / .win-nav-shell / .win-nav-left-panel / .win-nav-content），
+   而这些样式全在 **island 的 CSS** 里 —— 实测 482KB，首屏拿不到。
+   首屏只有本文件（Base.css，约 9KB），所以骨架是**完全没排版**的：
+   标题栏、侧边栏、正文全挤成一竖列文字。约 0.5–2 秒后 482KB 到达才归位。
+   这就是"打开先一堆乱码，然后才正常起来"。
+
+   修法：把骨架的**首屏几何**写在这里（首屏必到），数值与上游一致，
+   于是骨架一出现就是对的形状；island 接管后位置不变，看不出切换。
+   只写几何（尺寸/排布/滚动），不写外观（配色/圆角/阴影）——
+   外观仍由上游那份负责，避免两套规则打架。
+
+   同时把这些几何做成**自适应**：窄屏收成图标栏、手机隐藏侧栏，
+   与 NavigationView 的 Auto 模式断点（1008 / 640）对齐。
+   ============================================================== */
+
+/* 标题栏：32px、不参与收缩（上游是 flex:0 1 auto，会被压缩） */
+html.shell-ready .win-titlebar {
+  flex: 0 0 auto;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* 外壳：横向排布，吃掉标题栏以下的全部高度 */
+html.shell-ready .win-nav-shell {
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* 侧边栏：固定宽度、撑满高度（页脚才能常驻底部） */
+html.shell-ready .win-nav-left-panel {
+  flex: 0 0 auto;
+  width: calc(var(--win-nav-open-pane-length, 320px) + 2px);
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* 内容区：吃掉剩余宽度，自己滚 */
+html.shell-ready .win-nav-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+html.shell-ready .win-nav-content-inner {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+/*
+   骨架自己的内部元素（只有骨架有 winui-ssr-* 这些类）。
+   之前写在 WinShell.vue 的 <style> 里 —— 那同样会进 island 的 CSS 包，
+   首屏一样拿不到。搬到这里才有意义。
+*/
+.winui-ssr-titlebar {
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  flex: 0 0 auto;
+}
+
+.winui-ssr-title {
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text-primary, #fff);
+}
+
+.winui-ssr-pane {
+  padding-top: 40px;
+}
+
+.winui-ssr-search {
+  height: 40px;
+  margin: 0 6px 20px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--line-base, rgba(255, 255, 255, 0.1));
+  border-radius: 4px;
+  background: var(--c-s1, rgba(255, 255, 255, 0.06));
+  color: var(--c-faint, rgba(255, 255, 255, 0.5));
+  font-size: 14px;
+}
+
+.winui-ssr-search-icon,
+.winui-ssr-icon {
+  font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets", sans-serif;
+  flex: 0 0 auto;
+}
+
+.winui-ssr-search-icon { font-size: 12px; }
+.winui-ssr-icon { font-size: 16px; width: 16px; text-align: center; }
+
+.winui-ssr-menu {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* 页脚项贴底：与真实外壳一样常驻左下角 */
+.winui-ssr-footer {
+  margin-top: auto;
+  padding-bottom: 3px;
+}
+
+.winui-ssr-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 36px;
+  padding: 0 12px 0 14px;
+  color: var(--text-primary, #fff);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.winui-ssr-item:hover {
+  text-decoration: none;
+  background: var(--c-s2, rgba(255, 255, 255, 0.08));
+}
+
+/* 选中态用 WinUI 的左侧指示条 */
+.winui-ssr-item.is-selected::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  top: 50%;
+  width: 3px;
+  height: 16px;
+  margin-top: -8px;
+  border-radius: 2px;
+  background: var(--accent-base, #4ade80);
+}
+
+.winui-ssr-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ══ 自适应：与 NavigationView 的 Auto 断点对齐（1008 / 640） ══
+   之前这些几何只存在于 island 的 CSS 里，骨架在手机上会**一直显示
+   322px 的完整侧栏**（占掉半个屏幕），比"乱码"还难看。 */
+
+/* 紧凑：只留图标栏 */
+@media (max-width: 1008px) {
+  html.shell-ready .win-nav-left-panel {
+    width: calc(var(--win-nav-compact-pane-length, 48px) + 2px);
+  }
+  .winui-ssr-search,
+  .winui-ssr-label {
+    display: none;
+  }
+  .winui-ssr-item {
+    justify-content: center;
+    padding: 0;
+  }
+}
+
+/* 最小：侧栏收起，正文满宽；顶部留一行可点的导航，避免没 JS 时无法导航 */
+@media (max-width: 640px) {
+  html.shell-ready .win-nav-left-panel {
+    display: none;
+  }
+  html.shell-ready .win-nav-content-inner {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .winui-ssr-pane {
+    padding-top: 0;
+  }
+}

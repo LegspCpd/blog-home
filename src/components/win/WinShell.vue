@@ -120,105 +120,10 @@ const isCurrent = (tag: string) =>
 
 <style>
 /*
- * 骨架样式。
+ * 骨架的样式**不在这里** —— 全部在 src/styles/global.css。
  *
- * 只负责"看起来和真实外壳一样、位置一样"。几何全部对齐实测值：
- *   标题栏 32px、侧边栏宽、菜单项 36px 高、页脚项贴底、内容区左内边距 24px。
- * 改任何一处都要两边一起改，否则接管的那一瞬间会跳。
+ * 原因：这个 <style> 会打进 island 的 CSS 包（实测 482KB），首屏拿不到；
+ * 而骨架必须在首屏就长得对，否则就是"先一堆乱码、再正常起来"。
+ * 放进 global.css（Base.css，约 9KB，首屏必到）才有意义。
  */
-.winui-ssr-titlebar {
-  display: flex;
-  align-items: center;
-  padding-left: 12px;
-  flex: 0 0 auto;
-}
-
-.winui-ssr-title {
-  font-size: 12px;
-  color: var(--text-primary, #fff);
-  line-height: 1;
-}
-
-.winui-ssr-pane {
-  width: calc(var(--win-nav-open-pane-length, 320px) + 2px);
-  padding-top: 40px;
-  box-sizing: border-box;
-}
-
-.winui-ssr-search {
-  height: 40px;
-  margin: 0 6px 20px;
-  padding: 0 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  border: 1px solid var(--line-base);
-  border-radius: var(--r-sm, 4px);
-  background: var(--c-s1);
-  color: var(--c-faint);
-  font-size: 14px;
-}
-
-.winui-ssr-search-icon {
-  font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets", sans-serif;
-  font-size: 12px;
-}
-
-.winui-ssr-menu {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-/* 页脚项贴底：与真实外壳一样常驻左下角 */
-.winui-ssr-footer {
-  margin-top: auto;
-  padding-bottom: 3px;
-}
-
-.winui-ssr-item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 36px;
-  padding: 0 12px 0 14px;
-  color: var(--text-primary, #fff);
-  font-size: 14px;
-  text-decoration: none;
-  transition: background 100ms cubic-bezier(0, 0, 0, 1);
-}
-
-.winui-ssr-item:hover {
-  text-decoration: none;
-  background: var(--c-s2);
-}
-
-/* 选中态用 WinUI 的左侧指示条，不是整块高亮 */
-.winui-ssr-item.is-selected::before {
-  content: "";
-  position: absolute;
-  left: 1px;
-  top: 50%;
-  width: 3px;
-  height: 16px;
-  margin-top: -8px;
-  border-radius: 2px;
-  background: var(--accent-base, #4cc2ff);
-}
-
-.winui-ssr-icon {
-  font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets", sans-serif;
-  font-size: 16px;
-  width: 16px;
-  text-align: center;
-  flex: 0 0 auto;
-}
-
-.winui-ssr-label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 </style>
