@@ -22,10 +22,19 @@ export const SITE = {
 } as const;
 
 /** 导航项 */
+/**
+ * 左侧导航。
+ *
+ * 图标用 Segoe Fluent Icons 的字形码，**写在这里而不是靠下标去猜** ——
+ * 之前 Base.astro 里是 ["","",""][i]，
+ * 一加菜单项就会错位。
+ * 这几个码位是渲染出来看过的：E80F 房子、E8A5 文档、E8F1 书架、E8EC 标签。
+ */
 export const NAV = [
-  { href: "/", label: "首页" },
-  { href: "/archive/", label: "归档" },
-  { href: "/tags/", label: "标签" },
+  { href: "/", label: "首页", icon: "" },
+  { href: "/posts/", label: "文章", icon: "" },
+  { href: "/archive/", label: "归档", icon: "" },
+  { href: "/tags/", label: "标签", icon: "" },
 ] as const;
 
 /** 每页文章数 */

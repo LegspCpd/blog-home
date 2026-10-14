@@ -248,3 +248,37 @@ kbd {
   0%, 100% { opacity: 0.35; }
   50%      { opacity: 1; }
 }
+
+
+/* ==============================================================
+   强调色：天蓝 -> 绿
+
+   上游 WinUI 主题把强调色定义在 theme.css 的深色段：
+     --accent-base: #0067C0  （蓝）
+   这一族里有些是**字面值**（--accent-hover / --accent-pressed /
+   --accent-aa-fill），不会跟着 --accent-base 自动变，
+   所以必须逐个覆盖；只改 --accent-base 会只变一半。
+
+   本文件在上游之后加载，同权重下靠源码顺序胜出。
+
+   选 #4ADE80（亮绿）：深色界面里亮一点才读得出来。
+   配 --accent-text: #000 —— 亮绿上黑字对比度约 12:1，
+   白字只有约 1.6:1，不可用。
+   ============================================================== */
+:root {
+  --accent-base: #4ade80 !important;
+  --accent-hover: rgba(74, 222, 128, 0.9) !important;
+  --accent-pressed: rgba(74, 222, 128, 0.8) !important;
+  --accent-aa-fill: #15803d !important;
+  --accent-aa-text: #ffffff !important;
+  --accent: var(--accent-base);
+  --accent-text: #000000 !important;
+  --accent-text-secondary: rgba(0, 0, 0, 0.7) !important;
+  --accent-text-fill-color-primary: #166534 !important;
+  --SystemAccentColor: var(--accent-base) !important;
+}
+
+/* 焦点环也跟着走，否则键盘焦点还是蓝的 */
+:focus-visible {
+  outline-color: var(--accent-base);
+}

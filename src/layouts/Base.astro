@@ -42,10 +42,10 @@ const pageTransition = {
  * 只能依赖 Windows 系统已安装的那一份。Windows 之外的平台字形会缺失，
  * 这是整个 WinUIonWeb 的既有约束，不是本项目引入的。
  */
-const navItems = NAV.map((item, i) => ({
+const navItems = NAV.map((item) => ({
   Tag: item.href,
   Content: item.label,
-  Icon: ["\uE80F", "\uE8F1", "\uE8EC"][i] ?? "\uE8A5",
+  Icon: item.icon,
   /**
    * x:Name 会被 NavigationView 渲染成 DOM 上的 data-xaml-ref。
    *
@@ -57,9 +57,16 @@ const navItems = NAV.map((item, i) => ({
 }));
 
 /** 页脚项：官方规范里 FooterMenuItems 显示在「设置」项之前 */
+/**
+ * 页脚项：官方规范里 FooterMenuItems 显示在「设置」项之前。
+ *
+ * Icon 原来没给，所以左下角这两项**一直是纯文字、没有图标**。
+ * 码位也是渲染出来确认过的（E71B 链接、E943 花括号）——
+ * 之前设置页的「订阅 RSS」用的是 E734，那其实是个**星星**，看着不对。
+ */
 const footerItems = [
-  { Tag: SITE.links.rss, Content: "RSS", "x:Name": SITE.links.rss },
-  { Tag: SITE.links.github, Content: "GitHub", "x:Name": SITE.links.github },
+  { Tag: SITE.links.rss, Content: "RSS", Icon: "", "x:Name": SITE.links.rss },
+  { Tag: SITE.links.github, Content: "GitHub", Icon: "", "x:Name": SITE.links.github },
 ];
 
 /** 构建期生成的站内搜索索引，供标题栏的 AutoSuggestBox 使用 */

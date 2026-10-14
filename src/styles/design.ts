@@ -5,7 +5,7 @@
  * 这套值不再是"我挑的颜色"，而是**引用上游 theme.css 在 :root 上定义的
  * Fluent 自定义属性**。vue-app.js 已经全局 import 了那份 theme.css，
  * 所以页面里 --app-bg / --card-bg / --text-primary / --accent-base
- * 全都是活的（实测：rgb(32,32,32) / rgba(255,255,255,0.05) / #fff / #4CC2FF）。
+ * 全都是活的（实测：rgb(32,32,32) / rgba(255,255,255,0.05) / #fff / #4ADE80）。
  *
  * 这么做的理由不只是省事：站点里的 NavigationView、Button、ScrollViewer
  * 读的是同一批令牌。只要我们也读它们，配色就永远跟着控件走，
@@ -33,7 +33,7 @@ export const fluent = {
   textTertiary: "var(--text-tertiary, rgba(255, 255, 255, 0.5442))",
   textDisabled: "var(--text-disabled, rgba(255, 255, 255, 0.3628))",
   /* AccentFillColorDefault */
-  accent: "var(--accent-base, #4cc2ff)",
+  accent: "var(--accent-base, #4ade80)",
   accentText: "var(--accent-text, #000000)",
   /* SystemFillColor —— WinUI 的语义色 */
   success: "var(--system-success, #6ccb5f)",

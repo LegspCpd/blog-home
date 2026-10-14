@@ -1,107 +1,28 @@
 ---
-import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
-import PostCard from "../components/win/PostCard.astro";
-import { POSTS_PER_PAGE, SITE } from "../config/site";
+import { getCollection } from "astro:content";
+import { SITE } from "../config/site";
 
-const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
-  (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
-);
-
-const page = Math.max(1, Number(Astro.url.searchParams.get("page")) || 1);
-const total = Math.max(1, Math.ceil(posts.length / POSTS_PER_PAGE));
-const current = Math.min(page, total);
-const slice = posts.slice((current - 1) * POSTS_PER_PAGE, current * POSTS_PER_PAGE);
-
-const base = current > 1 ? `/?page=${current - 1}/` : "/";
-const next = current < total ? `/?page=${current + 1}/` : null;
-
-/* 标签云：取出现频次前 8 个，按次数决定字号——让「乱」有依据而不是随机 */
-const tally = new Map<string, number>();
-for (const p of posts) for (const t of p.data.tags) tally.set(t, (tally.get(t) ?? 0) + 1);
-const tags = [...tally.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
-const maxCount = tags[0]?.[1] ?? 1;
-
+/**
+ * 首页。
+ *
+ * 这里**只放 hero**，不列任何文章 —— 文章列表搬到 /posts/（左侧导航的「文章」）。
+ * 之前首页同时承担「首页 + 文章列表 + 分页」，用户要求拆开：
+ * 首页就写点东西，列表单独一页。
+ */
+const posts = await getCollection("posts", ({ data }) => !data.draft);
 ---
 
-<Base title={current > 1 ? `第 ${current} 页` : undefined}>
-  {
-    current === 1 ? (
-      <section class="hero">
-        <p class="eyebrow">{SITE.subtitle}</p>
-        <h1 class="hero-title">
-          写点<span class="accent">有意思</span>的东西
-        </h1>
-        <p class="hero-sub">
-          {posts.length} 篇记录。技术、设计、还有一些想不清楚的事。
-        </p>
-        <div class="hero-actions">
-          <a class="btn-primary" href="/archive/">
-            开始读 <span aria-hidden="true">→</span>
-          </a>
-          <a class="btn-ghost" href="/rss.xml">
-            订阅 RSS
-          </a>
-        </div>
-      </section>
-    ) : (
-      <h1 class="page-title">第 {current} 页</h1>
-    )
-  }
-
-  {
-    slice.length === 0 ? (
-      <p class="empty">还没有文章。</p>
-    ) : (
-      <div class="post-grid">
-        {slice.map((post, i) => (
-          <PostCard post={post} slug={post.id} hero={current === 1 && i === 0} />
-        ))}
-      </div>
-    )
-  }
-
-  {
-    total > 1 && (
-      <nav class="pager" aria-label="分页导航">
-        {current > 1 ? (
-          <a class="pager-link" href={base}>← 上一页</a>
-        ) : (
-          <span class="pager-link is-off">← 上一页</span>
-        )}
-        <span class="pager-info">
-          {current} / {total}
-        </span>
-        {next ? (
-          <a class="pager-link" href={next}>下一页 →</a>
-        ) : (
-          <span class="pager-link is-off">下一页 →</span>
-        )}
-      </nav>
-    )
-  }
-
-  {
-    current === 1 && tags.length > 0 && (
-      <aside class="tags-band" aria-label="标签">
-        <span class="eyebrow">按标签逛</span>
-        <ul class="tag-cloud">
-          {tags.map(([name, n]) => (
-            <li>
-              <a
-                class="cloud"
-                href={`/tags/${encodeURIComponent(name)}/`}
-                style={`--scale:${0.86 + (n / maxCount) * 0.34}`}
-              >
-                {name}
-                <sup>{n}</sup>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </aside>
-    )
-  }
+<Base>
+  <section class="hero">
+    <p class="eyebrow">{SITE.subtitle}</p>
+    <h1 class="hero-title">写点<span class="accent">有意思</span>的东西</h1>
+    <p class="hero-sub">{posts.length} 篇记录。技术、设计、还有一些想不清楚的事。</p>
+    <div class="hero-actions">
+      <a class="btn-primary" href="/posts/">开始读 <span aria-hidden="true">→</span></a>
+      <a class="btn-ghost" href="/rss.xml">订阅 RSS</a>
+    </div>
+  </section>
 </Base>
 
 <style>
