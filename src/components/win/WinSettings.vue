@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted, shallowRef } from "vue";
+import { onMounted, shallowRef, ref } from "vue";
 import { SITE } from "../../config/site";
+import { THEME_LABEL, currentTheme, setTheme, type UiTheme } from "../../lib/theme";
 
 /**
  * 设置页内容 —— WinUI 的 SettingsCard 列表。
@@ -24,6 +25,21 @@ const props = defineProps<{
 }>();
 
 const Card = shallowRef<any>(null);
+
+/**
+ * 界面主题。
+ *
+ * 和左下角那一项改的是同一件事（src/lib/theme.ts），
+ * 区别只是这里把两套都列出来让用户直接选，左下角那项是"点一下换一个"。
+ * 两处都**不跳转、不重载** —— 换的就是 <html> 上的一个属性。
+ */
+const theme = ref<UiTheme>(currentTheme());
+const THEMES: UiTheme[] = ["winui", "endfield"];
+
+function pick(next: UiTheme) {
+  theme.value = next;
+  setTheme(next);
+}
 
 onMounted(async () => {
   const mod = await import("winui-src/components/SettingsCard.vue");
@@ -78,10 +94,35 @@ const buildTimeText = (() => {
         HeaderIcon="&#xE72C;"
         :IsActionIconVisible="false" />
 
+      <!--
+        主题：真正接线的开关。
+        两套皮肤整套换，不是明暗切换 —— 点下去当页立刻变，不重载。
+        「分段选择」按套件规则是例外：当前段墨底反白，不用黄色块。
+      -->
       <component :is="Card"
-        Header="外观"
-        Description="本站跟随 WinUI 3 的深色主题，暂不提供切换"
-        HeaderIcon="&#xE793;"
+        Header="界面主题"
+        Description="整套外观换一套皮肤，切换即时生效，不会重新加载页面"
+        HeaderIcon="&#xE790;"
+        :IsActionIconVisible="false">
+        <div class="theme-seg" role="radiogroup" aria-label="界面主题">
+          <button
+            v-for="t in THEMES"
+            :key="t"
+            type="button"
+            role="radio"
+            class="theme-seg-btn"
+            :class="{ 'is-on': theme === t }"
+            :aria-checked="theme === t"
+            @click="pick(t)">
+            {{ THEME_LABEL[t] }}
+          </button>
+        </div>
+      </component>
+
+      <component :is="Card"
+        Header="状态"
+        :Description="`当前使用${THEME_LABEL[theme]}外观`"
+        HeaderIcon="&#xE73E;"
         :IsActionIconVisible="false" />
     </template>
 
@@ -183,6 +224,39 @@ const buildTimeText = (() => {
  */
 .settings-list .win-settings-card-surface {
   box-sizing: border-box;
+}
+
+/* 主题分段选择。
+   默认（WinUI 3）走 Fluent 的分段控件观感；
+   终末地那套在 skin.css 里覆盖成"当前段墨底反白"——
+   套件规则里分段选择是唯一不用黄色块的例外。 */
+.theme-seg {
+  display: inline-flex;
+  border: 1px solid var(--line-base, rgba(255, 255, 255, 0.14));
+  border-radius: var(--r-sm, 4px);
+  overflow: hidden;
+}
+
+.theme-seg-btn {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary, #fff);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background var(--m-snap, 100ms) cubic-bezier(0, 0, 0, 1);
+}
+
+.theme-seg-btn + .theme-seg-btn {
+  border-left: 1px solid var(--line-base, rgba(255, 255, 255, 0.14));
+}
+
+.theme-seg-btn.is-on {
+  background: var(--accent-base, #4ade80);
+  color: #000;
+  font-weight: 600;
 }
 
 /* 占位行：和 SettingsCard 的实际高度对齐 */

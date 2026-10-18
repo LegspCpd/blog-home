@@ -6,6 +6,12 @@ import { getSearchIndex } from "../lib/search";
 import Footer from "../components/win/Footer.astro";
 import WinShell from "../components/win/WinShell.vue";
 import "../styles/global.css";
+// 终末地风味主题（endfield-ui skill）。两套主题同时存在，默认走 WinUI 3。
+// 注意：不引套件那份 55KB 的 endfield.css —— 它的部件都是 .ef-* 类名，
+// 而本站的换皮是在自己已有的类名上重写（见 skin.css），用不到它。
+// 将来若要用套件的现成部件，再按页引入，别挂到全站。
+import "../styles/endfield/tokens.css";
+import "../styles/endfield/skin.css";
 
 /**
  * ★ 页面转场 —— 对标 WinUI 3 的 drill-in。
@@ -171,6 +177,65 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
 -->
 <html lang={SITE.lang} class="theme-dark shell-ready">
   <head>
+    <!--
+      ★ 主题引导脚本 —— 必须是 <head> 里第一件事，且不能 defer。
+
+      主题是 <html> 上的一个 data 属性（data-site-theme）。
+      默认主题 **WinUI 3 不打属性**；只有选了终末地风味才打上 endfield。
+      浏览器解析到这里时 body 还没开始绘制，所以不会出现"先按默认主题画一帧，
+      再闪成另一套"——这是这套做法能"零闪"的全部原因。
+
+      同时把底色/字色/color-scheme 内联到 <html> 上：CSS 还在下载时，
+      浏览器也得先画一个背景，内联值保证那一瞬间就是对的颜色。
+      （参考站 2x.nz 的做法与此完全一致：localStorage + dataset + 内联底色。）
+
+      为什么用 try/catch 全包：隐私模式下 localStorage 会直接抛异常，
+      不允许它把首屏脚本打断。
+    -->
+    <script is:inline>
+      (function () {
+        function read() {
+          try {
+            return localStorage.getItem("blog:ui-theme");
+          } catch (e) {
+            return null; // 隐私模式下 localStorage 会抛异常
+          }
+        }
+
+        function apply() {
+          var r = document.documentElement;
+          if (read() === "endfield") {
+            r.dataset.siteTheme = "endfield";
+            r.style.backgroundColor = "#f4f4f2";
+            r.style.color = "#161616";
+            r.style.colorScheme = "light";
+          } else {
+            // 回到默认主题：属性要去掉，内联样式也要清空，
+            // 否则上一次的底色会留在 <html> 上。
+            delete r.dataset.siteTheme;
+            r.style.backgroundColor = "";
+            r.style.color = "";
+            r.style.colorScheme = "";
+          }
+        }
+
+        apply();
+
+        /*
+         * ★ 站内跳转后必须重新贴一次。
+         *
+         * Astro 换页时会把新文档的 <html> 属性搬到当前文档上，
+         * 而服务端渲染的 HTML 里**没有** data-site-theme（那是每个用户各自的
+         * 选择，构建期不可能知道）—— 于是跳一次页属性就被抹掉了，
+         * 用户会看到"选了终末地，点进文章又变回 WinUI"。
+         *
+         * astro:after-swap 在新 DOM 换好、**页面还没绘制**的那一刻触发，
+         * 所以在这里补上不会闪。
+         */
+        document.addEventListener("astro:after-swap", apply);
+      })();
+    </script>
+
     <meta charset="UTF-8" />
     <style set:html={`:root{${vars}}`}></style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, provide, ref } from "vue";
+// 两套皮肤：主题就是 <html> 上的一个 data 属性，切换当页完成、不重载
+import { THEME_LABEL, currentTheme, toggleTheme, type UiTheme } from "../../lib/theme";
 
 /**
  * WinUI 3 应用壳 —— 真实结构，只在客户端加载。
@@ -78,6 +80,32 @@ const selected = computed(() =>
   props.path === "/settings/" ? null : (exactMatch.value ?? prefixMatch.value ?? null)
 );
 
+/**
+ * 主题项 —— 左下角那一行。
+ *
+ * 它和 RSS / GitHub / 设置 并排，但不是"跳转"，是**当页换皮**：
+ * 点一下把 <html> 上的 data-site-theme 翻过去，整页立刻变成另一套外观，
+ * 不导航、不重载、也不往历史里塞记录。
+ *
+ * 用 `#theme` 作为 Tag —— 事件委托那边看到以 # 开头的地址就知道这不是页面。
+ * 标签里带上当前主题名（"主题：WinUI 3"），用户一眼知道点下去会变成什么。
+ */
+const theme = ref<UiTheme>(currentTheme());
+
+const footerResolved = computed(() => [
+  ...(props.footerItems ?? []),
+  {
+    Tag: "#theme",
+    Content: `主题：${THEME_LABEL[theme.value]}`,
+    Icon: "\uE790", // 调色板
+    "x:Name": "#theme",
+  },
+]);
+
+function onToggleTheme() {
+  theme.value = toggleTheme();
+}
+
 const rootEl = ref<HTMLElement | null>(null);
 
 /**
@@ -151,6 +179,16 @@ function onShellClick(event: MouseEvent) {
   // 普通菜单项：地址写在 x:Name 里，被渲染成 data-xaml-ref
   const href = item.getAttribute("data-xaml-ref");
   if (href) {
+    /*
+     * 主题项：以 # 开头表示"这不是一个页面"。
+     * 点它是把整页换一层皮 —— 不导航、不重载、不写历史，
+     * 所以必须在这里拦下来，绝不能走下面的 goTo。
+     */
+    if (href === "#theme") {
+      event.preventDefault();
+      onToggleTheme();
+      return;
+    }
     if (href.startsWith("/")) {
       if (href !== location.pathname) void goTo(href);
     } else if (/^https?:/.test(href)) {
@@ -286,7 +324,7 @@ function onQuerySubmitted(args: any) {
     <NavigationView
       PaneDisplayMode="Auto"
       :MenuItemsSource="items"
-      :FooterMenuItemsSource="footerItems ?? []"
+      :FooterMenuItemsSource="footerResolved"
       :SelectedItem="selected"
       :IsSettingsVisible="true"
       :AlwaysShowHeader="false"

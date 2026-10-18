@@ -1,0 +1,520 @@
+/* ==============================================================
+   终末地风味 —— 换皮层
+
+   做法与参考站 2x.nz 一致：**同一份 DOM，两套皮肤**。
+   这里不改结构，只在自己已有的类名上重写表现，
+   全部挂在 html[data-site-theme="endfield"] 下面 —— 默认的 WinUI 3 主题
+   连一条规则都不会被匹配到。
+
+   规则来自 endfield-ui skill：
+     · 圆角一律 0
+     · 不用投影、发光、装饰性渐变
+     · 唯一的强调色只表示"当前位置 / 可点击 / 需要注意"，只做填充
+     · 浅色主题下强调色不能当线或字（白底上对比度 1.1:1）—— "在这里"的线用墨色
+     · 红色只给删除
+     · 细线分区，不用一堆带边框和投影的卡片
+   ============================================================== */
+
+/* ── 页面底色与字体 ──────────────────────────────────────── */
+html[data-site-theme="endfield"],
+html[data-site-theme="endfield"] body {
+  background: var(--ef-paper);
+  color: var(--ef-ink);
+}
+
+html[data-site-theme="endfield"] .winui-app {
+  font-family: var(--ef-font-ui);
+  background: var(--ef-paper);
+}
+
+/* 正文用干净的中文黑体常规字重；界面才用宽体拉丁 */
+html[data-site-theme="endfield"] .prose {
+  font-family: var(--ef-font-text);
+  font-size: var(--ef-t-body);
+  line-height: 1.85;
+  color: var(--ef-ink);
+}
+
+/* ── 顶部条 + 侧栏 = 深色命令栏 ─────────────────────────────
+   套件里"深色命令栏"是两套主题下都为深色的那一条；
+   参考站的左侧导航也是深色，页面主体才是浅色纸。
+   这里把标题栏和侧栏连成一块深色，内容区保持纸色。       */
+html[data-site-theme="endfield"] .win-titlebar,
+html[data-site-theme="endfield"] .win-nav-left-panel {
+  background: var(--ef-cmdbar);
+  color: var(--ef-cmdbar-text);
+}
+
+html[data-site-theme="endfield"] .win-titlebar {
+  border-bottom: none;
+}
+
+/* 标题栏里的字：宽体大写小字 */
+html[data-site-theme="endfield"] .win-titlebar-title {
+  font-family: var(--ef-font-ui);
+  font-stretch: var(--ef-w-label);
+  text-transform: uppercase;
+  letter-spacing: var(--ef-ls-eyebrow);
+  font-size: var(--ef-t-eyebrow);
+  font-weight: 600;
+  color: var(--ef-cmdbar-text);
+}
+
+/* 侧栏与内容之间用一条发丝线，不用阴影 */
+html[data-site-theme="endfield"] .win-nav-left-panel {
+  border-right: none;
+}
+
+/* 可见底色画在子元素上（上游把面板表面放在 .win-nav-pane-surface），
+   只改父级看不到效果 —— 实测父级背景仍是 transparent。 */
+html[data-site-theme="endfield"] .win-nav-pane-surface,
+html[data-site-theme="endfield"] .win-nav-shadow-caster {
+  background: var(--ef-cmdbar);
+  box-shadow: none;
+  border-right: var(--ef-line) solid #000;
+}
+
+/* 命令栏与内容之间那条分界：细线，不用阴影 */
+html[data-site-theme="endfield"] .win-nav-shell {
+  --NavigationViewExpandedPaneBackground: var(--ef-cmdbar);
+}
+
+/* 侧栏里的搜索框：纸板 + 直角，去掉圆角 */
+html[data-site-theme="endfield"] .win-nav-pane-search input,
+html[data-site-theme="endfield"] .win-nav-left-panel input {
+  background: #ffffff0f;
+  border: var(--ef-line) solid #ffffff2e;
+  border-radius: 0;
+  color: var(--ef-cmdbar-text);
+  font-family: var(--ef-font-ui);
+}
+
+/* ── 导航项：编号式的一行，当前项用强调色填充 ────────────────
+   套件规则：当前所在用色块"填充"，同时加粗或加标记，
+   色盲也看得出；切角表示可点击。                          */
+html[data-site-theme="endfield"] .win-nav-item {
+  border-radius: 0;
+  font-family: var(--ef-font-ui);
+  font-size: var(--ef-t-ui);
+  font-weight: 500;
+  color: var(--ef-cmdbar-text);
+  /* 右下角切掉一小块 —— "可以按" */
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--ef-cut-sm)),
+    calc(100% - var(--ef-cut-sm)) 100%,
+    0 100%
+  );
+}
+
+html[data-site-theme="endfield"] .win-nav-item:hover {
+  background: #ffffff1a;
+}
+
+/* 当前项：强调色填充 + 墨色字（浅色底上黄块压墨字，对比度 16:1） */
+html[data-site-theme="endfield"] .win-nav-item.is-selected {
+  background: var(--ef-signal);
+  color: var(--ef-on-signal);
+  font-weight: 700;
+}
+
+/* 上游的选中指示条在黄块旁边是多余的，收掉 */
+html[data-site-theme="endfield"] .win-nav-item.is-selected .win-nav-indicator,
+html[data-site-theme="endfield"] .win-nav-indicator-track {
+  display: none;
+}
+
+/* 页脚那三项（RSS / GitHub / 设置）同样处理 */
+html[data-site-theme="endfield"] .win-nav-footer .win-nav-item {
+  font-size: var(--ef-t-field);
+}
+
+/* ── 内容区 ────────────────────────────────────────────── */
+html[data-site-theme="endfield"] .win-nav-content,
+html[data-site-theme="endfield"] .win-nav-content-inner {
+  background: var(--ef-paper);
+}
+
+/* 内容区左内边距按套件的桌面页边距 */
+@media (min-width: 641px) {
+  html[data-site-theme="endfield"] .win-nav-content-inner {
+    padding-left: var(--ef-pad-desktop);
+    padding-right: var(--ef-pad-desktop);
+  }
+}
+
+/* ── 页头：// 眉标 + 粗中文标题 ──────────────────────────── */
+html[data-site-theme="endfield"] .winui-page-header {
+  border-bottom: var(--ef-line) solid var(--ef-rule);
+  min-height: 0;
+  padding-bottom: var(--ef-row-pad);
+  margin-bottom: var(--ef-gap);
+}
+
+html[data-site-theme="endfield"] .winui-page-header-title {
+  font-family: var(--ef-font-ui);
+  font-weight: 800;
+  letter-spacing: 0;
+  color: var(--ef-ink);
+}
+
+html[data-site-theme="endfield"] .winui-page-header-meta {
+  font-family: var(--ef-font-ui);
+  font-stretch: var(--ef-w-field);
+  font-size: var(--ef-t-field);
+  color: var(--ef-ink2);
+}
+
+/* ── 标题层级 ──────────────────────────────────────────── */
+html[data-site-theme="endfield"] h1,
+html[data-site-theme="endfield"] h2,
+html[data-site-theme="endfield"] h3 {
+  font-family: var(--ef-font-ui);
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--ef-ink);
+}
+
+html[data-site-theme="endfield"] .prose h2 {
+  font-size: var(--ef-t-h2);
+  line-height: 1.45;
+  margin-top: calc(var(--ef-gap) * 1.8);
+  padding-top: var(--ef-row-pad);
+  border-top: var(--ef-line) solid var(--ef-rule);
+}
+
+/* ── 链接与焦点 ────────────────────────────────────────── */
+html[data-site-theme="endfield"] a {
+  color: inherit;
+  text-decoration-color: var(--ef-rule);
+  text-underline-offset: 0.22em;
+}
+
+html[data-site-theme="endfield"] a:hover {
+  text-decoration-color: var(--ef-ink);
+}
+
+/* 焦点环：浅色下用墨色（黄在白底上只有 1.1:1，看不见） */
+html[data-site-theme="endfield"] :focus-visible {
+  outline: 2px solid var(--ef-ink);
+  outline-offset: 2px;
+}
+
+html[data-site-theme="endfield"] .win-nav-left-panel :focus-visible {
+  outline-color: var(--ef-signal);
+}
+
+/* 选中文字用黄底墨字 —— 高亮标记 */
+html[data-site-theme="endfield"] ::selection {
+  background: var(--ef-signal);
+  color: var(--ef-on-signal);
+}
+
+/* ── 按钮：直角切角；主按钮墨底，悬停时黄从左侧擦入 ──────────
+   触屏没有悬停，所以用 :active 做同样的擦入。              */
+html[data-site-theme="endfield"] .btn-primary,
+html[data-site-theme="endfield"] .btn-ghost,
+html[data-site-theme="endfield"] .rss {
+  border-radius: 0;
+  font-family: var(--ef-font-ui);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  position: relative;
+  overflow: hidden;
+  z-index: 0;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--ef-cut-btn)),
+    calc(100% - var(--ef-cut-btn)) 100%,
+    0 100%
+  );
+  transition: color var(--ef-d-press, 100ms) var(--ef-ease),
+    border-color var(--ef-d-press, 100ms) var(--ef-ease);
+}
+
+/* 擦入的那一层黄 */
+html[data-site-theme="endfield"] .btn-primary::before,
+html[data-site-theme="endfield"] .btn-ghost::before,
+html[data-site-theme="endfield"] .rss::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--ef-signal);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--ef-d-wipe, 280ms) var(--ef-mech);
+}
+
+html[data-site-theme="endfield"] .btn-primary:hover::before,
+html[data-site-theme="endfield"] .btn-primary:active::before,
+html[data-site-theme="endfield"] .btn-ghost:hover::before,
+html[data-site-theme="endfield"] .btn-ghost:active::before,
+html[data-site-theme="endfield"] .rss:hover::before,
+html[data-site-theme="endfield"] .rss:active::before {
+  transform: scaleX(1);
+}
+
+/* 主按钮静止即墨底白字；擦入后翻成墨字（压在黄上） */
+html[data-site-theme="endfield"] .btn-primary {
+  background: var(--ef-tag-bg);
+  border-color: var(--ef-tag-bg);
+  color: var(--ef-tag-fg);
+}
+html[data-site-theme="endfield"] .btn-primary:hover,
+html[data-site-theme="endfield"] .btn-primary:active {
+  color: var(--ef-on-signal);
+  border-color: var(--ef-signal);
+}
+
+/* 次要按钮：纸面板 + 墨线 */
+html[data-site-theme="endfield"] .btn-ghost,
+html[data-site-theme="endfield"] .rss {
+  background: var(--ef-panel);
+  border: var(--ef-line) solid var(--ef-ink);
+  color: var(--ef-ink);
+}
+html[data-site-theme="endfield"] .btn-ghost:hover,
+html[data-site-theme="endfield"] .btn-ghost:active,
+html[data-site-theme="endfield"] .rss:hover,
+html[data-site-theme="endfield"] .rss:active {
+  color: var(--ef-on-signal);
+}
+
+/* 按钮里的箭头跟着走 */
+html[data-site-theme="endfield"] .btn-primary .glyph,
+html[data-site-theme="endfield"] .btn-primary span[aria-hidden] {
+  transition: transform var(--ef-d-press, 100ms) var(--ef-snap);
+}
+html[data-site-theme="endfield"] .btn-primary:hover .glyph,
+html[data-site-theme="endfield"] .btn-primary:hover span[aria-hidden] {
+  transform: translateX(3px);
+}
+
+/* ── 卡片 → 细线区块（不用圆角卡片堆） ────────────────────── */
+html[data-site-theme="endfield"] .post-card,
+html[data-site-theme="endfield"] .settings-skeleton {
+  border-radius: 0;
+  background: var(--ef-panel);
+  border: var(--ef-line) solid var(--ef-rule);
+  box-shadow: none;
+}
+
+html[data-site-theme="endfield"] .post-card:hover {
+  border-color: var(--ef-ink);
+  background: var(--ef-panel);
+}
+
+/* 卡片里的标题用宽体粗中文 */
+html[data-site-theme="endfield"] .post-card-title {
+  font-family: var(--ef-font-ui);
+  font-weight: 700;
+  color: var(--ef-ink);
+}
+
+/* 分类/日期的字段行：宽体小字 */
+html[data-site-theme="endfield"] .post-card .eyebrow,
+html[data-site-theme="endfield"] .post-card .meta {
+  font-family: var(--ef-font-ui);
+  font-stretch: var(--ef-w-field);
+  font-size: var(--ef-t-field);
+  letter-spacing: 0.04em;
+  color: var(--ef-ink2);
+}
+
+/* ── 标签 chip：切角小块，当前/悬停用黄 ───────────────────── */
+html[data-site-theme="endfield"] .chip,
+html[data-site-theme="endfield"] .tags a {
+  border-radius: 0;
+  background: var(--ef-chip);
+  border-color: transparent;
+  color: var(--ef-ink);
+  font-family: var(--ef-font-ui);
+  font-stretch: var(--ef-w-field);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--ef-cut-sm)),
+    calc(100% - var(--ef-cut-sm)) 100%,
+    0 100%
+  );
+}
+
+html[data-site-theme="endfield"] .chip:hover,
+html[data-site-theme="endfield"] .tags a:hover {
+  background: var(--ef-signal);
+  color: var(--ef-on-signal);
+  border-color: transparent;
+}
+
+/* ── 代码块：墨色边框的纸板，直角 ─────────────────────────── */
+html[data-site-theme="endfield"] .prose pre {
+  border-radius: 0;
+  background: var(--ef-panel) !important;
+  border: var(--ef-line) solid var(--ef-rule);
+  color: var(--ef-ink);
+  font-size: var(--ef-t-field);
+}
+
+/* 行内代码 */
+html[data-site-theme="endfield"] .prose :not(pre) > code {
+  background: var(--ef-chip);
+  border-radius: 0;
+  color: var(--ef-ink);
+  padding: 0.1em 0.35em;
+}
+
+/* ── 引用块：左边一条墨线（不用圆角/背景） ────────────────── */
+html[data-site-theme="endfield"] .prose blockquote {
+  border-left: var(--ef-line-trace) solid var(--ef-ink);
+  border-radius: 0;
+  background: transparent;
+  padding-left: var(--ef-gap);
+  color: var(--ef-ink2);
+}
+
+/* ── 表格：细线，表头墨底反白 ────────────────────────────── */
+html[data-site-theme="endfield"] .prose table {
+  border-collapse: collapse;
+  font-family: var(--ef-font-ui);
+  font-stretch: var(--ef-w-field);
+  font-size: var(--ef-t-field);
+}
+
+html[data-site-theme="endfield"] .prose th {
+  background: var(--ef-tag-bg);
+  color: var(--ef-tag-fg);
+  font-weight: 600;
+}
+
+html[data-site-theme="endfield"] .prose th,
+html[data-site-theme="endfield"] .prose td {
+  border: var(--ef-line) solid var(--ef-rule);
+  padding: var(--ef-row-pad) calc(var(--ef-row-pad) * 1.2);
+}
+
+/* ── 页脚：细线分区，去掉光带与圆角 ───────────────────────── */
+html[data-site-theme="endfield"] .site-footer {
+  background: var(--ef-panel);
+  border-top: var(--ef-line) solid var(--ef-rule);
+  border-radius: 0;
+}
+
+html[data-site-theme="endfield"] .lead-title,
+html[data-site-theme="endfield"] .col-title {
+  font-family: var(--ef-font-ui);
+  font-stretch: var(--ef-w-label);
+  text-transform: uppercase;
+  letter-spacing: var(--ef-ls-eyebrow);
+  font-size: var(--ef-t-eyebrow);
+  font-weight: 600;
+  color: var(--ef-ink2);
+}
+
+html[data-site-theme="endfield"] .pitch {
+  font-family: var(--ef-font-ui);
+  font-weight: 700;
+  color: var(--ef-ink);
+}
+
+html[data-site-theme="endfield"] .col a {
+  color: var(--ef-ink2);
+  font-family: var(--ef-font-ui);
+}
+html[data-site-theme="endfield"] .col a:hover {
+  color: var(--ef-ink);
+}
+
+/* ── 首页 hero：超大宽体字标 ──────────────────────────────── */
+html[data-site-theme="endfield"] .hero {
+  max-width: none;
+  padding-top: calc(var(--ef-gap) * 2);
+  padding-bottom: calc(var(--ef-gap) * 2);
+  /* 背景质感：两角各一小片等高线，墨色 9%，只此一处 */
+  background-image: url("/ef/contours/contour-a.svg");
+  background-repeat: no-repeat;
+  background-position: right -40px top -40px;
+  background-size: 320px 320px;
+}
+
+html[data-site-theme="endfield"] .hero .eyebrow {
+  font-family: var(--ef-font-ui);
+  font-stretch: var(--ef-w-label);
+  text-transform: uppercase;
+  letter-spacing: var(--ef-ls-eyebrow);
+  font-size: var(--ef-t-eyebrow);
+  font-weight: 600;
+  color: var(--ef-ink2);
+}
+
+html[data-site-theme="endfield"] .hero-title {
+  font-family: var(--ef-font-ui);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.05;
+  color: var(--ef-ink);
+}
+
+/* 强调词：这一处用黄块填充（"要注意"的意思），墨字压在上面 */
+html[data-site-theme="endfield"] .hero-title .accent {
+  color: var(--ef-on-signal);
+  background: var(--ef-signal);
+  padding: 0 0.12em;
+  letter-spacing: 0;
+  text-shadow: none;
+}
+
+html[data-site-theme="endfield"] .hero-sub {
+  font-family: var(--ef-font-text);
+  color: var(--ef-ink2);
+}
+
+/* ── 进度条：改成强调色，直角 ────────────────────────────── */
+html[data-site-theme="endfield"] .nav-progress-bar {
+  background: var(--ef-signal);
+}
+
+/* ── 滚动条：墨色细轨（套件里的"墨色滚动条"） ────────────── */
+html[data-site-theme="endfield"] * {
+  scrollbar-color: rgba(22, 22, 22, 0.35) transparent;
+}
+html[data-site-theme="endfield"] ::-webkit-scrollbar-thumb {
+  background: rgba(22, 22, 22, 0.35);
+  border-radius: 0;
+}
+
+/* ── 减少动态效果：全部静止 ──────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html[data-site-theme="endfield"] *,
+  html[data-site-theme="endfield"] *::before,
+  html[data-site-theme="endfield"] *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ── 设置页的主题分段选择 ──────────────────────────────────
+   套件规则：分段选择是唯一不用强调色块的例外 —— 当前段墨底反白。 */
+html[data-site-theme="endfield"] .theme-seg {
+  border: var(--ef-line) solid var(--ef-ink);
+  border-radius: 0;
+}
+
+html[data-site-theme="endfield"] .theme-seg-btn {
+  font-family: var(--ef-font-ui);
+  font-weight: 600;
+  color: var(--ef-ink);
+  background: var(--ef-panel);
+}
+
+html[data-site-theme="endfield"] .theme-seg-btn + .theme-seg-btn {
+  border-left: var(--ef-line) solid var(--ef-ink);
+}
+
+html[data-site-theme="endfield"] .theme-seg-btn.is-on {
+  background: var(--ef-ink);
+  color: var(--ef-panel);
+}

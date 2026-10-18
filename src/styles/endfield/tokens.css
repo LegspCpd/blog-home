@@ -1,0 +1,145 @@
+/* ==============================================================
+   终末地风味主题 —— token 层
+
+   来源：endfield-ui skill（同目录 endfield.css / tokens.json 原样引入）。
+   本文件把 tokens.json 落成 CSS 变量，并且**只挂在
+   [data-site-theme="endfield"] 下** —— 默认主题（WinUI 3）一个字节都不受影响。
+
+   变量命名沿用套件自己的名字（--ef-*），便于和 endfield.css 对照。
+   值全部取自 tokens.json，不是我自己配的色。
+   ============================================================== */
+
+[data-site-theme="endfield"] {
+  /* ── 颜色：浅色主题是它的主用形态 ────────────────────────── */
+  --ef-paper: #f4f4f2;      /* 页面底 */
+  --ef-panel: #ffffff;      /* 板面、输入、条 */
+  --ef-ink: #161616;        /* 正文与一切要紧的线 */
+  --ef-ink2: #5c5c5c;       /* 次要文字、字段标签 */
+  --ef-rule: #d9d9d6;       /* 1px 发丝线 */
+  --ef-chip: #e4e4e0;       /* 安静的填充：闲置按钮、筛选块、轨道 */
+  --ef-signal: #fffa00;     /* 唯一强调色：当前位置 / 可点 / 要注意。只做填充 */
+  --ef-on-signal: #161616;  /* 压在强调色上的字 */
+  --ef-trace: #161616;      /* "你在这里"的线：浅色下就是墨色 */
+  --ef-tag-bg: #161616;
+  --ef-tag-fg: #ffffff;
+  --ef-danger: #b3261e;     /* 只给删除 */
+  --ef-scrim: #16161680;
+
+  /* 三色条：品红 / 黄 / 薄荷绿（固定常量） */
+  --ef-tri-a: #ff00f0;
+  --ef-tri-b: #fffa00;
+  --ef-tri-c: #00ffa2;
+
+  /* 深色命令栏（两套主题下都是深色） */
+  --ef-cmdbar: #161616;
+  --ef-cmdbar-text: #ededed;
+
+  /* ── 字体 ────────────────────────────────────────────────
+     界面：宽体几何拉丁（Saira，可变字宽轴）+ 中文黑体
+     阅读：中文黑体常规字重
+     宽度是关键：字段 112%、标签与字标 125%                */
+  --ef-font-ui: "Saira", "Noto Sans SC", "Source Han Sans SC",
+    "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --ef-font-text: "Noto Sans SC", "Source Han Sans SC", "PingFang SC",
+    "Microsoft YaHei", system-ui, sans-serif;
+  --ef-w-field: 112%;
+  --ef-w-label: 125%;
+  --ef-w-wordmark: 125%;
+
+  /* ── 字号 ────────────────────────────────────────────── */
+  --ef-t-display: clamp(48px, 10vw, 176px);
+  --ef-t-h1: 40px;
+  --ef-t-title: 30px;
+  --ef-t-h2: 22px;
+  --ef-t-body: 17px;
+  --ef-t-ui: 15px;
+  --ef-t-field: 13px;
+  --ef-t-eyebrow: 11px;
+  --ef-ls-eyebrow: 0.14em;
+
+  /* ── 间距 ────────────────────────────────────────────── */
+  --ef-pad-phone: 16px;
+  --ef-pad-desktop: 40px;
+  --ef-gap: 20px;
+  --ef-row-pad: 12px;
+  --ef-measure: 640px;      /* 一行读数，约 38 个汉字 */
+
+  /* ── 切角与线 ────────────────────────────────────────────
+     圆角一律 0；"能按"的东西切掉一个角                    */
+  --ef-radius: 0px;
+  --ef-cut-sm: 7px;         /* 标签、筛选块、当前导航项：右下角 */
+  --ef-cut-btn: 8px;
+  --ef-cut-panel: 26px;     /* 看板朝中心切掉的角 */
+  --ef-cut-frame: 52px;     /* 画框：左上与右下 */
+  --ef-line: 1px;
+  --ef-line-tab: 5px;
+  --ef-line-trace: 4px;
+  --ef-line-strip: 3px;
+
+  /* 斜线纹：45° 墨色细斜线（22%） */
+  --ef-hatch: repeating-linear-gradient(
+    -45deg,
+    transparent 0 5px,
+    rgba(22, 22, 22, 0.22) 5px 6.5px
+  );
+  --ef-hatch-strong: repeating-linear-gradient(
+    -45deg,
+    transparent 0 5px,
+    rgba(22, 22, 22, 0.45) 5px 6.5px
+  );
+
+  /* ── 动效：短、硬、机械 ──────────────────────────────────
+     snap 出现；mech 快门/擦入/所有退出                     */
+  --ef-snap: cubic-bezier(0.16, 1, 0.3, 1);
+  --ef-mech: cubic-bezier(0.7, 0, 0.2, 1);
+  --ef-ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --ef-d-press: 100ms;
+  --ef-d-row: 200ms;
+  --ef-d-wipe: 280ms;
+  --ef-d-come: 320ms;
+  --ef-d-shutter: 360ms;
+  --ef-d-tab: 400ms;
+  --ef-d-fill: 450ms;
+
+  /* 触控最小命中区 */
+  --ef-touch: 44px;
+}
+
+/*
+   深色版本。套件的深色是**另一套完整主题**，不是反色 ——
+   纸与板换深，墨换浅，而 trace 变成黄色（深色下黄可以当线用）。
+   这里只覆盖会变的那几个，其余沿用上面。
+*/
+[data-site-theme="endfield"][data-ef-dark] {
+  --ef-paper: #191919;
+  --ef-panel: #222222;
+  --ef-ink: #ededed;
+  --ef-ink2: #a3a3a3;
+  --ef-rule: #353535;
+  --ef-chip: #2e2e2e;
+  --ef-trace: #fffa00;
+  --ef-tag-bg: #3a3a3a;
+  --ef-tag-fg: #ededed;
+  --ef-danger: #ff8a7a;
+  --ef-scrim: #000000a0;
+  --ef-hatch: repeating-linear-gradient(
+    -45deg,
+    transparent 0 5px,
+    rgba(237, 237, 237, 0.22) 5px 6.5px
+  );
+  --ef-hatch-strong: repeating-linear-gradient(
+    -45deg,
+    transparent 0 5px,
+    rgba(237, 237, 237, 0.45) 5px 6.5px
+  );
+}
+
+/* Saira 自托管（SIL OFL 1.1，许可证随字体一起放在 /ef/ 下）。
+   用可变字体的字宽轴 —— 终末地的"宽"就靠它。 */
+@font-face {
+  font-family: "Saira";
+  src: url("/ef/Saira.ttf") format("truetype-variations");
+  font-weight: 100 900;
+  font-stretch: 50% 125%;
+  font-display: swap;
+}

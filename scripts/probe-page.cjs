@@ -175,6 +175,9 @@ function launchChrome() {
     deviceScaleFactor: 1,
     mobile: false,
   });
+  if (process.env.PROBE_PRE_SCRIPT) {
+    await send("Page.addScriptToEvaluateOnNewDocument", { source: process.env.PROBE_PRE_SCRIPT });
+  }
   await send("Page.navigate", { url: TARGET_URL });
   await sleep(WAIT_MS);
 
