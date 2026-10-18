@@ -20,10 +20,10 @@ const max = tags[0]?.[1] ?? 1;
 
 ---
 
-<Base title="标签" en="TAGS" path="/tags/">
+<Base title="标签" path="/tags/">
   <!-- 页面名由 NavigationView 的 52px 页头承担（WinUI 的做法），
        正文只留统计信息，避免出现两个「标签」大标题。 -->
-  <PageHeader title="标签" meta={`共 ${tags.length} 个标签 / ${posts.length} 篇文章`} />
+  <PageHeader title="标签" en="TAGS" meta={`共 ${tags.length} 个标签 / ${posts.length} 篇文章`} />
 
   <nav class="cloud" aria-label="全部标签">
     {
