@@ -204,15 +204,25 @@ const jsonLd = { "@context": "https://schema.org", "@graph": graph };
 
         function apply() {
           var r = document.documentElement;
-          if (read() === "endfield") {
+          var t = read();
+          if (t === "endfield") {
             r.dataset.siteTheme = "endfield";
+            delete r.dataset.efDark;
             r.style.backgroundColor = "#f4f4f2";
             r.style.color = "#161616";
             r.style.colorScheme = "light";
+          } else if (t === "endfield-dark") {
+            // 终末地的深色是**另一套 token**，不是把浅色反过来
+            r.dataset.siteTheme = "endfield";
+            r.dataset.efDark = "1";
+            r.style.backgroundColor = "#191919";
+            r.style.color = "#ededed";
+            r.style.colorScheme = "dark";
           } else {
             // 回到默认主题：属性要去掉，内联样式也要清空，
             // 否则上一次的底色会留在 <html> 上。
             delete r.dataset.siteTheme;
+            delete r.dataset.efDark;
             r.style.backgroundColor = "";
             r.style.color = "";
             r.style.colorScheme = "";

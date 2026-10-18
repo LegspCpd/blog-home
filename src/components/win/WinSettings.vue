@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, shallowRef, ref } from "vue";
 import { SITE } from "../../config/site";
-import { THEME_LABEL, currentTheme, setTheme, type UiTheme } from "../../lib/theme";
+import { THEME_LABEL, THEME_ORDER, currentTheme, setTheme, type UiTheme } from "../../lib/theme";
 
 /**
  * 设置页内容 —— WinUI 的 SettingsCard 列表。
@@ -34,7 +34,8 @@ const Card = shallowRef<any>(null);
  * 两处都**不跳转、不重载** —— 换的就是 <html> 上的一个属性。
  */
 const theme = ref<UiTheme>(currentTheme());
-const THEMES: UiTheme[] = ["winui", "endfield"];
+// 三套：WinUI 3 / 终末地浅色 / 终末地深色（顺序即 THEME_ORDER）
+const THEMES: UiTheme[] = THEME_ORDER;
 
 function pick(next: UiTheme) {
   theme.value = next;
