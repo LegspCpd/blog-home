@@ -3,6 +3,7 @@ import { getCollection, render } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import { SITE } from "../../config/site";
 import PageHeader from "../../components/win/PageHeader.astro";
+import EfStrip from "../../components/win/EfStrip.astro";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => !data.draft);
@@ -53,6 +54,8 @@ const readMinutes = Math.max(1, Math.round(words / 400));
 >
   <article class="post">
     <PageHeader title={data.title} />
+    <!-- 套件规定：三色条只出现在"页面开始"和"详情标题下方"这两处，这是第二处 -->
+    <EfStrip />
 
     <header class="head">
       {data.description && <p class="desc">{data.description}</p>}

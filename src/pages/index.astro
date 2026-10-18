@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import { getCollection } from "astro:content";
 import { SITE } from "../config/site";
+import EfStrip from "../components/win/EfStrip.astro";
 
 /**
  * 首页。
@@ -15,7 +16,15 @@ const posts = await getCollection("posts", ({ data }) => !data.draft);
 
 <Base>
   <section class="hero">
+    <!-- 三色条：套件规定只出现在"页面开始"和"详情标题下方"这两处 -->
+    <EfStrip />
     <p class="eyebrow">{SITE.subtitle}</p>
+    <!--
+      展示型页面的字标：宽体大写、实心。
+      对读屏软件是冗余的（站点名在 <title> 和页脚都有），所以 aria-hidden。
+      终末地主题下才显示，见 endfield/skin.css。
+    -->
+    <p class="ef-wordmark" aria-hidden="true">LegspCpd <span class="ef-slash">/</span></p>
     <h1 class="hero-title">写点<span class="accent">有意思</span>的东西</h1>
     <p class="hero-sub">{posts.length} 篇记录。技术、设计、还有一些想不清楚的事。</p>
     <div class="hero-actions">

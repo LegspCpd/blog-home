@@ -19,12 +19,26 @@ interface Props {
   title: string;
   /** 标题下方的辅助行，例如「共 16 篇」 */
   meta?: string;
+  /**
+   * 终末地主题下的英文眉标（宽体大写，排在中文标题**上方**）。
+   *
+   * 套件规则：英文小字在上、中文粗体在下，成对出现（`// RECORDS` / `记录`）。
+   * 必须是中文标题的**直译**，不能拿 GRAMMAR / SIGNAL / TONE 这类风格词凑数；
+   * 想不出贴切的英文就留空 —— 那时只显示中文标题，也不会破版。
+   */
+  en?: string;
 }
 
-const { title, meta } = Astro.props;
+const { title, meta, en } = Astro.props;
 ---
 
 <header class="winui-page-header">
+  <!--
+    眉标对读屏软件是冗余的（h1 已经说明了这是什么），所以标 aria-hidden；
+    它承担的是版式上"上面一行宽体小字"的角色。
+    默认主题（WinUI 3）下不显示，只出现在终末地主题里。
+  -->
+  {en && <p class="winui-page-header-eyebrow" aria-hidden="true">// {en}</p>}
   <h1 class="winui-page-header-title">{title}</h1>
   {meta && <p class="winui-page-header-meta">{meta}</p>}
 </header>
@@ -54,6 +68,11 @@ const { title, meta } = Astro.props;
     辅助行独立于 52px 页头之下。
     放进页头会把固定高度撑破，所以用负外边距把它拉回到页头正下方。
   */
+  /* 英文眉标只在终末地主题下出现（样式在 endfield/skin.css 里打开） */
+  .winui-page-header-eyebrow {
+    display: none;
+  }
+
   .winui-page-header-meta {
     margin: 4px 0 0;
     font-size: 12px;

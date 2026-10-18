@@ -1,0 +1,34 @@
+---
+/**
+ * 三色条 —— 品红 / 黄 / 薄荷绿三等分，高 3px。
+ *
+ * 套件规则：它标记"屏幕或页面的开始"，**只允许出现在两处** ——
+ *   1. 展示型页面的最上方（这里是首页）
+ *   2. 详情页的标题下方（文章页）
+ * 多用一处就失去意义了，所以做成组件，用在哪一眼能数清。
+ *
+ * 只在终末地主题下显示：它是那套视觉的标记物，
+ * 默认的 WinUI 3 主题里不该出现。
+ */
+---
+
+<div class="ef-strip" aria-hidden="true"></div>
+
+<style>
+  .ef-strip {
+    display: none;
+    height: 3px;
+    width: 100%;
+    /* 用渐变三等分，省掉三个子元素 */
+    background: linear-gradient(
+      90deg,
+      var(--ef-tri-a, #ff00f0) 0 33.333%,
+      var(--ef-tri-b, #fffa00) 33.333% 66.666%,
+      var(--ef-tri-c, #00ffa2) 66.666% 100%
+    );
+  }
+
+  html[data-site-theme="endfield"] .ef-strip {
+    display: block;
+  }
+</style>

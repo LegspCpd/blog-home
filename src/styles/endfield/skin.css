@@ -518,3 +518,244 @@ html[data-site-theme="endfield"] .theme-seg-btn.is-on {
   background: var(--ef-ink);
   color: var(--ef-panel);
 }
+
+/* ── 英文眉标：宽体大写，排在中文标题上方 ────────────────────
+   套件规则：英文小字在上、中文粗体在下，成对出现。
+   它默认是隐藏的（见 PageHeader.astro），只在这里打开。 */
+html[data-site-theme="endfield"] .winui-page-header-eyebrow {
+  display: block;
+  margin: 0 0 4px;
+  font-family: var(--ef-font-ui);
+  font-stretch: var(--ef-w-label);
+  text-transform: uppercase;
+  letter-spacing: var(--ef-ls-eyebrow);
+  font-size: var(--ef-t-eyebrow);
+  font-weight: 600;
+  color: var(--ef-ink2);
+}
+
+/* 页头在终末地下不再是"52px 定高的一条"，而是标题 + 眉标 + 计数三行 */
+html[data-site-theme="endfield"] .winui-page-header {
+  min-height: 0;
+  justify-content: flex-start;
+  padding-bottom: var(--ef-row-pad);
+}
+
+html[data-site-theme="endfield"] .winui-page-header-title {
+  font-size: var(--ef-t-title);
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+/* 计数行：宽体小字，用竖线分隔的字段观感 */
+html[data-site-theme="endfield"] .winui-page-header-meta {
+  margin-top: 6px;
+  font-stretch: var(--ef-w-field);
+  letter-spacing: 0.04em;
+}
+
+/* ── 首页字标：超大宽体大写 ────────────────────────────────
+   套件里展示型页面的标志物。字宽靠 Saira 的 wdth 轴拉到 125%。 */
+html[data-site-theme="endfield"] .ef-wordmark {
+  display: block;
+  margin: 0 0 8px;
+  font-family: var(--ef-font-ui);
+  font-stretch: var(--ef-w-wordmark);
+  text-transform: uppercase;
+  font-weight: 800;
+  /* 字号随屏幕走；上限压到 132px —— 这块是标识，主角是下面那行中文 */
+  font-size: clamp(40px, 9vw, 132px);
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+  color: var(--ef-ink);
+}
+
+/* 末尾那条斜杠：套件的字标写法（ACOFORK /）。
+   
+   它必须是**墨色**的普通斜杠。我第一版把它做成了强调色方块，
+   结果在超大字标下变成一根巨大的黄色竖条 —— 完全不对，
+   而且违反了套件的硬规则：浅色主题里强调色不能当字或线用
+   （白底上黄字只有 1.1:1，等于看不见）。 */
+html[data-site-theme="endfield"] .ef-wordmark .ef-slash {
+  color: var(--ef-ink);
+  margin-left: 0.06em;
+}
+
+/* 默认主题下字标不出现（它是终末地的版式部件） */
+.ef-wordmark {
+  display: none;
+}
+
+/* ── 首页 hero 在终末地下重排 ────────────────────────────────
+   页头不再需要那么大的上边距，三色条顶到最上面。 */
+html[data-site-theme="endfield"] .hero {
+  padding-top: 0;
+}
+
+html[data-site-theme="endfield"] .hero .ef-strip {
+  margin-bottom: calc(var(--ef-gap) * 1.2);
+}
+
+/* 主标题：中文粗体，比字标小一档，避免两行抢戏 */
+html[data-site-theme="endfield"] .hero-title {
+  font-size: clamp(28px, 4.6vw, 56px);
+  line-height: 1.15;
+  margin-top: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ★ 把本站的通用 token 整体重映射到终末地的一套
+
+   这一步是"一处顶一处"的关键。
+   页面组件（归档列表、文章卡片、标签云…）用的都是本站自己的通用 token
+   （--c-ink / --c-muted / --c-faint / --line-*），它们当初是按**深色**定的：
+   --c-ink 是纯白、--c-faint 是 36% 白 —— 铺在纸色底上等于隐形。
+   实测归档页的文章标题是 rgb(255,255,255)、摘要是 rgba(255,255,255,0.36)，
+   整页几乎读不出来。
+
+   与其逐个组件去改，不如在这里把 token 整体换掉：所有页面同时正确。
+   ══════════════════════════════════════════════════════════════ */
+html[data-site-theme="endfield"] {
+  /* ── 画布层 ──────────────────────────────────────────── */
+  --c-base: var(--ef-paper);
+  --c-s1: var(--ef-panel);
+  --c-s2: var(--ef-chip);
+  --c-s3: var(--ef-chip);
+  --c-inset: var(--ef-chip);
+
+  /* ── 发丝线：浅色主题是**墨色低透明度**，不是白色低透明度 ──
+     原来那三条 line-* 都是 rgba(255,255,255,·)，在白纸上一根都看不见。 */
+  --line-soft: rgba(22, 22, 22, 0.08);
+  --line-base: var(--ef-rule);
+  --line-strong: rgba(22, 22, 22, 0.4);
+
+  /* ── 文字 ────────────────────────────────────────────── */
+  --c-ink: var(--ef-ink);
+  --c-body: #2b2b2b;
+  --c-muted: var(--ef-ink2);
+  --c-faint: #8a8a8a;
+  --c-onNeon: var(--ef-on-signal);
+
+  /* ── 强调色 ──────────────────────────────────────────────
+     套件硬规则：**浅色主题里强调色不能当字或线**（白底上黄只有 1.1:1）。
+     而本站这些 *-volt 等令牌主要是"当字用"的（链接、hover、眉标），
+     所以在这里一律回到墨色；需要黄色填充的地方（当前项、标签 hover、
+     主按钮 hover）在各自的规则里显式用 var(--ef-signal)。 */
+  --c-neon-volt: var(--ef-ink);
+  --c-neon-mint: var(--ef-ink);
+  --c-neon-gold: var(--ef-ink);
+  --c-neon-peach: var(--ef-ink);
+  --c-neon-lav: var(--ef-ink);
+  --c-neon-sky: var(--ef-ink);
+}
+
+/* 页脚里的法务行、日期这类"最弱一级"的字，浅色下也要看清 */
+html[data-site-theme="endfield"] .legal,
+html[data-site-theme="endfield"] .month-count,
+html[data-site-theme="endfield"] .day {
+  color: #8a8a8a;
+}
+
+/* 归档列表的标题在纸底上要用墨色粗字，不能是纯白 */
+html[data-site-theme="endfield"] .row-title,
+html[data-site-theme="endfield"] .row-link {
+  color: var(--ef-ink);
+  font-family: var(--ef-font-ui);
+  font-weight: 700;
+}
+
+html[data-site-theme="endfield"] .row:hover .row-title,
+html[data-site-theme="endfield"] .row:hover .row-link {
+  /* 悬停时用黄色**块**表示"要看这一行"，而不是把字染黄 */
+  background: var(--ef-signal);
+  color: var(--ef-on-signal);
+}
+
+html[data-site-theme="endfield"] .row-desc,
+html[data-site-theme="endfield"] .row-cat {
+  color: var(--ef-ink2);
+}
+
+html[data-site-theme="endfield"] .month-label {
+  color: var(--ef-ink);
+  font-family: var(--ef-font-ui);
+  font-weight: 600;
+}
+
+/* 列表之间的分隔用发丝线，不用阴影 */
+html[data-site-theme="endfield"] .row {
+  border-color: var(--line-soft);
+}
+
+/* ── 设置页的卡片：内部用的是写死的白色 ────────────────────────
+   SettingsCard 是上游组件，它的图标/标题/描述不是走我们的 token，
+   而是直接 rgb(255,255,255) —— 铺在纸色底上整块看不见。
+   实测这一页有 24 个元素是这个白色。 */
+html[data-site-theme="endfield"] .win-settings-card-surface {
+  background: var(--ef-panel);
+  border: var(--ef-line) solid var(--ef-rule);
+  border-radius: 0;
+  color: var(--ef-ink);
+}
+
+html[data-site-theme="endfield"] .win-settings-card-header,
+html[data-site-theme="endfield"] .win-settings-card-text,
+html[data-site-theme="endfield"] .win-settings-card-content,
+html[data-site-theme="endfield"] .win-settings-card-title {
+  color: var(--ef-ink);
+}
+
+html[data-site-theme="endfield"] .win-settings-card-icon,
+html[data-site-theme="endfield"] .win-settings-card-action-icon,
+html[data-site-theme="endfield"] .win-settings-card-desc {
+  color: var(--ef-ink2);
+}
+
+/* 卡片的标题用宽体黑体，描述用常规字重 */
+html[data-site-theme="endfield"] .win-settings-card-title {
+  font-family: var(--ef-font-ui);
+  font-weight: 700;
+}
+
+html[data-site-theme="endfield"] .win-settings-card-desc {
+  font-family: var(--ef-font-text);
+}
+
+/* 悬停：细线变墨（不用阴影，也不用染色） */
+html[data-site-theme="endfield"] .win-settings-card:hover .win-settings-card-surface,
+html[data-site-theme="endfield"] .win-btn:hover .win-settings-card-surface {
+  border-color: var(--ef-ink);
+}
+
+/* ── 主题分段选择：字色要再压一层 ────────────────────────────
+   基础样式里写的是 color: var(--text-primary, #fff)，
+   而 WinUI 深色主题下 --text-primary 就是纯白 —— 于是"白字压白按钮"。
+   上一层选择器（多一个 .theme-seg）让它稳定生效。 */
+html[data-site-theme="endfield"] .theme-seg .theme-seg-btn {
+  background: var(--ef-panel);
+  color: var(--ef-ink);
+}
+
+html[data-site-theme="endfield"] .theme-seg .theme-seg-btn.is-on {
+  background: var(--ef-ink);
+  color: var(--ef-panel);
+}
+
+/* ── SettingsCard 里的文字：必须用 !important ────────────────
+   上游的 TextBlock（.win-text-block）把主题画刷**以内联样式**写在元素上，
+   和之前那个按钮的 padding 是同一类问题 —— 内联优先级高于任何选择器，
+   不加 !important 根本盖不掉。实测标题/描述/图标全是 rgb(255,255,255)，
+   铺在纸色底上整页看不清。 */
+html[data-site-theme="endfield"] .win-settings-card-header,
+html[data-site-theme="endfield"] .win-settings-card-text,
+html[data-site-theme="endfield"] .win-settings-card-content,
+html[data-site-theme="endfield"] .win-settings-card-title,
+html[data-site-theme="endfield"] .win-settings-card-surface {
+  color: var(--ef-ink) !important;
+}
+
+html[data-site-theme="endfield"] .win-settings-card-desc,
+html[data-site-theme="endfield"] .win-settings-card-icon,
+html[data-site-theme="endfield"] .win-settings-card-action-icon {
+  color: var(--ef-ink2) !important;
+}

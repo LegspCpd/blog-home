@@ -26,7 +26,7 @@ const next = current < total ? `/posts/?page=${current + 1}` : null;
 
 <Base title={current > 1 ? `文章 · 第 ${current} 页` : "文章"} path="/posts/">
   <PageHeader
-    title="文章"
+    title="文章" en="POSTS"
     meta={total > 1 ? `共 ${posts.length} 篇，第 ${current} / ${total} 页` : `共 ${posts.length} 篇`}
   />
 
