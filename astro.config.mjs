@@ -233,7 +233,20 @@ export default defineConfig({
        * 站点是纯深色的（color-scheme: dark + html.theme-dark），
        * 所以只需要一个深色主题，行为完全确定。
        */
-      theme: "github-dark",
+      /*
+       * 两套主题各用一套语法配色。
+       *
+       * 关键在 defaultColor: false —— 它让 Shiki **不写内联的 color**，
+       * 只把两套色值写成 CSS 变量（--shiki-light / --shiki-dark）挂在每个 token 上。
+       * 于是可以由我们的主题属性决定用哪一套（见 global.css）。
+       *
+       * 这正是之前踩过的那个坑的正确解法：以前用 themes:{light,dark} 但不带
+       * defaultColor:false，Shiki 会输出靠 prefers-color-scheme 切换的样式，
+       * 而本站的深色是用 class 声明的 —— 两者不是一回事，代码块会在深色页面
+       * 上渲染成白底深字。现在配色由 data-site-theme 决定，行为完全确定。
+       */
+      themes: { light: "github-light", dark: "github-dark" },
+      defaultColor: false,
       wrap: true,
     },
   },

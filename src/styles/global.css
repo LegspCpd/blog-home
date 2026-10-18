@@ -476,3 +476,26 @@ html.shell-ready .win-nav-content-inner {
     padding-top: 0;
   }
 }
+
+/* ==============================================================
+   代码块的语法配色：按主题各取一套
+   —— Shiki 以 defaultColor:false 输出，色值只在 CSS 变量里，
+      没有内联 color，所以这里能完全决定用哪一套。
+   ============================================================== */
+
+/* 默认主题（WinUI 3，深色）用 dark 那一套 */
+.prose pre span {
+  color: var(--shiki-dark, inherit);
+}
+
+/* 终末地是浅色纸面 —— 必须换成 light 那一套，
+   否则深色语法配色铺在白底上几乎看不清 */
+html[data-site-theme="endfield"] .prose pre span {
+  color: var(--shiki-light, inherit);
+}
+
+/* defaultColor:false 之后 <pre> 上不再有内联背景色，
+   原来为了盖掉内联值加的 !important 可以撤了 */
+.prose pre {
+  background: var(--c-inset);
+}
